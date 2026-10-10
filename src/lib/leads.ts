@@ -2,7 +2,8 @@ import "server-only";
 import { z } from "zod";
 import type { createClient } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/normalize";
-import { SERVICE_INTERESTS, STAGES, type Stage } from "@/lib/types";
+import { SERVICE_INTERESTS, STAGES, type Lead, type Stage } from "@/lib/types";
+import { sendStageChangedWebhook } from "@/lib/webhook";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 type DbError = { code?: string; message: string };
@@ -135,7 +136,8 @@ export async function findDuplicate(
 
 // ---------------------------------------------------------------------------
 // Stage changes. Every stage change in the app goes through here.
-// The database logs the change as an activity and sets/clears the won date.
+// The database logs the change as an activity and sets/clears the won date;
+// then we notify WEBHOOK_URL (if set).
 // ---------------------------------------------------------------------------
 
 export type StageChange = {
@@ -169,13 +171,26 @@ export async function changeLeadStage(
   if (change.stage === "lost") update.lost_reason = lostReason;
   if (change.stage === "won") update.deal_value = change.dealValue;
 
-  const { data: updated, error } = await supabase
+  const { data: lead, error } = await supabase
     .from("leads")
     .update(update)
     .eq("id", leadId)
-    .select("id");
+    .select("*")
+    .maybeSingle<Lead>();
   if (error) return { error: friendlyDbError(error) };
-  if (!updated?.length) return { error: "Lead not found." };
+  if (!lead) return { error: "Lead not found." };
+
+  const { data: owner } = lead.owner_id
+    ? await supabase.from("profiles").select("id, full_name, email").eq("id", lead.owner_id).maybeSingle()
+    : { data: null };
+  sendStageChangedWebhook({
+    event: "stage_changed",
+    from_stage: current.stage,
+    to_stage: lead.stage,
+    changed_at: lead.updated_at,
+    lead,
+    owner: owner ? { id: owner.id, name: owner.full_name, email: owner.email } : null,
+  });
 
   return {};
 }

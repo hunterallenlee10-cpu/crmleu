@@ -4,7 +4,7 @@ Internal CRM for **Lee Enterprises Unlimited**. Reps track cold outreach to loca
 
 Stack: Next.js (App Router, TypeScript) + Tailwind, with Supabase for Postgres, auth and row-level security, deployed on Vercel.
 
-> **Build status:** Phases 1–3 are done: schema, row-level security, login, invites, rep screens, duplicate protection, admin screens, import and export. The n8n API and the seed script come in Phase 4.
+**Contents:** [1. Supabase project](#1-create-the-supabase-project) · [2. Environment variables](#2-environment-variables) · [3. First admin](#3-create-your-first-admin-account) · [4. Run locally](#4-run-it-locally) · [5. Demo data](#5-demo-data-seed-script) · [6. Deploy to Vercel](#6-deploy-to-vercel) · [7. n8n API and webhook](#7-n8n-api-and-webhook) · [8. Admin guide](#8-admin-guide) · [9. Tests](#9-tests)
 
 ## How permissions work
 
@@ -52,8 +52,8 @@ Copy `.env.example` to `.env.local` and fill it in. The keys are under **Project
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The **publishable** (or legacy "anon") key. Safe in the browser. |
 | `SUPABASE_SERVICE_ROLE_KEY` | The **secret** (or legacy "service_role") key. **Server only.** Never add a `NEXT_PUBLIC_` prefix. |
 | `NEXT_PUBLIC_SITE_URL` | Where the app lives, e.g. `https://crm.yourdomain.com` (no trailing slash) |
-| `LEADS_API_KEY` | *(Phase 4)* A long random string that n8n sends to create leads |
-| `WEBHOOK_URL` | *(Phase 4, optional)* Where stage changes are POSTed |
+| `LEADS_API_KEY` | A long random secret that n8n sends to create leads. Generate one with `openssl rand -hex 32`. If it's empty, the API is turned off. |
+| `WEBHOOK_URL` | *Optional.* If set, every stage change is POSTed here, e.g. an n8n webhook. |
 
 ## 3. Create your first admin account
 
@@ -67,7 +67,7 @@ Public sign-up is off, so the first account is created by hand:
    set role = 'admin', full_name = 'Hunter Lee'
    where email = 'you@yourdomain.com';
    ```
-4. Sign in to the app. **Team** in the menu is where you invite reps.
+4. Sign in to the app. **Admin → Team** is where you invite reps.
 
 The database never lets a new user make themselves an admin. Admins can only be promoted with SQL like the above.
 
@@ -87,25 +87,79 @@ npm run dev
 
 Locally, emails (invites, password resets) don't actually send. They show up in Mailpit at http://127.0.0.1:54324. The local auth settings, including sign-up being off and the email templates, come from `supabase/config.toml`.
 
-## 5. Tests
+## 5. Demo data (seed script)
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing)
-npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
-npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
+npm run seed              # adds 1 admin, 5 reps, 150 fake Maryland leads, and their activity history
+npm run seed -- --reset   # removes all of it again
 ```
 
-The database tests (`supabase/tests/*.test.sql`) prove that:
+- **Logins:** every demo user's email ends in `@seed.leu.test`, and the password is `leu-demo-1234` (change it with `SEED_PASSWORD`). The script prints all six logins when it finishes.
+- **Fake data:** phone numbers use the fictional 555-0100 to 555-0199 range, so nobody real gets called. About half the Won deals land in the current month, so the dashboard has numbers to show.
+- **Safety:** the script reads `.env.local` and refuses to run against anything except a local Supabase unless you add `--remote`. Never seed your real production project.
+- **Re-runs:** running it again doesn't duplicate anything.
 
-- a rep cannot read, edit or delete another rep's lead, or see or add activities on it;
-- a rep cannot reassign leads, delete leads, or edit or delete activity entries;
-- a rep cannot change their own role or commission rate;
-- a deactivated rep sees nothing, and logged-out visitors are refused;
-- an admin can see, reassign and delete anything;
-- duplicates are blocked: the same phone in any format, or the same business name and city;
-- Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged.
+## 6. Deploy to Vercel
 
-## 6. Admin guide
+1. Push this repo to GitHub, then in Vercel choose **Add New → Project** and import it. The framework is detected as Next.js.
+2. Under **Environment Variables**, add everything from step 2:
+   - Set `NEXT_PUBLIC_SITE_URL` to the production URL.
+   - Use a fresh `LEADS_API_KEY`.
+3. Deploy.
+4. In Supabase, set **Site URL** and **Redirect URLs** (step 1.3) to that production URL. Invite links won't work until they match.
+5. When a future change adds files to `supabase/migrations/`, run `npx supabase db push` to update the database before (or right after) deploying.
+
+## 7. n8n API and webhook
+
+### Create a lead: `POST /api/leads`
+
+Send leads in from n8n (website forms, scrapers, etc.) with an **HTTP Request** node:
+
+- **Method:** `POST`
+- **URL:** `https://YOUR-APP/api/leads`
+- **Headers:** `x-api-key: <LEADS_API_KEY>` and `Content-Type: application/json`
+- **Body:** JSON with `business_name` (required) plus any of `contact_name`, `phone`, `email`, `website`, `city`, `state`, `niche`, `service_interest` (`website` / `automation` / `ai_call_answering` / `multiple`), `spec_site_url`, `next_follow_up` (`YYYY-MM-DD`), and `notes`.
+
+```bash
+curl -X POST https://YOUR-APP/api/leads \
+  -H "x-api-key: $LEADS_API_KEY" -H "Content-Type: application/json" \
+  -d '{"business_name":"Harbor Plumbing","contact_name":"Dana","phone":"(410) 555-0123","city":"Annapolis","state":"MD","niche":"Plumbing","notes":"Filled out the website form"}'
+```
+
+| Response | When |
+|---|---|
+| `201 {"result":"created","id":"…","owner":{"id","name","email"}}` | Saved. The lead is assigned round robin to the active rep who has waited longest. `owner` is `null` if there are no active reps; the lead then shows as Unassigned for the admin. |
+| `409 {"result":"duplicate","reason":"phone" or "name_city"}` | The phone, or the business name + city, is already in the CRM. Nothing is saved, and the response doesn't say who owns it. |
+| `400 {"result":"error","error":"…"}` | Missing `business_name`, a bad phone or email, or a body that isn't JSON. |
+| `401` / `503` | Wrong or missing `x-api-key`, or `LEADS_API_KEY` isn't set on the server. |
+
+Each new lead gets a "Created via API." note in its history, followed by your `notes` if you sent any. The `owner` email in the response is handy if you want n8n to tell the rep they have a new lead.
+
+### Stage changes: `WEBHOOK_URL`
+
+If `WEBHOOK_URL` is set, every stage change (from a lead's page or by dragging on the Pipeline) sends a POST like this:
+
+```json
+{
+  "event": "stage_changed",
+  "from_stage": "proposal_sent",
+  "to_stage": "won",
+  "changed_at": "2026-10-10T15:04:05.000Z",
+  "lead": { "id": "…", "business_name": "Harbor Plumbing", "phone": "4105550123", "deal_value": 3000, "won_date": "2026-10-10", "…": "every lead field" },
+  "owner": { "id": "…", "name": "Ava Brooks", "email": "ava@yourdomain.com" }
+}
+```
+
+Stages are `new`, `contacted`, `spec_sent`, `call_booked`, `proposal_sent`, `won` and `lost`.
+
+To kick off onboarding when a deal is won:
+1. In n8n, add a **Webhook** node (POST) and put its **production** URL in `WEBHOOK_URL`.
+2. Follow it with an **IF** node checking that `to_stage` equals `won`.
+
+The CRM sends the POST after the rep's change has saved, waits at most 5 seconds, and ignores failures. If n8n is down, nothing breaks for the rep. A warning is written to the Vercel logs and that event is not re-sent.
+
+
+## 8. Admin guide
 
 Admins get an **Admin** tab with four pages:
 
@@ -130,11 +184,23 @@ Admins get an **Admin** tab with four pages:
 
 On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
 
-## 7. Deploy to Vercel
+## 9. Tests
 
-1. Push this repo to GitHub, then in Vercel choose **Add New → Project** and import it. The framework is detected as Next.js.
-2. Under **Environment Variables**, add everything from step 2, with `NEXT_PUBLIC_SITE_URL` set to the production URL.
-3. Deploy, then make sure Supabase's **Site URL** and **Redirect URLs** (step 1.3) match that production URL. Invite links won't work until they do.
+```bash
+npm test                    # unit tests (normalization, New York dates, CSV parsing)
+npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
+npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
+```
+
+The database tests (`supabase/tests/*.test.sql`) prove that:
+
+- a rep cannot read, edit or delete another rep's lead, or see or add activities on it;
+- a rep cannot reassign leads, delete leads, or edit or delete activity entries;
+- a rep cannot change their own role or commission rate;
+- a deactivated rep sees nothing, and logged-out visitors are refused;
+- an admin can see, reassign and delete anything;
+- duplicates are blocked: the same phone in any format, or the same business name and city;
+- Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged.
 
 ## Project layout
 
@@ -153,6 +219,9 @@ src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, l
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
 src/app/api/export      CSV export (admins only)
+src/app/api/leads       POST endpoint for n8n (API key)
+src/lib/webhook.ts      stage-change webhook (WEBHOOK_URL)
+scripts/seed.mjs        demo data
 src/lib/import-fields.ts  column matching and parsing for CSV import
 src/app/login, auth/, set-password, forgot-password   sign-in flows
 ```

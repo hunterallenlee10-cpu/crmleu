@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:db": "supabase test db",
-    "test:db:no-docker": "bash scripts/db-test/run.sh"
+    "test:db:no-docker": "bash scripts/db-test/run.sh",
+    "seed": "node --env-file=.env.local scripts/seed.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
