@@ -15,8 +15,8 @@ update public.profiles set commission_rate = 10 where id = '00000000-0000-0000-0
 
 -- Leads: one each.
 insert into public.leads (id, business_name, phone, city, owner_id) values
-  ('11111111-1111-1111-1111-1111111111a1', 'Alpha Plumbing', '301-555-0001', 'Frederick', '00000000-0000-0000-0000-0000000000a1'),
-  ('11111111-1111-1111-1111-1111111111b1', 'Bravo Roofing',  '301-555-0002', 'Frederick', '00000000-0000-0000-0000-0000000000b1');
+  ('11111111-1111-1111-1111-1111111111a1', 'Pgtap Alpha Plumbing', '999-555-0001', 'Frederick', '00000000-0000-0000-0000-0000000000a1'),
+  ('11111111-1111-1111-1111-1111111111b1', 'Pgtap Bravo Roofing',  '999-555-0002', 'Frederick', '00000000-0000-0000-0000-0000000000b1');
 insert into public.activities (lead_id, user_id, type, body) values
   ('11111111-1111-1111-1111-1111111111a1', '00000000-0000-0000-0000-0000000000a1', 'note', 'A''s note'),
   ('11111111-1111-1111-1111-1111111111b1', '00000000-0000-0000-0000-0000000000b1', 'note', 'B''s secret note');
@@ -161,12 +161,12 @@ select throws_ok(
 
 select lives_ok(
   $$insert into public.leads (business_name, owner_id, city)
-    values ('Charlie Cleaning', '00000000-0000-0000-0000-0000000000a1', 'Hagerstown')$$,
+    values ('Pgtap Charlie Cleaning', '00000000-0000-0000-0000-0000000000a1', 'Hagerstown')$$,
   'rep A can create a lead for themselves'
 );
 
 select is(
-  public.check_duplicate('(301) 555-0002', 'Anything', 'Anywhere'),
+  public.check_duplicate('(999) 555-0002', 'Anything', 'Anywhere'),
   'phone',
   'duplicate check says rep B''s phone is taken without revealing the lead'
 );
@@ -208,7 +208,7 @@ select pg_temp.login_as('00000000-0000-0000-0000-00000000000a');
 
 select results_eq(
   $$select count(*)::int from public.leads
-    where business_name in ('Alpha Plumbing', 'Bravo Roofing', 'Charlie Cleaning')$$,
+    where business_name in ('Pgtap Alpha Plumbing', 'Pgtap Bravo Roofing', 'Pgtap Charlie Cleaning')$$,
   'values (3)',
   'admin sees every rep''s leads'
 );

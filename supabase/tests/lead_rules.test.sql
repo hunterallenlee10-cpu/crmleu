@@ -20,7 +20,7 @@ grant all on all sequences in schema pg_temp to public;
 -------------------------------------------------------------------------------
 -- Normalization
 -------------------------------------------------------------------------------
-select is(public.normalize_phone('+1 (301) 555-0100'), '3015550100', 'phone: strips formatting and leading 1');
+select is(public.normalize_phone('+1 (999) 555-0100'), '9995550100', 'phone: strips formatting and leading 1');
 select is(public.normalize_phone('555-0100'), null, 'phone: too short is invalid');
 select is(public.normalize_business_name('  Joe''s Pizza, L.L.C. '), 'joes pizza', 'name: punctuation and LLC removed');
 select is(public.normalize_business_name('Smith & Sons Co. Inc'), 'smith and sons', 'name: & and stacked suffixes');
@@ -32,28 +32,28 @@ select is(public.normalize_business_name('A/C Pros LTD'), 'a c pros', 'name: sla
 -- Duplicates
 -------------------------------------------------------------------------------
 insert into public.leads (id, business_name, phone, city, owner_id) values
-  ('22222222-2222-2222-2222-222222222222', 'Joe''s Pizza LLC', '(301) 555-0100', 'Frederick', '00000000-0000-0000-0000-0000000000a1');
+  ('22222222-2222-2222-2222-222222222222', 'Pgtap Joe''s Pizza LLC', '(999) 555-0100', 'Frederick', '00000000-0000-0000-0000-0000000000a1');
 
 select is(
   (select phone from public.leads where id = '22222222-2222-2222-2222-222222222222'),
-  '3015550100',
+  '9995550100',
   'phone is stored as 10 digits'
 );
 
 select throws_ok(
-  $$insert into public.leads (business_name, phone) values ('Other Biz', '1-301-555-0100')$$,
+  $$insert into public.leads (business_name, phone) values ('Other Biz', '1-999-555-0100')$$,
   '23505', null,
   'same phone in a different format is a duplicate'
 );
 
 select throws_ok(
-  $$insert into public.leads (business_name, city) values ('JOES PIZZA', ' frederick ')$$,
+  $$insert into public.leads (business_name, city) values ('PGTAP JOES PIZZA', ' frederick ')$$,
   '23505', null,
   'same business name + city is a duplicate'
 );
 
 select lives_ok(
-  $$insert into public.leads (business_name, city) values ('Joe''s Pizza', 'Hagerstown')$$,
+  $$insert into public.leads (business_name, city) values ('Pgtap Joe''s Pizza', 'Hagerstown')$$,
   'same business name in another city is fine'
 );
 
@@ -64,13 +64,13 @@ select throws_ok(
 );
 
 select is(
-  public.check_duplicate('3015550100', 'x', 'y'), 'phone', 'check_duplicate: phone'
+  public.check_duplicate('9995550100', 'x', 'y'), 'phone', 'check_duplicate: phone'
 );
 select is(
-  public.check_duplicate(null, 'Joes Pizza Inc.', 'FREDERICK'), 'name_city', 'check_duplicate: name + city'
+  public.check_duplicate(null, 'Pgtap Joes Pizza Inc.', 'FREDERICK'), 'name_city', 'check_duplicate: name + city'
 );
 select is(
-  public.check_duplicate('3015550100', 'Joe''s Pizza', 'Frederick', '22222222-2222-2222-2222-222222222222'),
+  public.check_duplicate('9995550100', 'Pgtap Joe''s Pizza', 'Frederick', '22222222-2222-2222-2222-222222222222'),
   null,
   'check_duplicate ignores the lead being edited'
 );

@@ -4,7 +4,7 @@ Internal CRM for **Lee Enterprises Unlimited**. Reps track cold outreach to loca
 
 Stack: Next.js (App Router, TypeScript) + Tailwind, with Supabase for Postgres, auth and row-level security, deployed on Vercel.
 
-> **Build status:** Phase 1 is done: schema, row-level security, login, invites and tests. Rep screens, admin screens, import/export, the n8n API and the seed script come in later phases.
+> **Build status:** Phases 1–2 are done: schema, row-level security, login, invites, rep screens and duplicate protection. Admin screens, import/export, the n8n API and the seed script come in later phases.
 
 ## How permissions work
 
@@ -90,7 +90,7 @@ Locally, emails (invites, password resets) don't actually send. They show up in 
 ## 5. Tests
 
 ```bash
-npm test                    # unit tests (phone / business-name normalization)
+npm test                    # unit tests (normalization, New York dates)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -121,6 +121,10 @@ src/proxy.ts            sends logged-out visitors to /login and refreshes sessio
 src/lib/supabase/       Supabase clients (server, browser, admin/service-role)
 src/lib/auth.ts         getProfile() / requireAdmin() for pages and actions
 src/lib/normalize.ts    phone / business-name normalization (mirrors the SQL)
-src/app/(app)/          logged-in screens
+src/lib/leads.ts        lead validation, duplicate check, and changeLeadStage() (every stage change goes through it)
+src/lib/dates.ts        "today" and follow-up dates in America/New_York
+src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
+src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
+src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
 src/app/login, auth/, set-password, forgot-password   sign-in flows
 ```

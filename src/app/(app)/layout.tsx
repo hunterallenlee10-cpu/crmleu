@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     <>
       <header className="sticky top-0 z-20 border-b border-line bg-ink/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-          <Link href="/" className="text-lg">
+          <Link href="/today" className="text-lg">
             <BrandName />
           </Link>
           <DesktopNav role={profile.role} />

@@ -6,7 +6,12 @@ import type { Role } from "@/lib/types";
 
 type NavItem = { href: string; label: string };
 
-const REP_ITEMS: NavItem[] = [{ href: "/", label: "Home" }];
+const REP_ITEMS: NavItem[] = [
+  { href: "/today", label: "Today" },
+  { href: "/leads", label: "Leads" },
+  { href: "/pipeline", label: "Pipeline" },
+  { href: "/leads/new", label: "+ New" },
+];
 const ADMIN_ITEMS: NavItem[] = [{ href: "/admin/team", label: "Team" }];
 
 function itemsFor(role: Role) {
@@ -14,7 +19,8 @@ function itemsFor(role: Role) {
 }
 
 function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  if (href === "/leads") return pathname.startsWith("/leads") && pathname !== "/leads/new";
+  return pathname.startsWith(href);
 }
 
 // Inline links in the header on desktop.
