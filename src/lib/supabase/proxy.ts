@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages anyone can open without logging in.
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth/confirm"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth/confirm", "/auth/callback"];
 
 // Refreshes the Supabase session cookie on every request and sends
 // logged-out visitors to /login. Real permission checks happen in the

@@ -1,12 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import Link from "next/link";
 import { signIn } from "./actions";
 import { FormMessage } from "@/components/form-message";
 
 export function LoginForm({ notice }: { notice?: string }) {
   const [state, action, pending] = useActionState(signIn, notice ? { error: notice } : undefined);
+
+  // If an email sign-in link landed here instead of /auth/callback, pass it on.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes("access_token") || hash.includes("error_code")) {
+      window.location.replace(`/auth/callback${hash}`);
+    }
+  }, []);
 
   return (
     <form action={action} className="space-y-5">

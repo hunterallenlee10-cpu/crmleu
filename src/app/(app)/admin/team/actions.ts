@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { siteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "@/components/form-message";
 
@@ -25,8 +26,10 @@ export async function inviteRep(_prev: FormState, formData: FormData): Promise<F
 
   // Sends the invite email. The new auth user gets a "rep" profile from the
   // on_auth_user_created trigger, using full_name from this metadata.
+  // The invite link lands on /auth/callback (see that page for why).
   const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
     data: { full_name },
+    redirectTo: `${await siteUrl()}/auth/callback`,
   });
   if (error) {
     return {
