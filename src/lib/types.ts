@@ -1,0 +1,90 @@
+// Row shapes for the tables in supabase/migrations.
+
+export type Role = "admin" | "rep";
+
+export type Stage =
+  | "new"
+  | "contacted"
+  | "spec_sent"
+  | "call_booked"
+  | "proposal_sent"
+  | "won"
+  | "lost";
+
+export type LeadSource = "manual" | "import" | "api";
+
+export type ServiceInterest = "website" | "automation" | "ai_call_answering" | "multiple";
+
+export type ActivityType =
+  | "call"
+  | "text"
+  | "email"
+  | "meeting"
+  | "note"
+  | "stage_change"
+  | "reassignment";
+
+export type Profile = {
+  id: string;
+  full_name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  commission_rate: number;
+  created_at: string;
+};
+
+export type Lead = {
+  id: string;
+  business_name: string;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  city: string | null;
+  state: string | null;
+  niche: string | null;
+  source: LeadSource;
+  stage: Stage;
+  owner_id: string | null;
+  assigned_at: string | null;
+  service_interest: ServiceInterest | null;
+  deal_value: number | null;
+  spec_site_url: string | null;
+  next_follow_up: string | null; // YYYY-MM-DD
+  do_not_contact: boolean;
+  lost_reason: string | null;
+  won_date: string | null; // YYYY-MM-DD
+  created_at: string;
+  updated_at: string;
+};
+
+export type Activity = {
+  id: number;
+  lead_id: string;
+  user_id: string | null;
+  type: ActivityType;
+  body: string | null;
+  created_at: string;
+};
+
+export const STAGES: { value: Stage; label: string }[] = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "spec_sent", label: "Spec Sent" },
+  { value: "call_booked", label: "Call Booked" },
+  { value: "proposal_sent", label: "Proposal Sent" },
+  { value: "won", label: "Won" },
+  { value: "lost", label: "Lost" },
+];
+
+export const SERVICE_INTERESTS: { value: ServiceInterest; label: string }[] = [
+  { value: "website", label: "Website" },
+  { value: "automation", label: "Automation" },
+  { value: "ai_call_answering", label: "AI call answering" },
+  { value: "multiple", label: "Multiple" },
+];
+
+export function stageLabel(stage: Stage) {
+  return STAGES.find((s) => s.value === stage)?.label ?? stage;
+}
