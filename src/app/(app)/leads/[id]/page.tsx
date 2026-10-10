@@ -7,7 +7,9 @@ import { formatDate, formatDateTime, todayNY } from "@/lib/dates";
 import { formatPhone } from "@/lib/normalize";
 import { createClient } from "@/lib/supabase/server";
 import { SERVICE_INTERESTS, type Activity, type ActivityType, type Lead } from "@/lib/types";
+import { getNiches } from "@/lib/niches";
 import { updateLead } from "../actions";
+import { AdminLeadControls, DeleteActivityButton } from "./admin-controls";
 import { FollowUpControl } from "./follow-up-control";
 import { QuickLog } from "./quick-log";
 import { StageControl } from "./stage-control";
@@ -25,7 +27,8 @@ const ACTIVITY_LABELS: Record<ActivityType, string> = {
 };
 
 export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
-  await getProfile();
+  const profile = await getProfile();
+  const isAdmin = profile.role === "admin";
   const { id } = await params;
   const supabase = await createClient();
 
@@ -33,19 +36,21 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
   const { data: lead } = await supabase.from("leads").select("*").eq("id", id).maybeSingle<Lead>();
   if (!lead) notFound();
 
-  const [{ data: activities }, { data: team }, { data: nicheRows }] = await Promise.all([
+  const [{ data: activities }, { data: team }, niches] = await Promise.all([
     supabase
       .from("activities")
       .select("*")
       .eq("lead_id", id)
       .order("created_at", { ascending: false })
       .returns<Activity[]>(),
-    supabase.from("team_members").select("id, full_name"),
-    supabase.from("leads").select("niche").not("niche", "is", null),
+    supabase.from("team_members").select("id, full_name, active"),
+    getNiches(supabase),
   ]);
 
   const names = new Map((team ?? []).map((m) => [m.id as string, m.full_name as string]));
-  const niches = [...new Set((nicheRows ?? []).map((r) => r.niche as string))].sort();
+  const assignees = (team ?? [])
+    .filter((m) => m.active)
+    .map((m) => ({ value: m.id as string, label: m.full_name as string }));
   const today = todayNY();
   const place = [lead.city, lead.state].filter(Boolean).join(", ");
   const tel = lead.phone ? `+1${lead.phone}` : null;
@@ -124,6 +129,7 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
                     {" · "}
                     {formatDateTime(a.created_at)}
                   </span>
+                  {isAdmin && <DeleteActivityButton activityId={a.id} />}
                 </p>
                 {a.body && <p className="mt-1 whitespace-pre-wrap">{a.body}</p>}
               </li>
@@ -135,6 +141,16 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
       <Section title="Details">
         <LeadForm action={updateLead.bind(null, lead.id)} lead={lead} niches={niches} submitLabel="Save changes" />
       </Section>
+
+      {isAdmin && (
+        <Section title="Admin">
+          <p className="text-sm text-muted">
+            Owner: <span className="text-fg">{lead.owner_id ? names.get(lead.owner_id) ?? "Unknown" : "Unassigned"}</span>
+            {" · "}Source: <span className="text-fg">{lead.source}</span>
+          </p>
+          <AdminLeadControls leadId={lead.id} ownerId={lead.owner_id} assignees={assignees} />
+        </Section>
+      )}
     </div>
   );
 }

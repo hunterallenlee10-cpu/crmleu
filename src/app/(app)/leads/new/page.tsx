@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LeadForm } from "@/components/lead-form";
 import { getProfile } from "@/lib/auth";
+import { getNiches } from "@/lib/niches";
 import { createClient } from "@/lib/supabase/server";
 import { createLead } from "../actions";
 
@@ -9,8 +10,7 @@ export const metadata: Metadata = { title: "New lead" };
 export default async function NewLeadPage() {
   await getProfile();
   const supabase = await createClient();
-  const { data } = await supabase.from("leads").select("niche").not("niche", "is", null);
-  const niches = [...new Set((data ?? []).map((r) => r.niche as string))].sort();
+  const niches = await getNiches(supabase);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">

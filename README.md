@@ -4,7 +4,7 @@ Internal CRM for **Lee Enterprises Unlimited**. Reps track cold outreach to loca
 
 Stack: Next.js (App Router, TypeScript) + Tailwind, with Supabase for Postgres, auth and row-level security, deployed on Vercel.
 
-> **Build status:** Phases 1–2 are done: schema, row-level security, login, invites, rep screens and duplicate protection. Admin screens, import/export, the n8n API and the seed script come in later phases.
+> **Build status:** Phases 1–3 are done: schema, row-level security, login, invites, rep screens, duplicate protection, admin screens, import and export. The n8n API and the seed script come in Phase 4.
 
 ## How permissions work
 
@@ -90,7 +90,7 @@ Locally, emails (invites, password resets) don't actually send. They show up in 
 ## 5. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates)
+npm test                    # unit tests (normalization, New York dates, CSV parsing)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -105,7 +105,32 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - duplicates are blocked: the same phone in any format, or the same business name and city;
 - Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged.
 
-## 6. Deploy to Vercel
+## 6. Admin guide
+
+Admins get an **Admin** tab with four pages:
+
+- **Dashboard:** revenue and deals won this month, commission owed per rep (won deal value × their rate), leads by stage per rep, and activities per rep this week (Monday to today). Every number uses New York time.
+- **Team:**
+  - Invite reps and set commission rates.
+  - Deactivating someone blocks their login, and a banner then asks you to move their open leads to someone else. Their Won and Lost leads stay with them, so their commission history doesn't move.
+- **Import:**
+  1. Upload a CSV (in Google Sheets: **File → Download → .csv**).
+  2. Match the columns to fields (most are guessed from the headers) and preview.
+  3. **Check for duplicates.**
+  4. Choose one owner or round robin, then import.
+
+  Rows are skipped, with the reason shown, when:
+  - the business name is missing,
+  - the phone isn't a 10-digit US number,
+  - the row is a duplicate of a lead already in the CRM, or of an earlier row in the same file,
+  - or it's marked Won with no deal value.
+
+  A Notes column becomes a note in each lead's history. Won rows without a won date count as won on the day you import. Up to 5,000 rows per file.
+- **Export CSV:** downloads every lead with its owner. Only admins can download it.
+
+On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
+
+## 7. Deploy to Vercel
 
 1. Push this repo to GitHub, then in Vercel choose **Add New → Project** and import it. The framework is detected as Next.js.
 2. Under **Environment Variables**, add everything from step 2, with `NEXT_PUBLIC_SITE_URL` set to the production URL.
@@ -126,5 +151,8 @@ src/lib/dates.ts        "today" and follow-up dates in America/New_York
 src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
+src/app/(app)/admin     dashboard, team, CSV import (admins only)
+src/app/api/export      CSV export (admins only)
+src/lib/import-fields.ts  column matching and parsing for CSV import
 src/app/login, auth/, set-password, forgot-password   sign-in flows
 ```

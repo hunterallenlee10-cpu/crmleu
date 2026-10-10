@@ -12,7 +12,7 @@ const REP_ITEMS: NavItem[] = [
   { href: "/pipeline", label: "Pipeline" },
   { href: "/leads/new", label: "+ New" },
 ];
-const ADMIN_ITEMS: NavItem[] = [{ href: "/admin/team", label: "Team" }];
+const ADMIN_ITEMS: NavItem[] = [{ href: "/admin", label: "Admin" }];
 
 function itemsFor(role: Role) {
   return role === "admin" ? [...REP_ITEMS, ...ADMIN_ITEMS] : REP_ITEMS;

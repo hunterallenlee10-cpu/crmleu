@@ -1,36 +1,41 @@
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/auth";
+import { getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/types";
+import { getTeam } from "@/lib/team";
+import type { Stage } from "@/lib/types";
 import { InviteForm } from "./invite-form";
+import { MemberRow } from "./member-row";
+import { ReassignPrompt } from "./reassign-prompt";
 
 export const metadata: Metadata = { title: "Team" };
 
 export default async function TeamPage() {
-  await requireAdmin();
+  const me = await getProfile(); // admin layout already checked the role
   const supabase = await createClient();
-  const { data: team } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, role, active, commission_rate, created_at")
-    .order("full_name")
-    .returns<Profile[]>();
+  const [team, { data: counts }] = await Promise.all([
+    getTeam(supabase),
+    supabase.rpc("dashboard_stage_counts"),
+  ]);
+  type Count = { owner_id: string | null; stage: Stage; lead_count: number };
+
+  const openLeads = (id: string) =>
+    ((counts ?? []) as Count[])
+      .filter((c) => c.owner_id === id && c.stage !== "won" && c.stage !== "lost")
+      .reduce((sum, c) => sum + Number(c.lead_count), 0);
+
+  const needsReassign = team.filter((m) => !m.active && openLeads(m.id) > 0);
+  const assignees = team.filter((m) => m.active).map((m) => ({ id: m.id, name: m.full_name }));
 
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Team</h1>
+      {needsReassign.map((m) => (
+        <ReassignPrompt key={m.id} from={{ id: m.id, name: m.full_name }} openLeads={openLeads(m.id)} assignees={assignees} />
+      ))}
       <InviteForm />
       <ul className="space-y-3">
-        {(team ?? []).map((p) => (
-          <li key={p.id} className="card flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="font-medium">{p.full_name}</p>
-              <p className="text-sm text-muted">{p.email}</p>
-            </div>
-            <div className="flex gap-2 text-xs uppercase tracking-wide">
-              <span className={p.role === "admin" ? "text-gold" : "text-muted"}>{p.role}</span>
-              {!p.active && <span className="text-danger">inactive</span>}
-            </div>
-          </li>
+        {team.map((m) => (
+          <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
         ))}
       </ul>
     </div>
