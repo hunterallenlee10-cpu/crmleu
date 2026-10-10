@@ -35,12 +35,16 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
      - Turn **off** "Allow new users to sign up".
      - Leave the **Email** provider **on**. Invited reps log in with email and password.
    - **URL Configuration:**
-     - Set **Site URL** to your app's address, e.g. `https://crm.yourdomain.com`. While testing locally, use `http://localhost:3000`.
-     - Add the same address under **Redirect URLs**.
-   - **Emails → Templates.** Replace two templates so their links go through the app:
-     - **Invite user:** paste the contents of `supabase/templates/invite.html`.
-     - **Reset password:** paste the contents of `supabase/templates/recovery.html`.
-   - **Emails → SMTP settings** (recommended). Supabase's built-in email only sends a few messages per hour. Add an SMTP provider (Resend, Postmark, Google Workspace, etc.) before inviting the whole team.
+     - Set **Site URL** to your app's address, e.g. `https://crm.yourdomain.com`.
+     - Under **Redirect URLs**, add `https://crm.yourdomain.com/**`. Invite and reset links return to `/auth/callback`, so the `/**` matters. Add `http://localhost:3000/**` too if you run the app locally.
+   - **Email (works out of the box).** Invites and password resets work with Supabase's built-in email; there are no templates to change.
+     - The catch: it sends at most **2 emails an hour**, from a Supabase address, and Supabase calls it "for testing".
+     - Fine for inviting a handful of reps over an afternoon.
+   - **Optional, for production email from your own domain:**
+     1. Add an SMTP provider under **Emails → SMTP settings**, e.g. Resend (free for 3,000 emails a month).
+     2. Then you can replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`.
+     - On a free project, Supabase only allows template changes once custom SMTP is set up.
+     - The app handles both kinds of links.
 
 ## 2. Environment variables
 
@@ -224,4 +228,5 @@ src/lib/webhook.ts      stage-change webhook (WEBHOOK_URL)
 scripts/seed.mjs        demo data
 src/lib/import-fields.ts  column matching and parsing for CSV import
 src/app/login, auth/, set-password, forgot-password   sign-in flows
+src/app/auth/callback   finishes sign-in from Supabase's built-in invite/reset emails
 ```
