@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -16,10 +17,13 @@ const InviteSchema = z.object({
 export type InviteState = (NonNullable<FormState> & { link?: string }) | undefined;
 
 // Two ways to invite, picked by which button was pressed:
-//   "email" - Supabase emails the invite (built-in email allows only 2 an hour).
+//   "email" - Supabase sends the email (built-in email allows only 2 an hour).
 //   "link"  - no email; the admin gets a link to text the rep themselves.
-// Either way the new auth user gets a "rep" profile from the
-// on_auth_user_created trigger, using full_name from this metadata.
+// A new person gets an invite, and the on_auth_user_created trigger gives them
+// a "rep" profile using full_name from the metadata. Someone who already
+// signed in once (e.g. accepted an earlier link but never set a password)
+// can't be invited again, so they get a password-reset link instead, which
+// signs them in and sends them to choose a password.
 export async function inviteRep(_prev: InviteState, formData: FormData): Promise<InviteState> {
   await requireAdmin();
   const fields = {
@@ -30,18 +34,59 @@ export async function inviteRep(_prev: InviteState, formData: FormData): Promise
   const parsed = InviteSchema.safeParse(fields);
   if (!parsed.success) return { error: parsed.error.issues[0].message, fields };
   const { full_name, email } = parsed.data;
+  const asLink = formData.get("mode") === "link";
   const site = await siteUrl();
   const auth = createAdminClient().auth.admin;
 
-  if (formData.get("mode") === "link") {
+  const supabase = await createClient();
+  const { data: existing, error: lookupError } = await supabase
+    .from("profiles")
+    .select("id, full_name, active")
+    .ilike("email", email.replace(/[\\%_]/g, "\\$&")) // any letter case; escape wildcards
+    .maybeSingle();
+  if (lookupError) return { error: lookupError.message, fields };
+
+  if (existing && !existing.active) {
+    return { error: `${existing.full_name} is deactivated. Click Reactivate on their card below, then try again.`, fields };
+  }
+
+  let alreadySignedIn = false;
+  if (existing) {
+    const { data, error } = await auth.getUserById(existing.id);
+    if (error) return { error: adminErrorMessage(error.message), fields };
+    alreadySignedIn = Boolean(data.user.email_confirmed_at);
+  }
+  const name = existing?.full_name ?? full_name;
+
+  if (alreadySignedIn) {
+    if (asLink) {
+      const { data, error } = await auth.generateLink({ type: "recovery", email });
+      if (error) return { error: adminErrorMessage(error.message), fields };
+      return {
+        message: `${name} already has an account, so this link signs them in to choose a password. It works once, so send it only to them, and don't open it yourself.`,
+        link: acceptLink(site, data.properties.hashed_token, "recovery"),
+      };
+    }
+
+    // Same email as "Forgot password". "implicit" so the link works on any
+    // device; it lands on /auth/callback, which sends them to choose a password.
+    const anon = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      auth: { flowType: "implicit", persistSession: false, autoRefreshToken: false },
+    });
+    const { error } = await anon.auth.resetPasswordForEmail(email, { redirectTo: `${site}/auth/callback` });
+    if (error) return { error: adminErrorMessage(error.message), fields };
+    return { message: `${name} already has an account, so we emailed them a link to choose a password.` };
+  }
+
+  // New, or invited before but never accepted: Supabase allows re-inviting.
+  if (asLink) {
     const { data, error } = await auth.generateLink({ type: "invite", email, options: { data: { full_name } } });
     if (error) return { error: adminErrorMessage(error.message), fields };
-
-    // Lands on /auth/accept, which waits for a tap before using the one-time
-    // token, so a text message's link preview can't use it up.
-    const link = `${site}/auth/accept?token_hash=${encodeURIComponent(data.properties.hashed_token)}`;
     revalidatePath("/admin/team");
-    return { message: `Invite link for ${full_name} is ready. It works once, so send it only to them, and don't open it yourself.`, link };
+    return {
+      message: `Invite link for ${name} is ready. It works once, so send it only to them, and don't open it yourself.`,
+      link: acceptLink(site, data.properties.hashed_token, "invite"),
+    };
   }
 
   // The emailed link lands on /auth/callback (see that page for why).
@@ -55,8 +100,16 @@ export async function inviteRep(_prev: InviteState, formData: FormData): Promise
   return { message: `Invite sent to ${email}.` };
 }
 
+// /auth/accept waits for a tap before using the one-time token, so a text
+// message's link preview can't use it up.
+function acceptLink(site: string, tokenHash: string, type: "invite" | "recovery"): string {
+  return `${site}/auth/accept?token_hash=${encodeURIComponent(tokenHash)}&type=${type}`;
+}
+
 function adminErrorMessage(message: string): string {
-  if (/already|registered|exists/i.test(message)) return "Someone with that email is already on the team.";
+  if (/already|registered|exists/i.test(message)) {
+    return "That email already has an account. If they're on the Team list below and deactivated, reactivate them first.";
+  }
   if (/rate limit/i.test(message)) {
     return "Supabase's email limit is used up for now (2 an hour). Use \"Create invite link\" instead, or try again in an hour.";
   }

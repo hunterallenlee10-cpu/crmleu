@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { acceptInvite } from "./actions";
 
-export function AcceptForm({ tokenHash }: { tokenHash: string }) {
+export function AcceptForm({ tokenHash, type }: { tokenHash: string; type: "invite" | "recovery" }) {
   const [error, action, pending] = useActionState(acceptInvite, undefined);
 
   if (error) {
@@ -19,8 +19,9 @@ export function AcceptForm({ tokenHash }: { tokenHash: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="token_hash" value={tokenHash} />
+      <input type="hidden" name="type" value={type} />
       <button type="submit" disabled={pending} className="btn btn-gold w-full">
-        {pending ? "One moment…" : "Accept invite"}
+        {pending ? "One moment…" : type === "recovery" ? "Continue" : "Accept invite"}
       </button>
     </form>
   );

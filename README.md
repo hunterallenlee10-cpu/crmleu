@@ -44,6 +44,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
      - The catch: it sends at most **2 emails an hour**, from a Supabase address, and Supabase calls it "for testing".
      - Fine for inviting a handful of reps over an afternoon.
      - To skip email entirely, use **Create invite link** on the Team page and text the link to the rep. It sends nothing, so the limit doesn't apply.
+     - Inviting someone who already has an account (say they accepted a link but never set a password) sends them a link to sign in and choose a password instead. If they're deactivated, reactivate them first.
    - **Optional, for production email from your own domain:**
      1. Add an SMTP provider under **Emails → SMTP settings**, e.g. Resend (free for 3,000 emails a month).
      2. Then you can replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`.
