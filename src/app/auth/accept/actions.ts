@@ -8,8 +8,10 @@ export async function acceptInvite(_prev: string | undefined, formData: FormData
   const tokenHash = String(formData.get("token_hash") ?? "");
   if (!tokenHash) return "This link is incomplete. Make sure you opened the whole link.";
 
+  // "recovery" is the link for someone who already has an account.
+  const type = formData.get("type") === "recovery" ? "recovery" : "invite";
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ type: "invite", token_hash: tokenHash });
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
   if (error) {
     // Supabase says "invalid or expired" when the token is gone: it was already
     // used, a newer link for the same person replaced it, or it timed out.
