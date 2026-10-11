@@ -3,7 +3,7 @@ import Link from "next/link";
 import { todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { getTeam } from "@/lib/team";
-import { STAGES, type ActivityType, type Stage } from "@/lib/types";
+import { STAGES, type ActivityType, type Profile, type Stage } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -49,8 +49,10 @@ export default async function DashboardPage() {
 
   const totalDeals = won.reduce((s, w) => s + Number(w.deals), 0);
   const totalRevenue = won.reduce((s, w) => s + Number(w.revenue), 0);
-  const commissionFor = (id: string, rate: number) => (Number(wonFor(id)?.revenue ?? 0) * rate) / 100;
-  const totalCommission = team.reduce((s, m) => s + commissionFor(m.id, Number(m.commission_rate)), 0);
+  // Admins own the business, so they never earn commission on their own wins.
+  const rateFor = (m: Profile) => (m.role === "admin" ? 0 : Number(m.commission_rate));
+  const commissionFor = (m: Profile) => (Number(wonFor(m.id)?.revenue ?? 0) * rateFor(m)) / 100;
+  const totalCommission = team.reduce((s, m) => s + commissionFor(m), 0);
   const totalActivities = activityCounts.reduce((s, a) => s + Number(a.activity_count), 0);
 
   const month = new Date(`${todayNY()}T12:00:00Z`).toLocaleDateString("en-US", {
@@ -148,8 +150,8 @@ export default async function DashboardPage() {
                 <Td left>{m.full_name}</Td>
                 <Td>{Number(w?.deals ?? 0)}</Td>
                 <Td>{money(Number(w?.revenue ?? 0))}</Td>
-                <Td>{Number(m.commission_rate)}%</Td>
-                <Td strong>{money(commissionFor(m.id, Number(m.commission_rate)))}</Td>
+                <Td>{m.role === "admin" ? "–" : `${rateFor(m)}%`}</Td>
+                <Td strong>{m.role === "admin" ? "–" : money(commissionFor(m))}</Td>
               </tr>
             );
           })}

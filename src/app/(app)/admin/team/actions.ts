@@ -54,6 +54,9 @@ export async function setCommissionRate(memberId: string, rate: number): Promise
   if (!Number.isFinite(rate) || rate < 0 || rate > 100) return { error: "Use a rate from 0 to 100." };
 
   const supabase = await createClient();
+  const { data: member } = await supabase.from("profiles").select("role").eq("id", memberId).maybeSingle();
+  if (member?.role === "admin") return { error: "Admins don't earn commission." };
+
   const { error } = await supabase
     .from("profiles")
     .update({ commission_rate: Math.round(rate * 100) / 100 })
