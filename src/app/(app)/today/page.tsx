@@ -4,7 +4,9 @@ import { LeadRow } from "@/components/lead-row";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import type { Lead } from "@/lib/types";
+import { getTeamMembers } from "@/lib/team";
+import type { Lead, Task } from "@/lib/types";
+import { TaskItem } from "../tasks/task-item";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -17,7 +19,7 @@ export default async function TodayPage() {
 
   // My open leads that are due (or overdue), plus fresh New leads assigned to me.
   const supabase = await createClient();
-  const { data } = await supabase
+  const leadsQuery = supabase
     .from("leads")
     .select("*")
     .eq("owner_id", profile.id)
@@ -25,6 +27,24 @@ export default async function TodayPage() {
     .or(`next_follow_up.lte.${today},and(stage.eq.new,assigned_at.gte.${newSince})`)
     .order("next_follow_up", { ascending: true, nullsFirst: false })
     .returns<Lead[]>();
+
+  // My open tasks, plus ones for the whole team.
+  const tasksQuery = supabase
+    .from("tasks")
+    .select("*")
+    .is("completed_at", null)
+    .or(`assignee_id.is.null,assignee_id.eq.${profile.id}`)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at")
+    .returns<Task[]>();
+
+  const [{ data }, { data: taskData }, members] = await Promise.all([
+    leadsQuery,
+    tasksQuery,
+    getTeamMembers(supabase),
+  ]);
+  const tasks = taskData ?? [];
+  const names = Object.fromEntries(members.map((m) => [m.id, m.full_name]));
 
   const leads = data ?? [];
   const overdue = leads.filter((l) => l.next_follow_up && l.next_follow_up < today);
@@ -46,6 +66,22 @@ export default async function TodayPage() {
             : `${overdue.length + dueToday.length} follow-up${overdue.length + dueToday.length === 1 ? "" : "s"} to do.`}
         </p>
       </div>
+
+      {tasks.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="flex items-baseline justify-between gap-3 text-sm font-semibold uppercase tracking-wider text-fg">
+            <span>Tasks <span className="text-muted">({tasks.length})</span></span>
+            <Link href="/tasks" className="text-xs font-medium normal-case tracking-normal text-gold underline-offset-4 hover:underline">
+              All tasks
+            </Link>
+          </h2>
+          <ul className="space-y-3">
+            {tasks.map((t) => (
+              <TaskItem key={t.id} task={t} canCheck isAdmin={false} assignees={[]} names={names} today={today} showAssignee={t.assignee_id === null} />
+            ))}
+          </ul>
+        </section>
+      )}
 
       <Section title="Overdue" count={overdue.length} tone="text-danger" leads={overdue} today={today} />
       <Section title="Due today" count={dueToday.length} tone="text-gold" leads={dueToday} today={today} />

@@ -88,3 +88,24 @@ export const SERVICE_INTERESTS: { value: ServiceInterest; label: string }[] = [
 export function stageLabel(stage: Stage) {
   return STAGES.find((s) => s.value === stage)?.label ?? stage;
 }
+
+export type Task = {
+  id: string;
+  title: string;
+  details: string | null;
+  assignee_id: string | null; // null = whole team
+  due_date: string | null; // YYYY-MM-DD
+  created_by: string | null;
+  completed_at: string | null;
+  completed_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// From the team_members view: names only, readable by everyone on the team.
+export type TeamMember = {
+  id: string;
+  full_name: string;
+  role: Role;
+  active: boolean;
+};
