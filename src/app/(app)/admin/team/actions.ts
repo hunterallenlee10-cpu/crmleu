@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
+import { emailEnabled } from "@/lib/email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { siteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +18,7 @@ const InviteSchema = z.object({
 export type InviteState = (NonNullable<FormState> & { link?: string }) | undefined;
 
 // Two ways to invite, picked by which button was pressed:
-//   "email" - Supabase sends the email (built-in email allows only 2 an hour).
+//   "email" - Supabase sends the email. Only when emailEnabled() (see lib/email.ts).
 //   "link"  - no email; the admin gets a link to text the rep themselves.
 // A new person gets an invite, and the on_auth_user_created trigger gives them
 // a "rep" profile using full_name from the metadata. Someone who already
@@ -34,7 +35,7 @@ export async function inviteRep(_prev: InviteState, formData: FormData): Promise
   const parsed = InviteSchema.safeParse(fields);
   if (!parsed.success) return { error: parsed.error.issues[0].message, fields };
   const { full_name, email } = parsed.data;
-  const asLink = formData.get("mode") === "link";
+  const asLink = formData.get("mode") === "link" || !emailEnabled();
   const site = await siteUrl();
   const auth = createAdminClient().auth.admin;
 
@@ -111,7 +112,7 @@ function adminErrorMessage(message: string): string {
     return "That email already has an account. If they're on the Team list below and deactivated, reactivate them first.";
   }
   if (/rate limit/i.test(message)) {
-    return "Supabase's email limit is used up for now (2 an hour). Use \"Create invite link\" instead, or try again in an hour.";
+    return "Supabase's email limit is used up for now. Use \"Create invite link\" instead, or try again in an hour.";
   }
   if (/invalid api key|legacy api keys/i.test(message)) {
     return "Supabase rejected the server key. Set SUPABASE_SERVICE_ROLE_KEY to this project's secret (service_role) key, then redeploy.";

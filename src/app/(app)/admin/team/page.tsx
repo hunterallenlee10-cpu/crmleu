@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getProfile } from "@/lib/auth";
+import { emailEnabled } from "@/lib/email";
 import { createClient } from "@/lib/supabase/server";
 import { getTeam } from "@/lib/team";
 import type { Stage } from "@/lib/types";
@@ -32,7 +33,7 @@ export default async function TeamPage() {
       {needsReassign.map((m) => (
         <ReassignPrompt key={m.id} from={{ id: m.id, name: m.full_name }} openLeads={openLeads(m.id)} assignees={assignees} />
       ))}
-      <InviteForm />
+      <InviteForm emailEnabled={emailEnabled()} />
       <ul className="space-y-3">
         {team.map((m) => (
           <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
