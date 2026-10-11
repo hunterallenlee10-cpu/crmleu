@@ -18,7 +18,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
   - A rep can tick off (or un-tick) tasks assigned to them, and tasks for the whole team.
   - They can see, but not tick off, tasks assigned to someone else.
 - **Admins** can see and do everything.
-- **No public sign-up.** The admin invites people by email, and every new user starts as a rep.
+- **No public sign-up.** The admin invites people with a one-time link (or by email once custom SMTP is set up), and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
 
 ---
@@ -40,16 +40,17 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
    - **URL Configuration:**
      - Set **Site URL** to your app's address, e.g. `https://crm.yourdomain.com`.
      - Under **Redirect URLs**, add `https://crm.yourdomain.com/**`. Invite and reset links return to `/auth/callback`, so the `/**` matters. Add `http://localhost:3000/**` too if you run the app locally.
-   - **Email (works out of the box).** Invites and password resets work with Supabase's built-in email; there are no templates to change.
-     - The catch: it sends at most **2 emails an hour**, from a Supabase address, and Supabase calls it "for testing".
-     - Fine for inviting a handful of reps over an afternoon.
-     - To skip email entirely, use **Create invite link** on the Team page and text the link to the rep. It sends nothing, so the limit doesn't apply.
-     - Inviting someone who already has an account (say they accepted a link but never set a password) sends them a link to sign in and choose a password instead. If they're deactivated, reactivate them first.
-   - **Optional, for production email from your own domain:**
-     1. Add an SMTP provider under **Emails → SMTP settings**, e.g. Resend (free for 3,000 emails a month).
-     2. Then you can replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`.
-     - On a free project, Supabase only allows template changes once custom SMTP is set up.
-     - The app handles both kinds of links.
+   - **Email: off until you add your own email provider.**
+     - Supabase's built-in email only delivers to members of your Supabase team. Emails to reps bounce, and too many bounces get the project's email blocked.
+     - So the app sends no email unless `AUTH_EMAIL_ENABLED=true` (see section 2). Until then:
+       - **Inviting:** on the Team page, **Create invite link** makes a one-time link that you text to the rep. It sends nothing.
+       - **Someone who already has an account** (say they accepted a link but never set a password, or forgot it): use **Create invite link** with their name and email. You get a link for them to sign in and choose a new password. If they're deactivated, reactivate them first.
+       - **Forgot password** tells reps to ask you for a link.
+   - **To turn email on:**
+     1. Add an SMTP provider under **Authentication → Emails → SMTP Settings**, e.g. Resend (free for 3,000 emails a month). Verify your domain with the provider first.
+     2. Raise the email limit under **Authentication → Rate Limits** if you need more than the default.
+     3. Optional: replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`. The app handles both kinds of links.
+     4. Set `AUTH_EMAIL_ENABLED=true` in Vercel and redeploy. **Send invite email** then appears on the Team page, and Forgot password sends reset emails.
 
 ## 2. Environment variables
 
@@ -63,6 +64,7 @@ Copy `.env.example` to `.env.local` and fill it in. The keys are under **Project
 | `NEXT_PUBLIC_SITE_URL` | Where the app lives, e.g. `https://crm.yourdomain.com` (no trailing slash) |
 | `LEADS_API_KEY` | A long random secret that n8n sends to create leads. Generate one with `openssl rand -hex 32`. If it's empty, the API is turned off. |
 | `WEBHOOK_URL` | *Optional.* If set, every stage change is POSTed here, e.g. an n8n webhook. |
+| `AUTH_EMAIL_ENABLED` | *Optional.* Set to `true` only after custom SMTP is set up (section 1.3). Turns on invite and password-reset emails. |
 
 ## 3. Create your first admin account
 
@@ -94,7 +96,7 @@ npx supabase start   # prints a local URL plus publishable and secret keys for .
 npm run dev
 ```
 
-Locally, emails (invites, password resets) don't actually send. They show up in Mailpit at http://127.0.0.1:54324. The local auth settings, including sign-up being off and the email templates, come from `supabase/config.toml`.
+Locally, emails (invites, password resets) don't actually send. Set `AUTH_EMAIL_ENABLED=true` in `.env.local` and they show up in Mailpit at http://127.0.0.1:54324. The local auth settings, including sign-up being off and the email templates, come from `supabase/config.toml`.
 
 ## 5. Demo data (seed script)
 
@@ -242,6 +244,6 @@ src/lib/webhook.ts      stage-change webhook (WEBHOOK_URL)
 scripts/seed.mjs        demo data
 src/lib/import-fields.ts  column matching and parsing for CSV import
 src/app/login, auth/, set-password, forgot-password   sign-in flows
-src/app/auth/callback   finishes sign-in from Supabase's built-in invite/reset emails
+src/app/auth/callback   finishes sign-in from invite/reset emails
 src/app/auth/accept     invite links an admin copies and texts (signs in on tap)
 ```

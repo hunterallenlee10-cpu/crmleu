@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { FormMessage } from "@/components/form-message";
 import { inviteRep } from "./actions";
 
-export function InviteForm() {
+export function InviteForm({ emailEnabled }: { emailEnabled: boolean }) {
   const [state, action, pending] = useActionState(inviteRep, undefined);
 
   return (
@@ -23,15 +23,18 @@ export function InviteForm() {
       <FormMessage state={state} />
       {state?.link && <CopyLink link={state.link} key={state.link} />}
       <div className="flex flex-wrap gap-3">
-        <button type="submit" name="mode" value="email" disabled={pending} className="btn btn-gold w-full sm:w-auto">
-          {pending ? "Working…" : "Send invite email"}
+        {/* The link button comes first so pressing Enter makes a link, not an email. */}
+        <button type="submit" name="mode" value="link" disabled={pending} className="btn btn-gold w-full sm:w-auto">
+          {pending ? "Working…" : "Create invite link"}
         </button>
-        <button type="submit" name="mode" value="link" disabled={pending} className="btn btn-ghost w-full sm:w-auto">
-          Create invite link
-        </button>
+        {emailEnabled && (
+          <button type="submit" name="mode" value="email" disabled={pending} className="btn btn-ghost w-full sm:w-auto">
+            Send invite email
+          </button>
+        )}
       </div>
       <p className="text-xs text-muted">
-        Email is limited to 2 an hour. &quot;Create invite link&quot; sends nothing; text the link to the rep yourself. Each link works once, and making a new one cancels the last.
+        Text the link to the rep yourself. Each link works once, and making a new one cancels the last. If someone already has an account, you get a link for them to choose a new password.
       </p>
     </form>
   );
