@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { FormMessage } from "@/components/form-message";
 import { inviteRep } from "./actions";
 
@@ -21,9 +21,46 @@ export function InviteForm() {
         </div>
       </div>
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full sm:w-auto">
-        {pending ? "Sending…" : "Send invite"}
-      </button>
+      {state?.link && <CopyLink link={state.link} key={state.link} />}
+      <div className="flex flex-wrap gap-3">
+        <button type="submit" name="mode" value="email" disabled={pending} className="btn btn-gold w-full sm:w-auto">
+          {pending ? "Working…" : "Send invite email"}
+        </button>
+        <button type="submit" name="mode" value="link" disabled={pending} className="btn btn-ghost w-full sm:w-auto">
+          Create invite link
+        </button>
+      </div>
+      <p className="text-xs text-muted">
+        Email is limited to 2 an hour. &quot;Create invite link&quot; sends nothing; text the link to the rep yourself.
+      </p>
     </form>
+  );
+}
+
+function CopyLink({ link }: { link: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch {
+      // Clipboard blocked: the field is selectable, so they can copy by hand.
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row">
+      <input
+        readOnly
+        aria-label="Invite link"
+        className="input flex-1 text-sm"
+        value={link}
+        onFocus={(e) => e.currentTarget.select()}
+      />
+      <button type="button" onClick={copy} className="btn btn-gold">
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 }

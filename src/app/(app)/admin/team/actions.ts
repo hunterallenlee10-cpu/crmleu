@@ -13,7 +13,14 @@ const InviteSchema = z.object({
   email: z.email("Enter a valid email.").trim().toLowerCase(),
 });
 
-export async function inviteRep(_prev: FormState, formData: FormData): Promise<FormState> {
+export type InviteState = (NonNullable<FormState> & { link?: string }) | undefined;
+
+// Two ways to invite, picked by which button was pressed:
+//   "email" - Supabase emails the invite (built-in email allows only 2 an hour).
+//   "link"  - no email; the admin gets a link to text the rep themselves.
+// Either way the new auth user gets a "rep" profile from the
+// on_auth_user_created trigger, using full_name from this metadata.
+export async function inviteRep(_prev: InviteState, formData: FormData): Promise<InviteState> {
   await requireAdmin();
   const fields = {
     full_name: String(formData.get("full_name") ?? ""),
@@ -23,13 +30,24 @@ export async function inviteRep(_prev: FormState, formData: FormData): Promise<F
   const parsed = InviteSchema.safeParse(fields);
   if (!parsed.success) return { error: parsed.error.issues[0].message, fields };
   const { full_name, email } = parsed.data;
+  const site = await siteUrl();
+  const auth = createAdminClient().auth.admin;
 
-  // Sends the invite email. The new auth user gets a "rep" profile from the
-  // on_auth_user_created trigger, using full_name from this metadata.
-  // The invite link lands on /auth/callback (see that page for why).
-  const { error } = await createAdminClient().auth.admin.inviteUserByEmail(email, {
+  if (formData.get("mode") === "link") {
+    const { data, error } = await auth.generateLink({ type: "invite", email, options: { data: { full_name } } });
+    if (error) return { error: adminErrorMessage(error.message), fields };
+
+    // Lands on /auth/accept, which waits for a tap before using the one-time
+    // token, so a text message's link preview can't use it up.
+    const link = `${site}/auth/accept?token_hash=${encodeURIComponent(data.properties.hashed_token)}`;
+    revalidatePath("/admin/team");
+    return { message: `Invite link for ${full_name} is ready. It works once, so send it only to them.`, link };
+  }
+
+  // The emailed link lands on /auth/callback (see that page for why).
+  const { error } = await auth.inviteUserByEmail(email, {
     data: { full_name },
-    redirectTo: `${await siteUrl()}/auth/callback`,
+    redirectTo: `${site}/auth/callback`,
   });
   if (error) return { error: adminErrorMessage(error.message), fields };
 
@@ -39,6 +57,9 @@ export async function inviteRep(_prev: FormState, formData: FormData): Promise<F
 
 function adminErrorMessage(message: string): string {
   if (/already|registered|exists/i.test(message)) return "Someone with that email is already on the team.";
+  if (/rate limit/i.test(message)) {
+    return "Supabase's email limit is used up for now (2 an hour). Use \"Create invite link\" instead, or try again in an hour.";
+  }
   if (/invalid api key|legacy api keys/i.test(message)) {
     return "Supabase rejected the server key. Set SUPABASE_SERVICE_ROLE_KEY to this project's secret (service_role) key, then redeploy.";
   }

@@ -43,6 +43,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
    - **Email (works out of the box).** Invites and password resets work with Supabase's built-in email; there are no templates to change.
      - The catch: it sends at most **2 emails an hour**, from a Supabase address, and Supabase calls it "for testing".
      - Fine for inviting a handful of reps over an afternoon.
+     - To skip email entirely, use **Create invite link** on the Team page and text the link to the rep. It sends nothing, so the limit doesn't apply.
    - **Optional, for production email from your own domain:**
      1. Add an SMTP provider under **Emails → SMTP settings**, e.g. Resend (free for 3,000 emails a month).
      2. Then you can replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`.
@@ -241,4 +242,5 @@ scripts/seed.mjs        demo data
 src/lib/import-fields.ts  column matching and parsing for CSV import
 src/app/login, auth/, set-password, forgot-password   sign-in flows
 src/app/auth/callback   finishes sign-in from Supabase's built-in invite/reset emails
+src/app/auth/accept     invite links an admin copies and texts (signs in on tap)
 ```
