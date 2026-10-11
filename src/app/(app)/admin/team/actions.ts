@@ -31,17 +31,18 @@ export async function inviteRep(_prev: FormState, formData: FormData): Promise<F
     data: { full_name },
     redirectTo: `${await siteUrl()}/auth/callback`,
   });
-  if (error) {
-    return {
-      error: /already|registered|exists/i.test(error.message)
-        ? "Someone with that email is already on the team."
-        : error.message,
-      fields,
-    };
-  }
+  if (error) return { error: adminErrorMessage(error.message), fields };
 
   revalidatePath("/admin/team");
   return { message: `Invite sent to ${email}.` };
+}
+
+function adminErrorMessage(message: string): string {
+  if (/already|registered|exists/i.test(message)) return "Someone with that email is already on the team.";
+  if (/invalid api key|legacy api keys/i.test(message)) {
+    return "Supabase rejected the server key. Set SUPABASE_SERVICE_ROLE_KEY to this project's secret (service_role) key, then redeploy.";
+  }
+  return message;
 }
 
 // ---------------------------------------------------------------------------
@@ -76,7 +77,7 @@ export async function setActive(memberId: string, active: boolean): Promise<{ er
   const { error: authError } = await createAdminClient().auth.admin.updateUserById(memberId, {
     ban_duration: active ? "none" : "876000h", // ~100 years
   });
-  if (authError) return { error: `Saved, but couldn't update their login: ${authError.message}` };
+  if (authError) return { error: `Saved, but couldn't update their login: ${adminErrorMessage(authError.message)}` };
 
   revalidatePath("/", "layout");
   return {};
