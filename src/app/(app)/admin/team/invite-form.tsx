@@ -31,7 +31,7 @@ export function InviteForm() {
         </button>
       </div>
       <p className="text-xs text-muted">
-        Email is limited to 2 an hour. &quot;Create invite link&quot; sends nothing; text the link to the rep yourself.
+        Email is limited to 2 an hour. &quot;Create invite link&quot; sends nothing; text the link to the rep yourself. Each link works once, and making a new one cancels the last.
       </p>
     </form>
   );

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AuthShell } from "@/components/brand";
-import { acceptInvite } from "./actions";
+import { AcceptForm } from "./accept-form";
 
 export const metadata: Metadata = { title: "Accept your invite" };
 
@@ -13,10 +13,7 @@ export default async function AcceptInvitePage({ searchParams }: PageProps<"/aut
   return (
     <AuthShell title="You're invited">
       <p className="text-sm text-muted">Lee Enterprises Unlimited has invited you to the team CRM.</p>
-      <form action={acceptInvite}>
-        <input type="hidden" name="token_hash" value={typeof token_hash === "string" ? token_hash : ""} />
-        <button type="submit" className="btn btn-gold w-full">Accept invite</button>
-      </form>
+      <AcceptForm tokenHash={typeof token_hash === "string" ? token_hash : ""} />
     </AuthShell>
   );
 }
