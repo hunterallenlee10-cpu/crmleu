@@ -41,7 +41,7 @@ export async function inviteRep(_prev: InviteState, formData: FormData): Promise
     // token, so a text message's link preview can't use it up.
     const link = `${site}/auth/accept?token_hash=${encodeURIComponent(data.properties.hashed_token)}`;
     revalidatePath("/admin/team");
-    return { message: `Invite link for ${full_name} is ready. It works once, so send it only to them.`, link };
+    return { message: `Invite link for ${full_name} is ready. It works once, so send it only to them, and don't open it yourself.`, link };
   }
 
   // The emailed link lands on /auth/callback (see that page for why).
