@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
 import type { Task } from "@/lib/types";
 import { TaskForm } from "./task-form";
@@ -31,6 +32,9 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
 
   const [{ data }, members] = await Promise.all([query.returns<Task[]>(), getTeamMembers(supabase)]);
   const tasks = (data ?? []).filter((t) => !mineOnly || t.assignee_id === null || t.assignee_id === me.id);
+  const progress = await getEveryoneProgress(supabase, tasks);
+  // An everyone task is still on my plate until I've ticked it, even if others haven't.
+  const myTick = (t: Task) => progress[t.id]?.find((p) => p.user_id === me.id);
 
   const names = Object.fromEntries(members.map((m) => [m.id, m.full_name]));
   const assignees = members.filter((m) => m.active).map((m) => ({ id: m.id, name: m.full_name }));
@@ -48,7 +52,11 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
       })),
   ].filter((g) => g.tasks.length > 0 || g.empty);
 
-  const myOpen = tasks.filter((t) => !t.completed_at && (t.assignee_id === me.id || t.assignee_id === null)).length;
+  const myOpen = tasks.filter((t) =>
+    t.everyone_must_complete
+      ? myTick(t)?.checked_at === null
+      : !t.completed_at && (t.assignee_id === me.id || t.assignee_id === null),
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -99,6 +107,8 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
             key={t.id}
             task={t}
             canCheck={isAdmin || t.assignee_id === null || t.assignee_id === me.id}
+            progress={progress[t.id]}
+            meId={me.id}
             isAdmin={isAdmin}
             assignees={assignees}
             names={names}
