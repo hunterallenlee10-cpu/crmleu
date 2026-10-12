@@ -22,7 +22,12 @@ const TaskSchema = z.object({
   due_date: z
     .union([z.iso.date("Pick a valid due date."), z.literal("")])
     .transform((s) => s || null),
-});
+  everyone_must_complete: z.string().transform((s) => s === "on"),
+}).transform((t) => ({
+  ...t,
+  // Only whole-team tasks can need everyone to tick them.
+  everyone_must_complete: t.everyone_must_complete && t.assignee_id === null,
+}));
 
 function taskFields(formData: FormData) {
   return {
@@ -30,6 +35,7 @@ function taskFields(formData: FormData) {
     details: String(formData.get("details") ?? ""),
     assignee_id: String(formData.get("assignee_id") ?? ""),
     due_date: String(formData.get("due_date") ?? ""),
+    everyone_must_complete: formData.get("everyone_must_complete") === "on" ? "on" : "",
   };
 }
 
@@ -96,7 +102,14 @@ export async function setTaskDone(taskId: string, done: boolean): Promise<{ erro
   await getProfile();
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_task_done", { p_task_id: taskId, p_done: done });
-  if (error) return { error: error.code === "42501" ? "Only the person it's assigned to can tick this off." : error.message };
+  if (error) {
+    if (error.code !== "42501") return { error: error.message };
+    return {
+      error: error.message.startsWith("Each rep")
+        ? "Each rep ticks this one off for themselves."
+        : "Only the person it's assigned to can tick this off.",
+    };
+  }
 
   revalidatePath("/", "layout");
   return {};

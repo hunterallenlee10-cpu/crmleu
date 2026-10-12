@@ -17,6 +17,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
 - **Tasks** are visible to the whole team. Only admins create, edit, assign or delete them.
   - A rep can tick off (or un-tick) tasks assigned to them, and tasks for the whole team.
   - They can see, but not tick off, tasks assigned to someone else.
+  - On an "everyone has to check this off" task, each rep can only tick (or un-tick) their own box.
 - **Admins** can see and do everything.
 - **No public sign-up.** The admin invites people with a one-time link (or by email once custom SMTP is set up), and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
@@ -195,6 +196,11 @@ Admins get an **Admin** tab with four pages:
 
 **Tasks** (in the main nav, for everyone):
 - Admins add a task with **+ New task**: a title, optional details, an optional due date, and who it's for (one person, or **Whole team**).
+- **Everyone has to check this off:** a switch that appears when a task is for the **Whole team**.
+  - **Off:** the task is done as soon as anyone ticks it.
+  - **On:** each rep ticks it off for themselves, and the task is only done once every rep has. The task lists each rep with ✓ or ○ and shows "3 of 5 done".
+  - "Every rep" means the active reps who were on the team when the task was added. People who join later aren't asked to do it, and deactivating someone stops a task from waiting on them. Admins don't tick these; they just watch the progress.
+  - You can flip the switch when editing a task too.
 - Everyone sees every task, grouped by person, with **Everyone / Mine** filters. Overdue tasks show in red.
 - Ticking a task off records who did it and when. Done tasks stay listed under each person for 30 days.
 - Admins can edit, reassign or delete any task, and tick off anyone's.
@@ -219,7 +225,8 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - an admin can see, reassign and delete anything;
 - duplicates are blocked: the same phone in any format, or the same business name and city;
 - Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged;
-- every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks.
+- every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks;
+- an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box.
 
 ## Project layout
 

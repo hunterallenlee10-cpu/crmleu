@@ -4,6 +4,7 @@ import { LeadRow } from "@/components/lead-row";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
+import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
 import type { Lead, Task } from "@/lib/types";
 import { TaskItem } from "../tasks/task-item";
@@ -43,7 +44,11 @@ export default async function TodayPage() {
     tasksQuery,
     getTeamMembers(supabase),
   ]);
-  const tasks = taskData ?? [];
+  // Everyone tasks only show for reps who still have to tick them.
+  const progress = await getEveryoneProgress(supabase, taskData ?? []);
+  const tasks = (taskData ?? []).filter(
+    (t) => !t.everyone_must_complete || progress[t.id]?.some((p) => p.user_id === profile.id && !p.checked_at),
+  );
   const names = Object.fromEntries(members.map((m) => [m.id, m.full_name]));
 
   const leads = data ?? [];
@@ -77,7 +82,18 @@ export default async function TodayPage() {
           </h2>
           <ul className="space-y-3">
             {tasks.map((t) => (
-              <TaskItem key={t.id} task={t} canCheck isAdmin={false} assignees={[]} names={names} today={today} showAssignee={t.assignee_id === null} />
+              <TaskItem
+                key={t.id}
+                task={t}
+                canCheck
+                progress={progress[t.id]}
+                meId={profile.id}
+                isAdmin={false}
+                assignees={[]}
+                names={names}
+                today={today}
+                showAssignee={t.assignee_id === null && !t.everyone_must_complete}
+              />
             ))}
           </ul>
         </section>
