@@ -1,6 +1,6 @@
 // Team board on the Today page: leaderboard scoring and the 24-hour feed.
 // Rows come from team_leaderboard() and team_feed() in
-// supabase/migrations/20261013000000_team_board.sql.
+// supabase/migrations/20261013100000_team_board.sql.
 
 import { stageLabel, type ActivityType, type Stage } from "@/lib/types";
 

@@ -1,12 +1,14 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { emailEnabled } from "@/lib/email";
 import { siteUrl } from "@/lib/site-url";
 import type { FormState } from "@/components/form-message";
 
 export async function sendResetLink(_prev: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get("email") ?? "").trim();
   if (!email) return { error: "Enter your email." };
+  if (!emailEnabled()) return { error: "Email is turned off. Ask your admin for a sign-in link." };
 
   // "implicit" flow so the reset link works on any device, not only the
   // browser that asked for it. It lands on /auth/callback.

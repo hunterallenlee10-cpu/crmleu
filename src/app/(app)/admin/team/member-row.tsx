@@ -46,26 +46,30 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
           {!member.active && <span className="text-danger">inactive</span>}
         </div>
       </div>
-      <div className="flex flex-wrap items-end gap-3">
-        <form onSubmit={saveRate} className="flex items-end gap-2">
-          <div>
-            <label htmlFor={`rate-${member.id}`} className="label">Commission %</label>
-            <input
-              id={`rate-${member.id}`}
-              inputMode="decimal"
-              className="input w-24"
-              value={rate}
-              onChange={(e) => { setRate(e.target.value); setSaved(false); }}
-            />
-          </div>
-          <button type="submit" disabled={isPending} className="btn btn-ghost">Save</button>
-        </form>
-        {!isMe && (
-          <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-ghost"}`}>
-            {member.active ? "Deactivate" : "Reactivate"}
-          </button>
-        )}
-      </div>
+      {(member.role !== "admin" || !isMe) && (
+        <div className="flex flex-wrap items-end gap-3">
+          {member.role !== "admin" && (
+            <form onSubmit={saveRate} className="flex items-end gap-2">
+              <div>
+                <label htmlFor={`rate-${member.id}`} className="label">Commission %</label>
+                <input
+                  id={`rate-${member.id}`}
+                  inputMode="decimal"
+                  className="input w-24"
+                  value={rate}
+                  onChange={(e) => { setRate(e.target.value); setSaved(false); }}
+                />
+              </div>
+              <button type="submit" disabled={isPending} className="btn btn-ghost">Save</button>
+            </form>
+          )}
+          {!isMe && (
+            <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-ghost"}`}>
+              {member.active ? "Deactivate" : "Reactivate"}
+            </button>
+          )}
+        </div>
+      )}
       {saved && <p role="status" className="text-sm text-ok">Rate saved.</p>}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </li>
