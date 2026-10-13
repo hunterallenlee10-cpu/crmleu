@@ -41,6 +41,7 @@ const addDays = (date, days) => {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 };
+const daysBetween = (from, to) => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000);
 const daysAgo = (days, hour = 10) => new Date(Date.now() - days * 86_400_000 - hour * 60_000).toISOString();
 
 // ---------------------------------------------------------------------------
@@ -105,6 +106,12 @@ const STAGE_MIX = [
   ["proposal_sent", 8], ["won", 8], ["lost", 7],
 ];
 const AREA_CODES = ["301", "240", "410", "443"];
+
+const STAGE_ORDER = STAGE_MIX.map(([stage]) => stage);
+const STAGE_LABELS = {
+  new: "New", contacted: "Contacted", spec_sent: "Spec Sent", call_booked: "Call Booked",
+  proposal_sent: "Proposal Sent", won: "Won", lost: "Lost",
+};
 
 function pickStage() {
   let r = rand() * 100;
@@ -187,6 +194,22 @@ function buildActivities(leads) {
         created_at: daysAgo(between(0, 20), between(60, 600)),
       });
     }
+    // The move into its current stage, so the Today leaderboard has specs, bookings and wins to count.
+    const at = STAGE_ORDER.indexOf(lead.stage);
+    if (at >= 2) {
+      const from = lead.stage === "lost" ? "contacted" : STAGE_ORDER[at - 1];
+      activities.push({
+        lead_id: lead.id,
+        user_id: lead.owner_id,
+        type: "stage_change",
+        to_stage: lead.stage,
+        body: `${STAGE_LABELS[from]} → ${STAGE_LABELS[lead.stage]}${lead.stage === "won" ? ` ($${lead.deal_value})` : ""}`,
+        // Wins happen on their won date, so the feed and the leaderboard agree.
+        created_at: lead.won_date
+          ? daysAgo(Math.max(0, daysBetween(lead.won_date, todayNY())), between(30, 240))
+          : daysAgo(between(0, 6), between(30, 900)),
+      });
+    }
   }
   return activities;
 }
@@ -230,7 +253,7 @@ async function main() {
     const skip = new Set((clashes ?? []).map((c) => c.idx));
     leads = leads.filter((_, i) => !skip.has(i));
 
-    const { data: saved, error } = await supabase.from("leads").insert(leads).select("id, business_name, owner_id, stage");
+    const { data: saved, error } = await supabase.from("leads").insert(leads).select("id, business_name, owner_id, stage, deal_value, won_date");
     if (error) throw new Error(`Couldn't insert leads: ${error.message}`);
     const activities = buildActivities(saved);
     const { error: actError } = await supabase.from("activities").insert(activities);

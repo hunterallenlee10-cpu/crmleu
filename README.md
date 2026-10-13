@@ -206,12 +206,21 @@ Admins get an **Admin** tab with four pages:
 - Admins can edit, reassign or delete any task, and tick off anyone's.
 - Each person's open tasks (theirs plus whole-team ones) also show at the top of **Today**.
 
+### The Today page (everyone)
+
+Besides each person's own overdue, due and new leads, **Today** shows the whole team:
+
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Spec Sent, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, specs, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
+- **Last 24 hours:** a line per person with what they did, then every entry, newest first.
+
+Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins see business names on everything. Reassignments aren't shown.
+
 On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
 
 ## 9. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing)
+npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
