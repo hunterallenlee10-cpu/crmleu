@@ -30,7 +30,7 @@ insert into public.leads (id, business_name, phone, city, owner_id, stage, deal_
 
 insert into public.activities (lead_id, user_id, type, created_at) values
   ('44444444-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'call', now() - interval '40 days');
--- The admin works a lead too. That shows in the feed but not on the leaderboard.
+-- The admin works a lead too. That stays off both the feed and the leaderboard.
 insert into public.activities (lead_id, user_id, type) values
   ('44444444-0000-0000-0000-000000000003', '00000000-0000-0000-0000-00000000000a', 'call');
 
@@ -114,10 +114,9 @@ select is_empty(
   $$select 1 from public.team_leaderboard('day') where user_id = '00000000-0000-0000-0000-00000000000a'$$,
   'admins stay off the leaderboard even when they log outreach'
 );
-select results_eq(
-  $$select count(*)::int from public.team_feed() where user_id = '00000000-0000-0000-0000-00000000000a'$$,
-  $$values (1)$$,
-  'but what admins do still shows in the team feed'
+select is_empty(
+  $$select 1 from public.team_feed() where user_id = '00000000-0000-0000-0000-00000000000a'$$,
+  'admins stay out of the team feed too'
 );
 select throws_ok(
   $$select * from public.team_leaderboard('year')$$,
