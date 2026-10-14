@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(18);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local', '{"full_name":"Admin"}'),
@@ -30,6 +30,9 @@ insert into public.leads (id, business_name, phone, city, owner_id, stage, deal_
 
 insert into public.activities (lead_id, user_id, type, created_at) values
   ('44444444-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'call', now() - interval '40 days');
+-- The admin works a lead too. That shows in the feed but not on the leaderboard.
+insert into public.activities (lead_id, user_id, type) values
+  ('44444444-0000-0000-0000-000000000003', '00000000-0000-0000-0000-00000000000a', 'call');
 
 -------------------------------------------------------------------------------
 -- Rep A works their leads.
@@ -106,6 +109,15 @@ select results_eq(
     where b.user_id::text like '00000000-0000-0000-0000-%' order by b.full_name$$,
   $$values ('Rep A'), ('Rep B'), ('Rep C')$$,
   'every active rep is on the board, even with no score; admins and inactive users without a score are not'
+);
+select is_empty(
+  $$select 1 from public.team_leaderboard('day') where user_id = '00000000-0000-0000-0000-00000000000a'$$,
+  'admins stay off the leaderboard even when they log outreach'
+);
+select results_eq(
+  $$select count(*)::int from public.team_feed() where user_id = '00000000-0000-0000-0000-00000000000a'$$,
+  $$values (1)$$,
+  'but what admins do still shows in the team feed'
 );
 select throws_ok(
   $$select * from public.team_leaderboard('year')$$,

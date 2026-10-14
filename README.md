@@ -210,7 +210,7 @@ Admins get an **Admin** tab with four pages:
 
 Besides each person's own overdue, due and new leads, **Today** shows the whole team:
 
-- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Spec Sent, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, specs, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Spec Sent, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, specs, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers. Only reps are ranked; admins don't appear on the leaderboard.
 - **Last 24 hours:** a line per person with what they did, then every entry, newest first.
 
 Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins see business names on everything. Reassignments aren't shown.
