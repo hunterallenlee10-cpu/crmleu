@@ -19,6 +19,13 @@ const LEADER_TILES: { metric: Metric; label: string }[] = [
   { metric: "revenue", label: "Top closer" },
 ];
 
+const POINT_RULES = [
+  { points: POINTS.outreach, label: "Call, text, email or meeting logged" },
+  { points: POINTS.specs_sent, label: "Lead moved to Spec Sent" },
+  { points: POINTS.calls_booked, label: "Lead moved to Call Booked" },
+  { points: POINTS.deals_won, label: "Deal won" },
+];
+
 const RANK_STYLES: Record<number, string> = {
   1: "bg-gold text-black",
   2: "bg-zinc-300 text-black",
@@ -55,10 +62,7 @@ export function Leaderboard({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="leaderboard-title" className="text-lg font-semibold">Leaderboard</h2>
-          <p className="text-sm text-muted">
-            {POINTS.outreach} pt per call, text, email or meeting · {POINTS.specs_sent} per spec sent ·{" "}
-            {POINTS.calls_booked} per call booked · {POINTS.deals_won} per deal won
-          </p>
+          <p className="text-sm text-muted">Ranked by points. Click a card or column to rank by something else.</p>
         </div>
         <nav className="flex rounded-xl border border-line p-1" aria-label="Leaderboard period">
           {PERIODS.map((p) => (
@@ -76,6 +80,8 @@ export function Leaderboard({
           ))}
         </nav>
       </div>
+
+      <PointsKey />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {LEADER_TILES.map(({ metric, label }) => {
@@ -164,5 +170,28 @@ export function Leaderboard({
         </div>
       )}
     </section>
+  );
+}
+
+// The scoring rules, shown right on the board so reps know how to climb it.
+function PointsKey() {
+  return (
+    <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
+      <h3 className="text-sm font-semibold text-gold">How points work</h3>
+      <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {POINT_RULES.map((rule) => (
+          <li key={rule.label} className="flex items-center gap-3">
+            <span className="inline-flex h-9 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gold px-2 text-sm font-bold text-black tabular-nums">
+              +{rule.points}
+            </span>
+            <span className="text-sm leading-snug">{rule.label}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-muted">
+        Each lead counts once per stage. Notes and other stage changes don&apos;t score, and every win is worth the same
+        no matter the deal size (see Revenue for that).
+      </p>
+    </div>
   );
 }
