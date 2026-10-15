@@ -25,7 +25,10 @@ export default async function TeamPage() {
       .reduce((sum, c) => sum + Number(c.lead_count), 0);
 
   const needsReassign = team.filter((m) => !m.active && openLeads(m.id) > 0);
-  const assignees = team.filter((m) => m.active).map((m) => ({ id: m.id, name: m.full_name }));
+  // Deactivated people are tucked away below so the list shows the current team.
+  const active = team.filter((m) => m.active);
+  const inactive = team.filter((m) => !m.active);
+  const assignees = active.map((m) => ({ id: m.id, name: m.full_name }));
 
   return (
     <div className="space-y-8">
@@ -35,10 +38,22 @@ export default async function TeamPage() {
       ))}
       <InviteForm emailEnabled={emailEnabled()} />
       <ul className="space-y-3">
-        {team.map((m) => (
+        {active.map((m) => (
           <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
         ))}
       </ul>
+      {inactive.length > 0 && (
+        <details>
+          <summary className="cursor-pointer text-sm text-muted hover:text-fg">
+            Inactive ({inactive.length})
+          </summary>
+          <ul className="mt-3 space-y-3">
+            {inactive.map((m) => (
+              <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }
