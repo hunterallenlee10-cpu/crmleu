@@ -48,7 +48,10 @@ export async function inviteRep(_prev: InviteState, formData: FormData): Promise
   if (lookupError) return { error: lookupError.message, fields };
 
   if (existing && !existing.active) {
-    return { error: `${existing.full_name} is deactivated. Click Reactivate on their card below, then try again.`, fields };
+    return {
+      error: `${existing.full_name} is deactivated. Open "Inactive" at the bottom of this page and click Reactivate on their card, then try again.`,
+      fields,
+    };
   }
 
   let alreadySignedIn = false;
@@ -158,6 +161,22 @@ export async function setActive(memberId: string, active: boolean): Promise<{ er
   if (authError) return { error: `Saved, but couldn't update their login: ${adminErrorMessage(authError.message)}` };
 
   revalidatePath("/", "layout");
+  return {};
+}
+
+// Set someone's password directly, for when they can't get an invite or reset
+// link to work. Also confirms their email, so a never-accepted invitee can log in.
+export async function setMemberPassword(memberId: string, password: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  if (password.length < 8) return { error: "Use at least 8 characters." };
+
+  const supabase = await createClient();
+  const { data: member } = await supabase.from("profiles").select("active").eq("id", memberId).maybeSingle();
+  if (!member) return { error: "That person isn't on the team." };
+  if (!member.active) return { error: "They're deactivated. Reactivate them first." };
+
+  const { error } = await createAdminClient().auth.admin.updateUserById(memberId, { password, email_confirm: true });
+  if (error) return { error: adminErrorMessage(error.message) };
   return {};
 }
 
