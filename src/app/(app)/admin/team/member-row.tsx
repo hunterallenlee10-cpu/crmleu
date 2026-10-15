@@ -2,12 +2,15 @@
 
 import { useState, useTransition } from "react";
 import type { Profile } from "@/lib/types";
-import { setActive, setCommissionRate } from "./actions";
+import { setActive, setCommissionRate, setMemberPassword } from "./actions";
 
 export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: boolean; openLeads: number }) {
   const [rate, setRate] = useState(String(Number(member.commission_rate)));
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordSet, setPasswordSet] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function saveRate(e: React.FormEvent) {
@@ -18,6 +21,18 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
       const res = await setCommissionRate(member.id, Number(rate));
       if (res.error) setError(res.error);
       else setSaved(true);
+    });
+  }
+
+  function savePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    startTransition(async () => {
+      const res = await setMemberPassword(member.id, password);
+      if (res.error) return setError(res.error);
+      setPasswordSet(true);
+      setShowPassword(false);
+      setPassword("");
     });
   }
 
@@ -63,12 +78,46 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
               <button type="submit" disabled={isPending} className="btn btn-ghost">Save</button>
             </form>
           )}
+          {!isMe && member.active && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => { setShowPassword(!showPassword); setPasswordSet(false); setError(""); }}
+              className="btn btn-ghost"
+            >
+              Set password
+            </button>
+          )}
           {!isMe && (
             <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-ghost"}`}>
               {member.active ? "Deactivate" : "Reactivate"}
             </button>
           )}
         </div>
+      )}
+      {showPassword && (
+        <form onSubmit={savePassword} className="flex flex-wrap items-end gap-2">
+          <div className="flex-1">
+            <label htmlFor={`pw-${member.id}`} className="label">New password for {member.full_name}</label>
+            {/* Plain text so you can see what you're about to send them. */}
+            <input
+              id={`pw-${member.id}`}
+              type="text"
+              autoComplete="off"
+              minLength={8}
+              required
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <button type="submit" disabled={isPending} className="btn btn-gold">Save password</button>
+        </form>
+      )}
+      {passwordSet && (
+        <p role="status" className="text-sm text-ok">
+          Password set. They can log in with {member.email} and the new password now. Send it to them privately.
+        </p>
       )}
       {saved && <p role="status" className="text-sm text-ok">Rate saved.</p>}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
