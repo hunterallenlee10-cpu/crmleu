@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { BrandName } from "@/components/brand";
 import { DesktopNav, MobileNav } from "@/components/nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getProfile } from "@/lib/auth";
+import { getTheme } from "@/lib/theme";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  const profile = await getProfile();
+  const [profile, theme] = await Promise.all([getProfile(), getTheme()]);
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-ink/80 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 border-b border-tint/[0.06] bg-ink/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
           <Link href="/today" className="rounded-lg text-lg">
             <BrandName />
@@ -16,10 +18,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <DesktopNav role={profile.role} />
           <div className="flex items-center gap-2">
             <span className="hidden text-sm text-muted sm:inline">{profile.full_name}</span>
+            <ThemeToggle initial={theme} />
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className="rounded-full border border-transparent px-3 py-1.5 text-sm text-muted transition-colors hover:border-line hover:bg-white/[0.03] hover:text-gold-light"
+                className="rounded-full border border-transparent px-3 py-1.5 text-sm text-muted transition-colors hover:border-line hover:bg-tint/[0.03] hover:text-gold-light"
               >
                 Sign out
               </button>

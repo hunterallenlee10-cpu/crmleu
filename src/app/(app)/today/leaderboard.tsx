@@ -27,8 +27,8 @@ const POINT_RULES = [
 ];
 
 const RANK_STYLES: Record<number, string> = {
-  1: "bg-gradient-to-b from-gold-light to-gold text-ink shadow-[0_0_14px_-4px_rgb(201_162_74/0.8)]",
-  2: "bg-gradient-to-b from-zinc-200 to-zinc-400 text-ink",
+  1: "bg-gradient-to-b from-gilt-light to-gilt text-on-gold shadow-[0_0_14px_-4px_rgb(201_162_74/0.8)]",
+  2: "bg-gradient-to-b from-zinc-200 to-zinc-400 text-on-gold",
   3: "bg-gradient-to-b from-amber-600 to-amber-800 text-fg",
 };
 
@@ -181,7 +181,7 @@ function PointsKey() {
       <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {POINT_RULES.map((rule) => (
           <li key={rule.label} className="flex items-center gap-3">
-            <span className="inline-flex h-9 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-gold-light to-gold px-2 text-sm font-bold text-ink tabular-nums shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]">
+            <span className="inline-flex h-9 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-gilt-light to-gilt px-2 text-sm font-bold text-on-gold tabular-nums shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]">
               +{rule.points}
             </span>
             <span className="text-sm leading-snug">{rule.label}</span>

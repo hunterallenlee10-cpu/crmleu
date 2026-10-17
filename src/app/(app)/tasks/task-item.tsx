@@ -127,7 +127,7 @@ export function TaskItem({
       </div>
       {isAdmin && (
         <div className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-start">
-          <button type="button" onClick={() => setEditing(true)} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-white/[0.04] hover:text-gold-light">
+          <button type="button" onClick={() => setEditing(true)} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-tint/[0.04] hover:text-gold-light">
             Edit
           </button>
           <button type="button" onClick={remove} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-danger/[0.06] hover:text-danger">

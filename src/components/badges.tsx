@@ -2,12 +2,12 @@ import { followUpLabel } from "@/lib/dates";
 import { stageLabel, type Stage } from "@/lib/types";
 
 const STAGE_STYLES: Record<Stage, string> = {
-  new: "border-line-strong bg-white/[0.03] text-muted",
-  contacted: "border-sky-400/30 bg-sky-400/[0.08] text-sky-300",
-  warm_up_program: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
-  call_booked: "border-teal-400/30 bg-teal-400/[0.08] text-teal-300",
-  quote_given: "border-amber-400/30 bg-amber-400/[0.08] text-amber-300",
-  won: "border-gold/60 bg-gold/15 text-gold-light",
+  new: "border-line-strong bg-tint/[0.03] text-muted",
+  contacted: "border-sky-400/30 bg-sky-400/[0.08] text-sky-300 light:border-sky-600/25 light:bg-sky-500/10 light:text-sky-800",
+  warm_up_program: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300 light:border-violet-600/25 light:bg-violet-500/10 light:text-violet-800",
+  call_booked: "border-teal-400/30 bg-teal-400/[0.08] text-teal-300 light:border-teal-600/25 light:bg-teal-500/10 light:text-teal-800",
+  quote_given: "border-amber-400/30 bg-amber-400/[0.08] text-amber-300 light:border-amber-600/30 light:bg-amber-500/10 light:text-amber-800",
+  won: "border-gold/60 bg-gold/15 text-gold-light light:bg-gold/10",
   lost: "border-danger/30 bg-danger/[0.08] text-danger",
 };
 

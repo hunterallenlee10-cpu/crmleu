@@ -123,7 +123,7 @@ function Column({ stage, label, children }: { stage: Stage; label: string; child
       className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-2xl border p-2.5 transition-[border-color,background-color,box-shadow] duration-200 sm:w-72 ${
         isOver
           ? "border-gold/70 bg-gold/[0.06] shadow-[0_0_0_4px_rgb(201_162_74/0.1)]"
-          : "border-line bg-white/[0.015]"
+          : "border-line bg-tint/[0.015]"
       }`}
     >
       <h2 className="mb-2.5 flex items-center justify-between px-1.5 pt-1 text-sm font-semibold">
@@ -152,9 +152,9 @@ function Card({ lead, today, dimmed }: { lead: Lead; today: string; dimmed: bool
 function CardBody({ lead, today, lifted }: { lead: Lead; today: string; lifted?: boolean }) {
   return (
     <div
-      className={`rounded-xl border bg-panel p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.04),0_1px_2px_rgb(0_0_0/0.4)] transition-[border-color,background-color,transform] duration-200 ${
+      className={`rounded-xl border bg-panel p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.04),0_1px_2px_rgb(0_0_0/var(--shadow-soft))] transition-[border-color,background-color,transform] duration-200 ${
         lifted
-          ? "rotate-[1.5deg] border-gold bg-raised shadow-[0_24px_60px_-12px_rgb(0_0_0/0.9),0_0_0_1px_rgb(201_162_74/0.3)]"
+          ? "rotate-[1.5deg] border-gold bg-raised shadow-[0_24px_60px_-12px_rgb(0_0_0/var(--shadow-strong)),0_0_0_1px_rgb(201_162_74/0.3)]"
           : "border-line hover:-translate-y-px hover:border-gold/40 hover:bg-raised"
       }`}
     >

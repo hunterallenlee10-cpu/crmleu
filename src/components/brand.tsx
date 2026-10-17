@@ -1,9 +1,11 @@
+import { ThemeToggle } from "@/components/theme-toggle";
+
 // The gold "L" monogram, matching the favicon.
 export function BrandMark({ className = "size-8 text-lg" }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center rounded-[28%] border border-gold/35 bg-gradient-to-b from-[#1d1a12] to-ink font-serif font-bold text-gold shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_4px_14px_-6px_rgb(201_162_74/0.45)] ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-[28%] border border-gold/35 bg-gradient-to-b from-mark to-ink font-serif font-bold text-gold shadow-[inset_0_1px_0_rgb(255_255_255/0.06),0_4px_14px_-6px_rgb(201_162_74/0.45)] ${className}`}
       style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
     >
       L
@@ -28,6 +30,7 @@ export function BrandName({ className = "" }: { className?: string }) {
 export function AuthShell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <main className="relative flex flex-1 items-center justify-center overflow-hidden px-5 py-12">
+      <ThemeToggle className="absolute top-4 right-4" />
       {/* Gold glow behind the card */}
       <div
         aria-hidden="true"

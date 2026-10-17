@@ -85,7 +85,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         </p>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-10">
           {tasks.length > 0 && (
             <section className="space-y-4">

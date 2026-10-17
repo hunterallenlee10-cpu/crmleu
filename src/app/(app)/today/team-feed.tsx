@@ -120,7 +120,7 @@ function FeedRow({ item, meId, now }: { item: FeedItem; meId: string; now: Date 
     <li>
       <div
         className={`flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors ${
-          line.tone === "win" ? "bg-gold/[0.08] shadow-[inset_0_0_0_1px_rgb(201_162_74/0.2)]" : "hover:bg-white/[0.03]"
+          line.tone === "win" ? "bg-gold/[0.08] shadow-[inset_0_0_0_1px_rgb(201_162_74/0.2)]" : "hover:bg-tint/[0.03]"
         }`}
       >
         <p className="min-w-0">
@@ -158,7 +158,7 @@ function Avatar({ name, me }: { name: string; me: boolean }) {
     <span
       aria-hidden
       className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-        me ? "bg-gradient-to-b from-gold-light to-gold text-ink shadow-[0_0_12px_-4px_rgb(201_162_74/0.8)]" : "border border-gold/25 bg-gradient-to-b from-[#1d1a12] to-ink text-gold"
+        me ? "bg-gradient-to-b from-gilt-light to-gilt text-on-gold shadow-[0_0_12px_-4px_rgb(201_162_74/0.8)]" : "border border-gold/25 bg-gradient-to-b from-mark to-ink text-gold"
       }`}
     >
       {initials || "?"}
