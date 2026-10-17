@@ -23,7 +23,7 @@ grant all on all sequences in schema pg_temp to public;
 
 insert into public.leads (id, business_name, phone, city, owner_id, stage, deal_value, won_date) values
   ('44444444-0000-0000-0000-000000000001', 'Board A Open',  '9995552001', 'Testville', '00000000-0000-0000-0000-0000000000a1', 'contacted', null, null),
-  ('44444444-0000-0000-0000-000000000002', 'Board A Close', '9995552002', 'Testville', '00000000-0000-0000-0000-0000000000a1', 'proposal_sent', 2500, null),
+  ('44444444-0000-0000-0000-000000000002', 'Board A Close', '9995552002', 'Testville', '00000000-0000-0000-0000-0000000000a1', 'quote_given', 2500, null),
   ('44444444-0000-0000-0000-000000000003', 'Board B Open',  '9995552003', 'Testville', '00000000-0000-0000-0000-0000000000b1', 'contacted', null, null),
   ('44444444-0000-0000-0000-000000000004', 'Board A Old',   '9995552004', 'Testville', '00000000-0000-0000-0000-0000000000a1', 'won', 900,
      date_trunc('month', public.today_ny())::date - 1);
@@ -42,10 +42,10 @@ insert into public.activities (lead_id, type, body) values
   ('44444444-0000-0000-0000-000000000001', 'call', 'Private note text'),
   ('44444444-0000-0000-0000-000000000001', 'text', null),
   ('44444444-0000-0000-0000-000000000001', 'note', 'Notes are not outreach');
-update public.leads set stage = 'spec_sent' where id = '44444444-0000-0000-0000-000000000001';
+update public.leads set stage = 'warm_up_program' where id = '44444444-0000-0000-0000-000000000001';
 -- Going back and forth still counts the lead once.
 update public.leads set stage = 'contacted' where id = '44444444-0000-0000-0000-000000000001';
-update public.leads set stage = 'spec_sent' where id = '44444444-0000-0000-0000-000000000001';
+update public.leads set stage = 'warm_up_program' where id = '44444444-0000-0000-0000-000000000001';
 update public.leads set stage = 'won' where id = '44444444-0000-0000-0000-000000000002';
 
 select results_eq(
@@ -94,10 +94,10 @@ select is_empty(
 );
 
 select results_eq(
-  $$select outreach::int, specs_sent::int, calls_booked::int, deals_won::int, revenue
+  $$select outreach::int, warm_ups::int, calls_booked::int, deals_won::int, revenue
     from public.team_leaderboard('month') where full_name = 'Rep A'$$,
   $$values (2, 1, 0, 1, 2500.00::numeric)$$,
-  'leaderboard counts outreach, distinct specs, and this month''s wins'
+  'leaderboard counts outreach, distinct warm ups, and this month''s wins'
 );
 select results_eq(
   $$select outreach::int from public.team_leaderboard('day') where full_name = 'Rep B'$$,

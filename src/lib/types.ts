@@ -5,9 +5,9 @@ export type Role = "admin" | "rep";
 export type Stage =
   | "new"
   | "contacted"
-  | "spec_sent"
+  | "warm_up_program"
   | "call_booked"
-  | "proposal_sent"
+  | "quote_given"
   | "won"
   | "lost";
 
@@ -71,9 +71,9 @@ export type Activity = {
 export const STAGES: { value: Stage; label: string }[] = [
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
-  { value: "spec_sent", label: "Spec Sent" },
+  { value: "warm_up_program", label: "Warm Up Program" },
   { value: "call_booked", label: "Call Booked" },
-  { value: "proposal_sent", label: "Proposal Sent" },
+  { value: "quote_given", label: "Quote Given" },
   { value: "won", label: "Won" },
   { value: "lost", label: "Lost" },
 ];

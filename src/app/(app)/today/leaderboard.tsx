@@ -14,14 +14,14 @@ import {
 
 const LEADER_TILES: { metric: Metric; label: string }[] = [
   { metric: "outreach", label: "Most outreach" },
-  { metric: "specs_sent", label: "Most specs sent" },
+  { metric: "warm_ups", label: "Most warm ups" },
   { metric: "calls_booked", label: "Most calls booked" },
   { metric: "revenue", label: "Top closer" },
 ];
 
 const POINT_RULES = [
   { points: POINTS.outreach, label: "Call, text, email or meeting logged" },
-  { points: POINTS.specs_sent, label: "Lead moved to Spec Sent" },
+  { points: POINTS.warm_ups, label: "Lead moved to Warm Up Program" },
   { points: POINTS.calls_booked, label: "Lead moved to Call Booked" },
   { points: POINTS.deals_won, label: "Deal won" },
 ];
