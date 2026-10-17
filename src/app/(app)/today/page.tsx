@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AlarmClock, CircleAlert, Inbox, ListChecks, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
 import { getProfile } from "@/lib/auth";
@@ -79,7 +80,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     <div className="space-y-10">
       <div>
         <h1 className="page-title">Today</h1>
-        <p className="mt-2 text-muted">
+        <p className="mt-1.5 text-muted">
           Hi <span className="text-fg">{firstName}</span>.{" "}
           {due === 0 ? "No follow-ups due." : `${due} follow-up${due === 1 ? "" : "s"} to do.`}
         </p>
@@ -88,15 +89,15 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-10">
           {tasks.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="eyebrow flex items-center gap-3 text-fg">
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <ListChecks aria-hidden="true" className="size-4 text-muted" strokeWidth={1.75} />
                 Tasks <span className="count">{tasks.length}</span>
-                <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
-                <Link href="/tasks" className="text-xs font-medium normal-case tracking-normal text-gold-light underline-offset-4 hover:underline">
+                <Link href="/tasks" className="ml-auto text-label font-medium text-muted underline-offset-4 hover:text-fg hover:underline">
                   All tasks
                 </Link>
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {tasks.map((t) => (
                   <TaskItem
                     key={t.id}
@@ -116,8 +117,8 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           )}
 
           {/* Empty sections render nothing, so the board moves up when nothing is due. */}
-          <Section title="Overdue" count={overdue.length} tone="text-danger" leads={overdue} today={today} />
-          <Section title="Due today" count={dueToday.length} tone="text-gold" leads={dueToday} today={today} />
+          <Section title="Overdue" count={overdue.length} icon={CircleAlert} tone="text-danger" leads={overdue} today={today} />
+          <Section title="Due today" count={dueToday.length} icon={AlarmClock} tone="text-warning" leads={dueToday} today={today} />
 
           {boardRes.error ? (
             <p className="text-sm text-danger">Couldn&apos;t load the leaderboard.</p>
@@ -128,13 +129,14 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           <Section
             title="Newly assigned"
             count={fresh.length}
-            tone="text-fg"
+            icon={Inbox}
+            tone="text-muted"
             leads={fresh}
             today={today}
             empty={
               <>
                 No new leads in the last {NEW_LEAD_WINDOW_DAYS} days.{" "}
-                <Link href="/leads/new" className="text-gold underline-offset-4 hover:underline">Add one</Link>
+                <Link href="/leads/new" className="font-medium text-fg underline underline-offset-4 hover:text-accent">Add one</Link>
               </>
             }
           />
@@ -155,6 +157,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
 function Section({
   title,
   count,
+  icon: Icon,
   tone,
   leads,
   today,
@@ -162,6 +165,7 @@ function Section({
 }: {
   title: string;
   count: number;
+  icon: LucideIcon;
   tone: string;
   leads: Lead[];
   today: string;
@@ -169,17 +173,20 @@ function Section({
 }) {
   if (count === 0 && !empty) return null;
   return (
-    <section className="space-y-4">
-      <h2 className={`eyebrow flex items-center gap-3 ${tone}`}>
+    <section className="space-y-3">
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <Icon aria-hidden="true" className={`size-4 ${tone}`} strokeWidth={1.75} />
         {title} <span className="count">{count}</span>
-        <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
       </h2>
       {count === 0 ? (
-        <p className="rounded-2xl border border-dashed border-line px-5 py-6 text-center text-sm text-muted">{empty}</p>
+        <div className="empty">
+          <Inbox aria-hidden="true" className="empty-icon" strokeWidth={1.75} />
+          <p>{empty}</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
           {leads.map((lead) => (
-            <LeadRow key={lead.id} lead={lead} today={today} />
+            <LeadRow key={lead.id} lead={lead} today={today} inList />
           ))}
         </div>
       )}

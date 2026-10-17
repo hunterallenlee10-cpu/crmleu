@@ -35,9 +35,9 @@ export function LeadForm({
   const key = JSON.stringify(state?.fields ?? lead?.updated_at ?? "");
 
   return (
-    <form action={formAction} className="space-y-5" key={key}>
+    <form action={formAction} className="space-y-6" key={key}>
       <Field name="business_name" label="Business name" required defaultValue={value("business_name")} />
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
         <Field name="contact_name" label="Contact name" defaultValue={value("contact_name")} />
         <Field name="phone" label="Phone" type="tel" inputMode="tel" defaultValue={value("phone")} />
         <Field name="email" label="Email" type="email" defaultValue={value("email")} />
@@ -62,12 +62,12 @@ export function LeadForm({
         <Field name="spec_site_url" label="Spec site URL" inputMode="url" defaultValue={value("spec_site_url")} />
         {isNew && <Field name="next_follow_up" label="Next follow-up" type="date" defaultValue={value("next_follow_up")} />}
       </div>
-      <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-field px-4 transition-colors hover:border-line-strong has-[:checked]:border-danger/50 has-[:checked]:bg-danger/[0.06]">
-        <input type="checkbox" name="do_not_contact" defaultChecked={dnc} className="size-5 accent-[var(--color-danger)]" />
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-line px-3 transition-colors duration-150 hover:border-line-strong has-[:checked]:border-danger/50 has-[:checked]:bg-danger/[0.06] sm:min-h-10">
+        <input type="checkbox" name="do_not_contact" defaultChecked={dnc} className="size-4 accent-[var(--color-danger-solid)]" />
         <span>Do not contact</span>
       </label>
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full sm:w-auto">
+      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
         {pending ? "Saving…" : submitLabel}
       </button>
     </form>
@@ -83,7 +83,7 @@ function Field({
     <div>
       <label htmlFor={name} className="label">
         {label}
-        {props.required && <span className="text-gold"> *</span>}
+        {props.required && <span className="text-danger"> *</span>}
       </label>
       <input id={name} name={name} className="input" {...props} />
     </div>

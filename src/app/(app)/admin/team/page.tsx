@@ -37,17 +37,17 @@ export default async function TeamPage() {
         <ReassignPrompt key={m.id} from={{ id: m.id, name: m.full_name }} openLeads={openLeads(m.id)} assignees={assignees} />
       ))}
       <InviteForm emailEnabled={emailEnabled()} />
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {active.map((m) => (
           <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
         ))}
       </ul>
       {inactive.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-sm text-muted transition-colors hover:text-gold-light">
+          <summary className="cursor-pointer rounded-control text-label font-medium text-muted transition-colors duration-150 hover:text-fg">
             Inactive ({inactive.length})
           </summary>
-          <ul className="mt-3 space-y-3">
+          <ul className="mt-3 space-y-2">
             {inactive.map((m) => (
               <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
             ))}

@@ -81,7 +81,7 @@ export function PipelineBoard({ initialLeads, today }: { initialLeads: Lead[]; t
   return (
     <>
       {error && !pending && (
-        <p role="alert" className="mb-4 rounded-xl border border-danger/35 bg-danger/[0.08] px-4 py-3 text-sm text-danger">
+        <p role="alert" className="mb-4 rounded-control bg-danger/[0.1] px-3 py-2.5 text-sm text-danger">
           {error}
         </p>
       )}
@@ -120,14 +120,12 @@ function Column({ stage, label, children }: { stage: Stage; label: string; child
     <section
       ref={setNodeRef}
       aria-label={label}
-      className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-2xl border p-2.5 transition-[border-color,background-color,box-shadow] duration-200 sm:w-72 ${
-        isOver
-          ? "border-gold/70 bg-gold/[0.06] shadow-[0_0_0_4px_rgb(201_162_74/0.1)]"
-          : "border-line bg-tint/[0.015]"
+      className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-card border bg-surface-2 p-2 transition-[border-color,background-color] duration-150 sm:w-72 ${
+        isOver ? "border-accent" : "border-line"
       }`}
     >
-      <h2 className="mb-2.5 flex items-center justify-between px-1.5 pt-1 text-sm font-semibold">
-        <span className={`flex items-center gap-2 ${stage === "won" ? "text-gold-light" : stage === "lost" ? "text-danger" : ""}`}>
+      <h2 className="mb-2 flex items-center justify-between px-1.5 pt-1 text-label font-semibold">
+        <span className="flex items-center gap-2">
           <span aria-hidden="true" className={`size-2 rounded-full ${STAGE_DOT[stage]}`} />
           {label}
         </span>
@@ -142,7 +140,7 @@ function Card({ lead, today, dimmed }: { lead: Lead; today: string; dimmed: bool
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} className={`touch-manipulation ${dimmed ? "opacity-30" : ""}`}>
-      <Link href={`/leads/${lead.id}`} draggable={false} className="block">
+      <Link href={`/leads/${lead.id}`} draggable={false} className="block rounded-card">
         <CardBody lead={lead} today={today} />
       </Link>
     </div>
@@ -152,18 +150,16 @@ function Card({ lead, today, dimmed }: { lead: Lead; today: string; dimmed: bool
 function CardBody({ lead, today, lifted }: { lead: Lead; today: string; lifted?: boolean }) {
   return (
     <div
-      className={`rounded-xl border bg-panel p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.04),0_1px_2px_rgb(0_0_0/var(--shadow-soft))] transition-[border-color,background-color,transform] duration-200 ${
-        lifted
-          ? "rotate-[1.5deg] border-gold bg-raised shadow-[0_24px_60px_-12px_rgb(0_0_0/var(--shadow-strong)),0_0_0_1px_rgb(201_162_74/0.3)]"
-          : "border-line hover:-translate-y-px hover:border-gold/40 hover:bg-raised"
+      className={`rounded-card border bg-surface p-3 transition-[border-color,box-shadow] duration-150 ${
+        lifted ? "cursor-grabbing border-line-strong shadow-float" : "border-line hover:border-line-strong"
       }`}
     >
-      <p className="truncate font-semibold tracking-tight">{lead.business_name}</p>
-      <p className="truncate text-xs text-muted">{[lead.niche, lead.city].filter(Boolean).join(" · ") || " "}</p>
-      <div className="mt-2 flex items-center justify-between">
+      <p className="truncate font-medium" title={lead.business_name}>{lead.business_name}</p>
+      <p className="mt-0.5 truncate text-xs text-muted">{[lead.niche, lead.city].filter(Boolean).join(" · ") || " "}</p>
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <FollowUpBadge date={lead.next_follow_up} today={today} />
         {lead.deal_value != null && (
-          <span className="text-xs font-semibold text-gold-light tabular-nums">${Number(lead.deal_value).toLocaleString("en-US")}</span>
+          <span className="text-xs font-medium text-fg">${Number(lead.deal_value).toLocaleString("en-US")}</span>
         )}
       </div>
     </div>

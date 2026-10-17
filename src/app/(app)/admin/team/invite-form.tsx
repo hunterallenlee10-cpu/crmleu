@@ -8,8 +8,8 @@ export function InviteForm({ emailEnabled }: { emailEnabled: boolean }) {
   const [state, action, pending] = useActionState(inviteRep, undefined);
 
   return (
-    <form action={action} className="card card-glow space-y-4">
-      <h2 className="text-lg font-semibold tracking-tight">Invite a rep</h2>
+    <form action={action} className="card space-y-4">
+      <h2 className="section-title">Invite a rep</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="full_name" className="label">Name</label>
@@ -24,16 +24,16 @@ export function InviteForm({ emailEnabled }: { emailEnabled: boolean }) {
       {state?.link && <CopyLink link={state.link} key={state.link} />}
       <div className="flex flex-wrap gap-3">
         {/* The link button comes first so pressing Enter makes a link, not an email. */}
-        <button type="submit" name="mode" value="link" disabled={pending} className="btn btn-gold w-full sm:w-auto">
+        <button type="submit" name="mode" value="link" disabled={pending} className="btn btn-primary w-full sm:w-auto">
           {pending ? "Working…" : "Create invite link"}
         </button>
         {emailEnabled && (
-          <button type="submit" name="mode" value="email" disabled={pending} className="btn btn-ghost w-full sm:w-auto">
+          <button type="submit" name="mode" value="email" disabled={pending} className="btn btn-secondary w-full sm:w-auto">
             Send invite email
           </button>
         )}
       </div>
-      <p className="text-xs text-muted">
+      <p className="max-w-prose text-xs text-muted">
         Text the link to the rep yourself. Each link works once, and making a new one cancels the last. If someone already has an account, you get a link for them to choose a new password.
       </p>
     </form>
@@ -61,7 +61,7 @@ function CopyLink({ link }: { link: string }) {
         value={link}
         onFocus={(e) => e.currentTarget.select()}
       />
-      <button type="button" onClick={copy} className="btn btn-gold">
+      <button type="button" onClick={copy} className="btn btn-secondary">
         {copied ? "Copied" : "Copy"}
       </button>
     </div>

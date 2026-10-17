@@ -10,19 +10,19 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-tint/[0.06] bg-ink/80 backdrop-blur-xl backdrop-saturate-150">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-          <Link href="/today" className="rounded-lg text-lg">
+      <header className="sticky top-0 z-20 border-b border-line bg-surface-2">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-5">
+          <Link href="/today" className="rounded-control text-base">
             <BrandName />
           </Link>
           <DesktopNav role={profile.role} />
-          <div className="flex items-center gap-2">
-            <span className="hidden text-sm text-muted sm:inline">{profile.full_name}</span>
+          <div className="flex items-center gap-1">
+            <span className="mr-1 hidden text-sm text-muted lg:inline">{profile.full_name}</span>
             <ThemeToggle initial={theme} />
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className="rounded-full border border-transparent px-3 py-1.5 text-sm text-muted transition-colors hover:border-line hover:bg-tint/[0.03] hover:text-gold-light"
+                className="inline-flex min-h-11 items-center rounded-control px-3 text-sm text-muted transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg sm:min-h-9"
               >
                 Sign out
               </button>
@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pt-8 pb-28 md:pb-16">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pt-8 pb-28 md:pt-10 md:pb-16">{children}</main>
       <MobileNav role={profile.role} />
     </>
   );

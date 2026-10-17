@@ -11,7 +11,7 @@ export function AcceptForm({ tokenHash, type }: { tokenHash: string; type: "invi
     return (
       <div className="space-y-5">
         <p role="alert" className="text-sm text-danger">{error}</p>
-        <Link href="/login" className="btn btn-ghost w-full">Back to sign in</Link>
+        <Link href="/login" className="btn btn-secondary w-full">Back to sign in</Link>
       </div>
     );
   }
@@ -20,7 +20,7 @@ export function AcceptForm({ tokenHash, type }: { tokenHash: string; type: "invi
     <form action={action}>
       <input type="hidden" name="token_hash" value={tokenHash} />
       <input type="hidden" name="type" value={type} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full">
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
         {pending ? "One moment…" : type === "recovery" ? "Continue" : "Accept invite"}
       </button>
     </form>

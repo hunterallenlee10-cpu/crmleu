@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Circle } from "lucide-react";
 import { useCallback, useOptimistic, useState, useTransition } from "react";
 import { followUpLabel, formatDateTime } from "@/lib/dates";
 import type { EveryoneProgress, Task } from "@/lib/types";
@@ -71,7 +72,7 @@ export function TaskItem({
   }
 
   const due = task.due_date ? followUpLabel(task.due_date, today) : null;
-  const dueColor = done || !due ? "text-muted" : due.tone === "overdue" ? "text-danger" : due.tone === "today" ? "text-gold" : "text-muted";
+  const dueColor = done || !due ? "text-muted" : due.tone === "overdue" ? "text-danger" : due.tone === "today" ? "text-warning" : "text-muted";
   const assignee = task.assignee_id ? (names[task.assignee_id] ?? "Former member") : "Whole team";
   const lockedReason = everyone ? "Each rep ticks this off for themselves" : `Only ${assignee} can tick this off`;
   // My own chip follows the checkbox right away; the rest come from the server.
@@ -79,7 +80,7 @@ export function TaskItem({
   const tickedCount = progress.filter(ticked).length;
 
   return (
-    <li className={`card flex gap-4 px-5 py-4 transition-opacity ${done ? "opacity-60" : ""}`}>
+    <li className={`flex gap-3 rounded-card border border-line bg-surface px-4 py-3.5 transition-opacity duration-150 sm:px-5 ${done ? "opacity-60" : ""}`}>
       <label className={`-m-2 flex shrink-0 items-start p-2 ${canCheck ? "cursor-pointer" : "cursor-not-allowed"}`}>
         <input
           type="checkbox"
@@ -88,24 +89,24 @@ export function TaskItem({
           onChange={toggle}
           aria-label={`${done ? "Mark not done" : "Mark done"}: ${task.title}`}
           title={canCheck ? undefined : lockedReason}
-          className="mt-0.5 h-6 w-6 accent-gold disabled:opacity-40"
+          className="mt-0.5 size-[18px] disabled:opacity-40"
         />
       </label>
       <div className="min-w-0 flex-1 space-y-1">
-        <p className={`font-semibold tracking-tight break-words ${done ? "text-muted line-through" : ""}`}>{task.title}</p>
-        {task.details && <p className="text-sm whitespace-pre-line break-words text-muted">{task.details}</p>}
-        <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
-          {showAssignee && <span className={task.assignee_id ? "" : "text-gold"}>{assignee}</span>}
+        <p className={`font-medium break-words ${done ? "text-muted line-through" : ""}`}>{task.title}</p>
+        {task.details && <p className="text-label whitespace-pre-line break-words text-muted">{task.details}</p>}
+        <p className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5 text-xs text-muted">
+          {showAssignee && <span className={task.assignee_id ? "" : "font-medium text-fg"}>{assignee}</span>}
           {everyone && (
-            <span className="font-medium text-gold">
+            <span className="font-medium text-info">
               Everyone checks off · {tickedCount} of {progress.length} done
             </span>
           )}
           {due && <span className={`font-medium ${dueColor}`}>{dueText(due.text, due.tone)}</span>}
           {task.completed_at && (everyone ? (
-            <span className="text-ok">Everyone&apos;s done · {formatDateTime(task.completed_at)}</span>
+            <span className="text-success">Everyone&apos;s done · {formatDateTime(task.completed_at)}</span>
           ) : done && (
-            <span className="text-ok">
+            <span className="text-success">
               Done{task.completed_by ? ` by ${names[task.completed_by] ?? "a former member"}` : ""} · {formatDateTime(task.completed_at)}
             </span>
           ))}
@@ -116,9 +117,14 @@ export function TaskItem({
               <li
                 key={p.user_id}
                 title={p.checked_at && ticked(p) ? `Checked off ${formatDateTime(p.checked_at)}` : undefined}
-                className={`rounded-full border px-2.5 py-0.5 text-xs ${ticked(p) ? "border-ok/40 bg-ok/[0.08] text-ok" : "border-line text-muted"}`}
+                className={`pill ${ticked(p) ? "pill-success" : "pill-neutral"}`}
               >
-                {ticked(p) ? "✓" : "○"} {p.full_name}
+                {ticked(p) ? (
+                  <Check aria-label="Checked off" className="size-3" strokeWidth={2.25} />
+                ) : (
+                  <Circle aria-label="Not yet" className="size-3" strokeWidth={2} />
+                )}{" "}
+                {p.full_name}
               </li>
             ))}
           </ul>
@@ -127,10 +133,10 @@ export function TaskItem({
       </div>
       {isAdmin && (
         <div className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-start">
-          <button type="button" onClick={() => setEditing(true)} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-tint/[0.04] hover:text-gold-light">
+          <button type="button" onClick={() => setEditing(true)} disabled={isPending} className="btn btn-ghost min-h-9 px-2.5 text-label sm:min-h-8">
             Edit
           </button>
-          <button type="button" onClick={remove} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-danger/[0.06] hover:text-danger">
+          <button type="button" onClick={remove} disabled={isPending} className="btn btn-ghost min-h-9 px-2.5 text-label hover:bg-danger/[0.1] hover:text-danger sm:min-h-8">
             Delete
           </button>
         </div>

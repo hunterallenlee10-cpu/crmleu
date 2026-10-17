@@ -52,13 +52,13 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
     <li className={`card space-y-4 ${member.active ? "" : "opacity-60"}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold tracking-tight">{member.full_name}</p>
-          <p className="text-sm text-muted">{member.email}</p>
-          <p className="mt-1.5 text-xs text-muted tabular-nums">{openLeads} open lead{openLeads === 1 ? "" : "s"}</p>
+          <p className="font-medium">{member.full_name}</p>
+          <p className="text-label text-muted">{member.email}</p>
+          <p className="mt-1 text-xs text-muted">{openLeads} open lead{openLeads === 1 ? "" : "s"}</p>
         </div>
-        <div className="flex gap-2 text-xs font-medium tracking-wide uppercase">
-          <span className={`rounded-full border px-2 py-0.5 ${member.role === "admin" ? "border-gold/40 bg-gold/10 text-gold-light" : "border-line text-muted"}`}>{member.role}</span>
-          {!member.active && <span className="rounded-full border border-danger/30 px-2 py-0.5 text-danger">inactive</span>}
+        <div className="flex gap-1.5">
+          <span className={`pill capitalize ${member.role === "admin" ? "pill-accent" : "pill-neutral"}`}>{member.role}</span>
+          {!member.active && <span className="pill pill-danger capitalize">inactive</span>}
         </div>
       </div>
       {(member.role !== "admin" || !isMe) && (
@@ -75,7 +75,7 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
                   onChange={(e) => { setRate(e.target.value); setSaved(false); }}
                 />
               </div>
-              <button type="submit" disabled={isPending} className="btn btn-ghost">Save</button>
+              <button type="submit" disabled={isPending} className="btn btn-secondary">Save</button>
             </form>
           )}
           {!isMe && member.active && (
@@ -83,13 +83,13 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
               type="button"
               disabled={isPending}
               onClick={() => { setShowPassword(!showPassword); setPasswordSet(false); setError(""); }}
-              className="btn btn-ghost"
+              className="btn btn-secondary"
             >
               Set password
             </button>
           )}
           {!isMe && (
-            <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-ghost"}`}>
+            <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-secondary"}`}>
               {member.active ? "Deactivate" : "Reactivate"}
             </button>
           )}
@@ -111,15 +111,15 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button type="submit" disabled={isPending} className="btn btn-gold">Save password</button>
+          <button type="submit" disabled={isPending} className="btn btn-primary">Save password</button>
         </form>
       )}
       {passwordSet && (
-        <p role="status" className="text-sm text-ok">
+        <p role="status" className="text-sm text-success">
           Password set. They can log in with {member.email} and the new password now. Send it to them privately.
         </p>
       )}
-      {saved && <p role="status" className="text-sm text-ok">Rate saved.</p>}
+      {saved && <p role="status" className="text-sm text-success">Rate saved.</p>}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </li>
   );

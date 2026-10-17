@@ -19,7 +19,7 @@ export default async function ForgotPasswordPage() {
           <p className="text-sm text-muted">
             Ask your admin for a sign-in link. They can make one from the Team page, and it lets you choose a new password.
           </p>
-          <Link href="/login" className="btn btn-ghost w-full">Back to sign in</Link>
+          <Link href="/login" className="btn btn-secondary w-full">Back to sign in</Link>
         </div>
       )}
     </AuthShell>

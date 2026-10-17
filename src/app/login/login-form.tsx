@@ -27,11 +27,11 @@ export function LoginForm({ notice }: { notice?: string }) {
         <input id="password" name="password" type="password" autoComplete="current-password" required className="input" />
       </div>
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full">
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
         {pending ? "Signing in…" : "Sign in"}
       </button>
       <p className="text-center text-sm">
-        <Link href="/forgot-password" className="text-muted underline-offset-4 hover:text-gold hover:underline">
+        <Link href="/forgot-password" className="rounded-[4px] text-muted underline-offset-4 transition-colors duration-150 hover:text-fg hover:underline">
           Forgot your password?
         </Link>
       </p>
