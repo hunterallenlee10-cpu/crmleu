@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { getTheme } from "@/lib/theme";
+import { THEME_COLORS } from "@/lib/theme-shared";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,13 +15,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export const viewport: Viewport = {
-  themeColor: "#0b0b0b",
-};
+export async function generateViewport(): Promise<Viewport> {
+  return { themeColor: THEME_COLORS[await getTheme()] };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Rendered on the server from the cookie, so there's no flash of the wrong theme.
+  const theme = await getTheme();
   return (
-    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="en" data-theme={theme} className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );

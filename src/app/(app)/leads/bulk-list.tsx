@@ -60,7 +60,7 @@ export function BulkLeadList({
       </div>
 
       {selected.size > 0 && (
-        <div className="sticky top-20 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-gold/50 bg-panel/90 p-4 shadow-[0_18px_50px_-18px_rgb(0_0_0/0.9),0_0_0_1px_rgb(201_162_74/0.08)] backdrop-blur-xl motion-safe:animate-pop-in">
+        <div className="sticky top-20 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-gold/50 bg-panel/90 p-4 shadow-[0_18px_50px_-18px_rgb(0_0_0/var(--shadow-strong)),0_0_0_1px_rgb(201_162_74/0.08)] backdrop-blur-xl motion-safe:animate-pop-in">
           <span className="text-sm font-semibold text-gold-light tabular-nums">{selected.size} selected</span>
           <select aria-label="New owner" className="input flex-1 sm:w-56 sm:flex-none" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
             <option value="">Reassign to…</option>

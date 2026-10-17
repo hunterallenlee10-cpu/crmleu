@@ -37,7 +37,7 @@ export function DesktopNav({ role }: { role: Role }) {
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
             isActive(pathname, item.href)
               ? "bg-gold/[0.12] text-gold-light shadow-[inset_0_0_0_1px_rgb(201_162_74/0.3)]"
-              : "text-muted hover:bg-white/[0.04] hover:text-fg"
+              : "text-muted hover:bg-tint/[0.04] hover:text-fg"
           }`}
         >
           {item.label}
@@ -53,7 +53,7 @@ export function MobileNav({ role }: { role: Role }) {
   const items = itemsFor(role);
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.06] bg-ink/85 backdrop-blur-xl backdrop-saturate-150 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-tint/[0.06] bg-ink/85 backdrop-blur-xl backdrop-saturate-150 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
