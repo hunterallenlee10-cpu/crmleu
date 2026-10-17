@@ -49,7 +49,7 @@ export function QuickLog({ leadId }: { leadId: string }) {
         ))}
       </div>
       {current && (
-        <div className="space-y-3">
+        <div className="space-y-3 motion-safe:animate-pop-in">
           <textarea
             autoFocus
             rows={3}
@@ -57,7 +57,7 @@ export function QuickLog({ leadId }: { leadId: string }) {
             onChange={(e) => setBody(e.target.value)}
             placeholder={current.placeholder}
             aria-label={current.label}
-            className="input py-3"
+            className="input resize-y py-3 leading-relaxed"
           />
           <button type="button" onClick={save} disabled={isPending} className="btn btn-gold w-full">
             {isPending ? "Saving…" : "Save"}

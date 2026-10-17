@@ -35,7 +35,7 @@ export function FollowUpControl({
 
   return (
     <div className="space-y-3">
-      <p className="text-lg">
+      <p className="text-xl font-medium tracking-tight">
         {label ? (
           <span className={label.tone === "overdue" ? "text-danger" : label.tone === "today" ? "text-gold" : ""}>
             {label.text}
@@ -51,7 +51,7 @@ export function FollowUpControl({
             type="button"
             disabled={isPending}
             onClick={() => save(addDays(today, s.days))}
-            className="btn btn-ghost min-h-11 px-4 text-sm"
+            className="chip"
           >
             {s.label}
           </button>

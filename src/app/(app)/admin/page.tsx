@@ -62,9 +62,11 @@ export default async function DashboardPage() {
     <div className="space-y-10">
       {/* Headline + tiles */}
       <section className="grid gap-4 lg:grid-cols-4">
-        <div className="card lg:col-span-2">
+        <div className="card card-glow flex flex-col justify-between p-6 lg:col-span-2">
           <p className="text-sm text-muted">Revenue won in {month}</p>
-          <p className="mt-2 text-5xl font-semibold text-gold">{money(totalRevenue)}</p>
+          <p className="mt-3 bg-gradient-to-b from-gold-light to-gold bg-clip-text text-5xl font-semibold tracking-tight text-transparent tabular-nums sm:text-6xl">
+            {money(totalRevenue)}
+          </p>
         </div>
         <div className="grid grid-cols-3 gap-4 lg:col-span-2">
           <Tile label={`Deals won in ${month}`} value={totalDeals.toLocaleString("en-US")} />
@@ -87,7 +89,7 @@ export default async function DashboardPage() {
             <tr key={m.id}>
               <Td left>
                 <Link href={`/leads?owner=${m.id}`} className="hover:text-gold">{m.full_name}</Link>
-                {!m.active && <span className="ml-2 text-xs text-danger">inactive</span>}
+                {!m.active && <span className="ml-2 rounded-full border border-danger/30 px-1.5 py-px text-xs text-danger">inactive</span>}
               </Td>
               {STAGES.map((s) => <Td key={s.value}>{leadsFor(m.id, s.value) || "–"}</Td>)}
               <Td strong>{leadsFor(m.id)}</Td>
@@ -155,7 +157,7 @@ export default async function DashboardPage() {
           })}
         </tbody>
         <tfoot>
-          <tr className="border-t border-line">
+          <tr className="border-t border-line-strong">
             <Td left strong>Total</Td>
             <Td strong>{totalDeals}</Td>
             <Td strong>{money(totalRevenue)}</Td>
@@ -171,8 +173,8 @@ export default async function DashboardPage() {
 function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div className="card flex flex-col justify-between p-4">
-      <p className="text-xs text-muted">{label}</p>
-      <p className="mt-2 text-xl font-semibold sm:text-2xl">{value}</p>
+      <p className="text-xs leading-snug text-muted">{label}</p>
+      <p className="mt-3 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
     </div>
   );
 }
@@ -181,11 +183,11 @@ function Table({ title, caption, children }: { title: string; caption: string; c
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted">{caption}</p>
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <p className="mt-0.5 text-sm text-muted">{caption}</p>
       </div>
-      <div className="card -mx-5 overflow-x-auto rounded-none border-x-0 p-0 sm:mx-0 sm:rounded-2xl sm:border-x">
-        <table className="w-full min-w-max text-sm tabular-nums">{children}</table>
+      <div className="card -mx-5 overflow-x-auto rounded-none border-x-0 bg-none p-0 sm:mx-0 sm:rounded-2xl sm:border-x">
+        <table className="w-full min-w-max text-sm tabular-nums [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-line/70">{children}</table>
       </div>
     </section>
   );
@@ -193,7 +195,7 @@ function Table({ title, caption, children }: { title: string; caption: string; c
 
 function Th({ children, left }: { children: React.ReactNode; left?: boolean }) {
   return (
-    <th className={`border-b border-line px-4 py-3 font-medium text-muted ${left ? "sticky left-0 bg-panel text-left" : "text-right"}`}>
+    <th className={`border-b border-line bg-raised px-4 py-3 text-xs font-semibold tracking-wider text-muted uppercase ${left ? "sticky left-0 text-left" : "text-right"}`}>
       {children}
     </th>
   );
@@ -202,6 +204,6 @@ function Th({ children, left }: { children: React.ReactNode; left?: boolean }) {
 function Td({ children, left, strong }: { children?: React.ReactNode; left?: boolean; strong?: boolean }) {
   return (
     // The name column stays put while the numbers scroll sideways on phones.
-    <td className={`px-4 py-3 ${left ? "sticky left-0 bg-panel text-left" : "text-right"} ${strong ? "font-semibold" : ""}`}>{children}</td>
+    <td className={`px-4 py-3.5 ${left ? "sticky left-0 bg-panel text-left font-medium" : "text-right"} ${strong ? "font-semibold text-fg" : ""}`}>{children}</td>
   );
 }

@@ -28,7 +28,7 @@ export default async function TeamPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Team</h1>
+      <h1 className="page-title">Team</h1>
       {needsReassign.map((m) => (
         <ReassignPrompt key={m.id} from={{ id: m.id, name: m.full_name }} openLeads={openLeads(m.id)} assignees={assignees} />
       ))}

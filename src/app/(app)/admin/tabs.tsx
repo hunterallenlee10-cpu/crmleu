@@ -17,15 +17,14 @@ export function AdminTabs() {
         <Link
           key={t.href}
           href={t.href}
-          className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-medium ${
-            pathname === t.href ? "border-gold bg-gold text-black" : "border-line text-muted hover:text-fg"
-          }`}
+          aria-current={pathname === t.href ? "page" : undefined}
+          className={`chip shrink-0 ${pathname === t.href ? "chip-active" : ""}`}
         >
           {t.label}
         </Link>
       ))}
       {/* A plain link: the browser downloads the CSV. */}
-      <a href="/api/export" className="shrink-0 rounded-full border border-line px-4 py-2.5 text-sm font-medium text-muted hover:text-fg">
+      <a href="/api/export" className="chip shrink-0 border-dashed sm:ml-auto">
         Export CSV
       </a>
     </nav>

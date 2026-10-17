@@ -22,7 +22,7 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Pipeline</h1>
+        <h1 className="page-title">Pipeline</h1>
         <p className="mt-1 text-sm text-muted">
           <span className="md:hidden">Press and hold a card, then drag it to another stage.</span>
           <span className="hidden md:inline">Drag a card to another stage.</span>

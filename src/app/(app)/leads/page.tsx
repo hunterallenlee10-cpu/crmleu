@@ -73,11 +73,11 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{isAdmin ? "All leads" : "My leads"}</h1>
+        <h1 className="page-title">{isAdmin ? "All leads" : "My leads"}</h1>
         <Link href="/leads/new" className="btn btn-gold">+ New lead</Link>
       </div>
       <LeadFilters niches={niches} owners={isAdmin ? ownerFilter : undefined} />
-      <p className="text-sm text-muted">
+      <p className="text-sm text-muted tabular-nums">
         {total} lead{total === 1 ? "" : "s"}
         {pages > 1 && ` · page ${page} of ${pages}`}
       </p>
@@ -93,7 +93,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
       )}
 
       {pages > 1 && (
-        <nav className="flex items-center justify-between gap-3" aria-label="Pages">
+        <nav className="flex items-center justify-between gap-3 border-t border-line pt-6" aria-label="Pages">
           {page > 1 ? <Link href={pageHref(page - 1)} className="btn btn-ghost">← Previous</Link> : <span />}
           {page < pages ? <Link href={pageHref(page + 1)} className="btn btn-ghost">Next →</Link> : <span />}
         </nav>

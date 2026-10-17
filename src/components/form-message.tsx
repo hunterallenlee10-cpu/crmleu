@@ -7,14 +7,14 @@ export type FormState =
 export function FormMessage({ state }: { state: FormState }) {
   if (state?.error) {
     return (
-      <p role="alert" className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+      <p role="alert" className="rounded-xl border border-danger/35 bg-danger/[0.08] px-4 py-3 text-sm text-danger">
         {state.error}
       </p>
     );
   }
   if (state?.message) {
     return (
-      <p role="status" className="rounded-xl border border-ok/40 bg-ok/10 px-4 py-3 text-sm text-ok">
+      <p role="status" className="rounded-xl border border-ok/35 bg-ok/[0.08] px-4 py-3 text-sm text-ok">
         {state.message}
       </p>
     );

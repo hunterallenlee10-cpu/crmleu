@@ -8,8 +8,8 @@ export function InviteForm() {
   const [state, action, pending] = useActionState(inviteRep, undefined);
 
   return (
-    <form action={action} className="card space-y-4">
-      <h2 className="text-lg font-semibold">Invite a rep</h2>
+    <form action={action} className="card card-glow space-y-4">
+      <h2 className="text-lg font-semibold tracking-tight">Invite a rep</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="full_name" className="label">Name</label>

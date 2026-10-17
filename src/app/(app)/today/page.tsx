@@ -38,9 +38,9 @@ export default async function TodayPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-2xl font-semibold">Today</h1>
-        <p className="mt-1 text-muted">
-          Hi {firstName}.{" "}
+        <h1 className="page-title">Today</h1>
+        <p className="mt-2 text-muted">
+          Hi <span className="text-fg">{firstName}</span>.{" "}
           {overdue.length + dueToday.length === 0
             ? "No follow-ups due."
             : `${overdue.length + dueToday.length} follow-up${overdue.length + dueToday.length === 1 ? "" : "s"} to do.`}
@@ -83,12 +83,13 @@ function Section({
 }) {
   if (count === 0 && !empty) return null;
   return (
-    <section className="space-y-3">
-      <h2 className={`text-sm font-semibold uppercase tracking-wider ${tone}`}>
-        {title} <span className="text-muted">({count})</span>
+    <section className="space-y-4">
+      <h2 className={`eyebrow flex items-center gap-3 ${tone}`}>
+        {title} <span className="count">{count}</span>
+        <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
       </h2>
       {count === 0 ? (
-        <p className="text-sm text-muted">{empty}</p>
+        <p className="rounded-2xl border border-dashed border-line px-5 py-6 text-center text-sm text-muted">{empty}</p>
       ) : (
         <div className="space-y-3">
           {leads.map((lead) => (
