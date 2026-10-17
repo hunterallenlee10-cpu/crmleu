@@ -1,47 +1,42 @@
 import { followUpLabel } from "@/lib/dates";
 import { stageLabel, type Stage } from "@/lib/types";
 
+// Soft tinted pills. Hues follow the pipeline from cold to closed.
 const STAGE_STYLES: Record<Stage, string> = {
-  new: "border-line-strong bg-tint/[0.03] text-muted",
-  contacted: "border-sky-400/30 bg-sky-400/[0.08] text-sky-300 light:border-sky-600/25 light:bg-sky-500/10 light:text-sky-800",
-  warm_up_program: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300 light:border-violet-600/25 light:bg-violet-500/10 light:text-violet-800",
-  call_booked: "border-teal-400/30 bg-teal-400/[0.08] text-teal-300 light:border-teal-600/25 light:bg-teal-500/10 light:text-teal-800",
-  quote_given: "border-amber-400/30 bg-amber-400/[0.08] text-amber-300 light:border-amber-600/30 light:bg-amber-500/10 light:text-amber-800",
-  won: "border-gold/60 bg-gold/15 text-gold-light light:bg-gold/10",
-  lost: "border-danger/30 bg-danger/[0.08] text-danger",
+  new: "pill-neutral",
+  contacted: "pill-accent",
+  warm_up_program: "pill-info",
+  call_booked: "pill-violet",
+  quote_given: "pill-warning",
+  won: "pill-success",
+  lost: "pill-danger",
 };
 
-// The color of each stage, as a small dot (pipeline columns, badges).
+// The color of each stage, as a small dot (pipeline column headers).
 export const STAGE_DOT: Record<Stage, string> = {
-  new: "bg-muted",
-  contacted: "bg-sky-400",
-  warm_up_program: "bg-violet-400",
-  call_booked: "bg-teal-400",
-  quote_given: "bg-amber-400",
-  won: "bg-gold",
+  new: "bg-faint",
+  contacted: "bg-accent",
+  warm_up_program: "bg-info",
+  call_booked: "bg-violet",
+  quote_given: "bg-warning",
+  won: "bg-success",
   lost: "bg-danger",
 };
 
 export function StageBadge({ stage }: { stage: Stage }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${STAGE_STYLES[stage]}`}
-    >
-      <span aria-hidden="true" className={`size-1.5 rounded-full ${STAGE_DOT[stage]}`} />
-      {stageLabel(stage)}
-    </span>
+    <span className={`pill ${STAGE_STYLES[stage]}`}>{stageLabel(stage)}</span>
   );
 }
 
 export function FollowUpBadge({ date, today }: { date: string | null; today: string }) {
-  if (!date) return <span className="text-xs text-muted/70">No follow-up</span>;
+  if (!date) return <span className="text-xs text-muted">No follow-up</span>;
   const { text, tone } = followUpLabel(date, today);
-  const color =
+  const style =
     tone === "overdue"
-      ? "bg-danger/10 text-danger"
+      ? "pill pill-danger"
       : tone === "today"
-        ? "bg-gold/[0.12] text-gold-light"
-        : "text-muted";
-  const pad = tone === "overdue" || tone === "today" ? "rounded-md px-1.5 py-0.5" : "";
-  return <span className={`text-xs font-medium whitespace-nowrap ${pad} ${color}`}>{text}</span>;
+        ? "pill pill-warning"
+        : "text-xs font-medium whitespace-nowrap text-muted";
+  return <span className={style}>{text}</span>;
 }

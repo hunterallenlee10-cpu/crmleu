@@ -63,14 +63,14 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-10">
       {/* Headline + tiles */}
-      <section className="grid gap-4 lg:grid-cols-4">
-        <div className="card card-glow flex flex-col justify-between p-6 lg:col-span-2">
-          <p className="text-sm text-muted">Revenue won in {month}</p>
-          <p className="mt-3 bg-gradient-to-b from-gold-light to-gold bg-clip-text text-5xl font-semibold tracking-tight text-transparent tabular-nums sm:text-6xl">
+      <section className="grid gap-px overflow-hidden rounded-card border border-line bg-line lg:grid-cols-5">
+        <div className="flex flex-col justify-between bg-surface p-5 lg:col-span-2">
+          <p className="text-label text-muted">Revenue won in {month}</p>
+          <p className="mt-2 text-xl font-semibold tracking-tight">
             {money(totalRevenue)}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-4 lg:col-span-2">
+        <div className="grid grid-cols-3 gap-px lg:col-span-3">
           <Tile label={`Deals won in ${month}`} value={totalDeals.toLocaleString("en-US")} />
           <Tile label="Commission owed" value={money(totalCommission)} />
           <Tile label="Activities this week" value={totalActivities.toLocaleString("en-US")} />
@@ -90,8 +90,8 @@ export default async function DashboardPage() {
           {people.map((m) => (
             <tr key={m.id}>
               <Td left>
-                <Link href={`/leads?owner=${m.id}`} className="hover:text-gold">{m.full_name}</Link>
-                {!m.active && <span className="ml-2 rounded-full border border-danger/30 px-1.5 py-px text-xs text-danger">inactive</span>}
+                <Link href={`/leads?owner=${m.id}`} className="rounded-[4px] underline-offset-4 hover:underline">{m.full_name}</Link>
+                {!m.active && <span className="pill pill-danger ml-2">inactive</span>}
               </Td>
               {STAGES.map((s) => <Td key={s.value}>{leadsFor(m.id, s.value) || "–"}</Td>)}
               <Td strong>{leadsFor(m.id)}</Td>
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
           ))}
           {hasUnassigned && (
             <tr>
-              <Td left><Link href="/leads?owner=unassigned" className="hover:text-gold">Unassigned</Link></Td>
+              <Td left><Link href="/leads?owner=unassigned" className="rounded-[4px] underline-offset-4 hover:underline">Unassigned</Link></Td>
               {STAGES.map((s) => <Td key={s.value}>{leadsFor(null, s.value) || "–"}</Td>)}
               <Td strong>{leadsFor(null)}</Td>
             </tr>
@@ -174,9 +174,9 @@ export default async function DashboardPage() {
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="card flex flex-col justify-between p-4">
-      <p className="text-xs leading-snug text-muted">{label}</p>
-      <p className="mt-3 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
+    <div className="flex flex-col justify-between bg-surface p-4 sm:p-5">
+      <p className="text-xs leading-snug text-muted sm:text-label">{label}</p>
+      <p className="mt-2 text-base font-semibold sm:text-lg">{value}</p>
     </div>
   );
 }
@@ -185,11 +185,11 @@ function Table({ title, caption, children }: { title: string; caption: string; c
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <h2 className="section-title">{title}</h2>
         <p className="mt-0.5 text-sm text-muted">{caption}</p>
       </div>
-      <div className="card -mx-5 overflow-x-auto rounded-none border-x-0 bg-none p-0 sm:mx-0 sm:rounded-2xl sm:border-x">
-        <table className="w-full min-w-max text-sm tabular-nums [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-line/70">{children}</table>
+      <div className="table-wrap">
+        <table className="data-table">{children}</table>
       </div>
     </section>
   );
@@ -197,7 +197,7 @@ function Table({ title, caption, children }: { title: string; caption: string; c
 
 function Th({ children, left }: { children: React.ReactNode; left?: boolean }) {
   return (
-    <th className={`border-b border-line bg-raised px-4 py-3 text-xs font-semibold tracking-wider text-muted uppercase ${left ? "sticky left-0 text-left" : "text-right"}`}>
+    <th className={left ? "sticky left-0 z-[1] text-left" : "text-right"}>
       {children}
     </th>
   );
@@ -206,6 +206,6 @@ function Th({ children, left }: { children: React.ReactNode; left?: boolean }) {
 function Td({ children, left, strong }: { children?: React.ReactNode; left?: boolean; strong?: boolean }) {
   return (
     // The name column stays put while the numbers scroll sideways on phones.
-    <td className={`px-4 py-3.5 ${left ? "sticky left-0 bg-panel text-left font-medium" : "text-right"} ${strong ? "font-semibold text-fg" : ""}`}>{children}</td>
+    <td className={`${left ? "sticky left-0 bg-surface text-left font-medium" : "text-right"} ${strong ? "font-semibold" : left ? "" : "text-muted"}`}>{children}</td>
   );
 }

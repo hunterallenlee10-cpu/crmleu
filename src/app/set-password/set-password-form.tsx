@@ -18,7 +18,7 @@ export function SetPasswordForm() {
         <input id="confirm" name="confirm" type="password" autoComplete="new-password" minLength={8} required className="input" />
       </div>
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full">
+      <button type="submit" disabled={pending} className="btn btn-primary w-full">
         {pending ? "Saving…" : "Save password"}
       </button>
     </form>

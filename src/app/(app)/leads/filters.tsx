@@ -45,7 +45,7 @@ export function LeadFilters({
     setFilters((f) => ({ ...f, [name]: e.target.value }));
 
   return (
-    <div className="space-y-3 rounded-2xl border border-line bg-panel/60 p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.03)]">
+    <div className="space-y-3">
       <input
         type="search"
         value={filters.q}
@@ -54,7 +54,7 @@ export function LeadFilters({
         aria-label="Search leads"
         className="input"
       />
-      <div className={`grid gap-3 sm:flex ${owners ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`grid gap-2 sm:flex sm:gap-3 ${owners ? "grid-cols-3" : "grid-cols-2"}`}>
         <select aria-label="Stage" className="input sm:w-48" value={filters.stage} onChange={set("stage")}>
           <option value="">All stages</option>
           {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}

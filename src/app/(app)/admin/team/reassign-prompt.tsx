@@ -27,7 +27,7 @@ export function ReassignPrompt({
   }
 
   return (
-    <form onSubmit={submit} role="alert" className="space-y-3 rounded-2xl border border-gold/50 bg-gold/[0.07] p-5 shadow-[0_0_0_4px_rgb(201_162_74/0.05)]">
+    <form onSubmit={submit} role="alert" className="space-y-3 rounded-card border border-warning/30 bg-warning/[0.08] p-4 sm:p-5">
       <p>
         <span className="font-semibold">{from.name}</span> is deactivated but still has{" "}
         <span className="font-semibold">{openLeads} open lead{openLeads === 1 ? "" : "s"}</span>. Reassign them to:
@@ -37,7 +37,7 @@ export function ReassignPrompt({
           <option value="">Choose a rep…</option>
           {assignees.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
-        <button type="submit" disabled={!to || isPending} className="btn btn-gold">
+        <button type="submit" disabled={!to || isPending} className="btn btn-primary">
           {isPending ? "Reassigning…" : `Reassign ${openLeads} lead${openLeads === 1 ? "" : "s"}`}
         </button>
       </div>

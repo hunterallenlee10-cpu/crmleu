@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CircleCheck } from "lucide-react";
 import Link from "next/link";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
@@ -63,7 +64,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
       <div className="space-y-4">
         <div>
           <h1 className="page-title">Tasks</h1>
-          <p className="mt-2 text-muted">
+          <p className="mt-1.5 text-muted">
             {myOpen === 0 ? "You're all caught up." : `${myOpen} open task${myOpen === 1 ? "" : "s"} for you.`}
           </p>
         </div>
@@ -85,11 +86,11 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
       </div>
 
       {isAdmin && (
-        <details className="card card-glow group" open={tasks.length === 0}>
-          <summary className="cursor-pointer list-none text-lg font-semibold tracking-tight [&::-webkit-details-marker]:hidden">
-            <span className="text-gold group-open:hidden">+ </span>New task
+        <details className="card group" open={tasks.length === 0}>
+          <summary className="-m-5 cursor-pointer list-none rounded-card p-5 text-sm font-semibold transition-colors duration-150 hover:bg-surface-2 group-open:mb-0 group-open:rounded-b-none [&::-webkit-details-marker]:hidden">
+            <span className="text-muted group-open:hidden">+ </span>New task
           </summary>
-          <div className="mt-4">
+          <div className="mt-5">
             <TaskForm assignees={assignees} />
           </div>
         </details>
@@ -114,22 +115,24 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
           />
         );
         return (
-          <section key={g.key} className="space-y-4">
-            <h2 className={`eyebrow flex items-center gap-3 ${g.key === me.id ? "text-gold" : "text-fg"}`}>
-              {g.title} <span className="count normal-case tracking-normal">{open.length} open</span>
-              <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
+          <section key={g.key} className="space-y-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              {g.title} <span className="count">{open.length} open</span>
             </h2>
             {open.length > 0 ? (
-              <ul className="space-y-3">{open.map(item)}</ul>
+              <ul className="space-y-2">{open.map(item)}</ul>
             ) : (
-              <p className="rounded-2xl border border-dashed border-line px-5 py-5 text-center text-sm text-muted">{g.tasks.length === 0 ? g.empty : "All done."}</p>
+              <div className="empty py-6">
+                <CircleCheck aria-hidden="true" className="empty-icon" strokeWidth={1.75} />
+                <p>{g.tasks.length === 0 ? g.empty : "All done."}</p>
+              </div>
             )}
             {done.length > 0 && (
               <details className="space-y-3">
-                <summary className="cursor-pointer text-sm text-muted transition-colors hover:text-gold-light">
+                <summary className="cursor-pointer rounded-control text-label text-muted transition-colors duration-150 hover:text-fg">
                   Done in the last {DONE_WINDOW_DAYS} days ({done.length})
                 </summary>
-                <ul className="mt-3 space-y-3">{done.map(item)}</ul>
+                <ul className="mt-3 space-y-2">{done.map(item)}</ul>
               </details>
             )}
           </section>

@@ -3,87 +3,132 @@
 /* `light:` styles apply when the light theme is on (see ThemeToggle). */
 @custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
-/* LEU black-and-gold palette. Dark is the default; light overrides it below. */
+/*
+  LEU design tokens.
+  Dark is the default: "Graphite & Platinum". Light: "Daylight & Navy".
+  Components use these names only, never raw hex values.
+*/
 @theme {
-  --color-ink: #0b0b0b;        /* page background */
-  --color-panel: #141414;      /* cards */
-  --color-raised: #1b1b1b;     /* hovered / lifted surfaces */
-  --color-field: #0e0e0e;      /* inputs (sit darker than the card around them) */
-  --color-line: #262626;       /* borders */
-  --color-line-strong: #353535;
-  --color-fg: #f5f1e8;         /* main text */
-  --color-muted: #9b968b;      /* secondary text */
-  --color-gold: #c9a24a;
-  --color-gold-light: #e2c47a;
-  --color-gold-deep: #a8832f;
-  --color-danger: #f07167;
-  --color-ok: #7bc47f;
-  --color-tint: #ffffff;       /* faint hover / fill washes */
-  --color-mark: #1d1a12;       /* monogram background */
-  /* Gold for buttons and badges with dark text on them. Same in both themes. */
-  --color-gilt-light: #e2c47a;
-  --color-gilt: #c9a24a;
-  --color-gilt-deep: #a8832f;
-  --color-on-gold: #0b0b0b;
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Surfaces */
+  --color-bg: #121417;             /* page */
+  --color-surface: #1a1d21;        /* cards, panels */
+  --color-surface-2: #22262b;      /* top bar, lanes, table headers, hovered rows */
+  --color-line: #2e3238;           /* borders */
+  --color-line-strong: #3a3f46;
+
+  /* Text */
+  --color-fg: #eceef1;             /* platinum */
+  --color-muted: #9ba1aa;
+  --color-faint: #6b717a;          /* non-essential marks only (fails AA as body text) */
+
+  /* Accent: primary actions, current selection, focus */
+  --color-accent: #c9ced6;
+  --color-accent-strong: #dde1e6;  /* brushed-platinum highlight */
+  --color-accent-deep: #b4bac3;    /* brushed-platinum shade */
+  --color-on-accent: #121417;
+
+  /* Semantic. Used as soft tinted pills, never big solid blocks. */
+  --color-success: #4fb286;
+  --color-warning: #e0a84a;
+  --color-danger: #ec6a6d;         /* #E5575B lifted a touch so small text passes AA */
+  --color-danger-solid: #e5575b;
+  --color-info: #6ea8fe;
+  --color-violet: #a99bf5;         /* one extra stage hue */
+
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale, ratio ~1.2: 12 / 13 / 14 (body) / 16 / 20 / 24 / 30 */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.125rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 1.875rem;
+  --text-2xl--line-height: 2.25rem;
+
+  /* Radius by hierarchy */
+  --radius-control: 6px;           /* inputs, buttons, badges */
+  --radius-card: 10px;             /* cards, panels, lanes */
+  --radius-modal: 14px;            /* dialogs */
+
+  /* Floating elements only: offset + soft blur */
+  --shadow-float: 0 8px 24px -6px rgb(0 0 0 / 0.5), 0 2px 6px -2px rgb(0 0 0 / 0.35);
 
   --animate-fade-in: fade-in 160ms ease-out both;
-  --animate-pop-in: pop-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pop-in: pop-in 180ms ease-out both;
 
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
   @keyframes pop-in {
-    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    from { opacity: 0; transform: translateY(6px) scale(0.99); }
     to { opacity: 1; transform: none; }
   }
 }
 
-:root {
-  --shadow-strong: 0.9;  /* opacity of big drop shadows */
-  --shadow-soft: 0.35;
-  --glow: 0.09;          /* gold glow behind the top of the page */
-}
-
 html {
   color-scheme: dark;
+  /* Keep focused fields clear of the sticky top bar and the phone tab bar. */
+  scroll-padding-top: 4.5rem;
+  scroll-padding-bottom: 5.5rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 768px) {
+  html {
+    scroll-padding-bottom: 1rem;
+  }
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --color-ink: #f4f4f2;
-  --color-panel: #ffffff;
-  --color-raised: #f8f8f6;
-  --color-field: #fbfbfa;
-  --color-line: #e3e1db;
-  --color-line-strong: #cfccc4;
-  --color-fg: #18181b;
-  --color-muted: #66635b;
-  --color-gold: #946f16;       /* darker so gold text stays readable on white */
-  --color-gold-light: #85630f;
-  --color-gold-deep: #6f520b;
-  --color-danger: #c2372b;
-  --color-ok: #2d7d38;
-  --color-tint: #000000;
-  --color-mark: #fffaf0;
-  --shadow-strong: 0.16;
-  --shadow-soft: 0.06;
-  --glow: 0.12;
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f5;
+  --color-line: #dde2e8;
+  --color-line-strong: #c3cad3;
+  --color-fg: #0f1b2d;             /* navy ink */
+  --color-muted: #5b6675;
+  --color-faint: #6b7684;
+  --color-accent: #1e3a5f;         /* navy */
+  --color-accent-strong: #1e3a5f;
+  --color-accent-deep: #1e3a5f;
+  --color-on-accent: #ffffff;
+  --color-success: #1a744c;
+  --color-warning: #935a00;
+  --color-danger: #c1363b;
+  --color-danger-solid: #c1363b;
+  --color-info: #1f5fbf;
+  --color-violet: #5b46c4;
+  --shadow-float: 0 8px 24px -6px rgb(15 27 45 / 0.16), 0 2px 6px -2px rgb(15 27 45 / 0.1);
 }
 
 body {
-  /* A soft gold glow behind the top of every page. */
-  background:
-    radial-gradient(1100px 420px at 50% -180px, rgb(201 162 74 / var(--glow)), transparent 70%) no-repeat,
-    var(--color-ink);
+  background: var(--color-bg);
   color: var(--color-fg);
-  font-feature-settings: "ss01", "cv11";
-  transition: background-color 200ms ease, color 200ms ease;
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  /* Every number, date, phone and dollar amount lines up. */
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--color-accent);
 }
 
 ::selection {
-  background: rgb(201 162 74 / 0.35);
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
   color: var(--color-fg);
 }
 
@@ -92,117 +137,186 @@ body {
   scrollbar-color: var(--color-line-strong) transparent;
 }
 
-/* Keyboard focus ring for links and buttons. Inputs have their own. */
-:where(a, button, summary, [role="button"]):focus-visible {
-  outline: 2px solid var(--color-gold);
+a {
+  text-underline-offset: 3px;
+}
+
+/* Keyboard focus: 2px accent ring with offset. */
+:where(a, button, summary, [role="button"], [role="switch"], input[type="checkbox"], input[type="radio"]):focus-visible {
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accent);
+}
+
+/* The logo comes in two finishes. Silver on dark, gold on light. */
+.logo-light {
+  display: none;
+}
+[data-theme="light"] .logo-dark {
+  display: none;
+}
+[data-theme="light"] .logo-light {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
 @layer components {
+  /* Buttons: primary (brushed platinum / navy), secondary, ghost, danger. */
   .btn {
-    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-base font-semibold whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform,filter] duration-200 ease-out select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-control border px-4 text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,filter] duration-150 ease-out select-none sm:min-h-10 disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .btn-gold {
-    @apply text-on-gold;
-    background: linear-gradient(180deg, var(--color-gilt-light) 0%, var(--color-gilt) 55%, var(--color-gilt-deep) 100%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.35),
-      inset 0 -1px 0 rgb(0 0 0 / 0.15),
-      0 1px 2px rgb(0 0 0 / calc(var(--shadow-soft) * 1.4)),
-      0 8px 24px -10px rgb(201 162 74 / 0.55);
+  .btn-primary {
+    @apply border-accent-deep text-on-accent;
+    background: linear-gradient(180deg, var(--color-accent-strong) 0%, var(--color-accent) 55%, var(--color-accent-deep) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55);
   }
-  .btn-gold:hover {
-    filter: brightness(1.07);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.4),
-      inset 0 -1px 0 rgb(0 0 0 / 0.15),
-      0 1px 2px rgb(0 0 0 / calc(var(--shadow-soft) * 1.4)),
-      0 12px 32px -10px rgb(201 162 74 / 0.7);
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
+  .btn-primary:active:not(:disabled) {
+    filter: brightness(0.94);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.18);
+  }
+  [data-theme="light"] .btn-primary {
+    background: var(--color-accent);
+    box-shadow: none;
+  }
+  [data-theme="light"] .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.18);
+  }
+  .btn-secondary {
+    @apply border-line bg-surface text-fg hover:border-line-strong hover:bg-surface-2 active:bg-surface-2;
   }
   .btn-ghost {
-    @apply border border-line bg-tint/[0.02] text-fg hover:border-gold/50 hover:bg-gold/[0.06] hover:text-gold-light;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+    @apply border-transparent bg-transparent text-muted hover:bg-fg/[0.06] hover:text-fg active:bg-fg/[0.09];
   }
   .btn-danger {
-    @apply border border-danger/50 bg-danger/[0.04] text-danger hover:border-danger/80 hover:bg-danger/10;
+    @apply border-danger/40 bg-danger/[0.08] text-danger hover:border-danger/70 hover:bg-danger/[0.14] active:bg-danger/[0.18];
   }
 
-  /* 16px text keeps iOS from zooming in on focus */
+  /* Inputs: 40px (44px on phones), visible labels, accent focus ring.
+     16px text on phones keeps iOS from zooming in on focus. */
   .input {
-    @apply min-h-12 w-full rounded-xl border border-line bg-field px-4 text-base text-fg transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-muted/60 hover:border-line-strong focus:border-gold/70 disabled:opacity-60;
-    box-shadow: inset 0 1px 2px rgb(0 0 0 / calc(var(--shadow-soft) * 1.3));
+    @apply min-h-11 w-full rounded-control border border-line-strong bg-bg px-3 text-base text-fg transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-muted hover:border-muted/60 sm:min-h-10 sm:text-sm disabled:cursor-not-allowed disabled:opacity-60;
   }
-  .input:focus {
-    box-shadow:
-      inset 0 1px 2px rgb(0 0 0 / calc(var(--shadow-soft) * 1.3)),
-      0 0 0 4px rgb(201 162 74 / 0.18);
+  .input:focus-visible {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
-  /* Custom chevron so selects match the rest of the form. */
+  [data-theme="light"] .input {
+    @apply bg-surface;
+  }
   select.input {
-    @apply cursor-pointer appearance-none pr-10;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239b968b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    @apply cursor-pointer appearance-none pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239ba1aa' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 0.85rem center;
-    background-size: 1.1rem;
+    background-position: right 0.65rem center;
+    background-size: 1rem;
   }
   select.input option {
-    background: var(--color-panel);
+    background: var(--color-surface);
+    color: var(--color-fg);
   }
   input[type="date"].input::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    opacity: 0.6;
-    filter: invert(0.75) sepia(0.4) saturate(2) hue-rotate(5deg);
+    opacity: 0.7;
+    filter: invert(0.7);
   }
   [data-theme="light"] input[type="date"].input::-webkit-calendar-picker-indicator {
     filter: none;
   }
 
   .label {
-    @apply mb-1.5 block text-sm font-medium text-muted;
+    @apply mb-1.5 block text-label font-medium text-muted;
   }
 
   .card {
-    @apply rounded-2xl border border-line bg-panel p-5;
-    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.025), rgb(255 255 255 / 0) 120px);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      0 1px 2px rgb(0 0 0 / var(--shadow-soft)),
-      0 10px 30px -18px rgb(0 0 0 / var(--shadow-strong));
+    @apply rounded-card border border-line bg-surface p-5;
   }
-  /* A card that links somewhere: lifts a little on hover. */
+  /* A card that links somewhere. */
   .card-link {
-    @apply transition-[border-color,transform,background-color] duration-200 ease-out hover:-translate-y-px hover:border-gold/40 hover:bg-raised active:translate-y-0;
-  }
-  /* Feature card with a gold glow in the corner. */
-  .card-glow {
-    background-image:
-      radial-gradient(600px 220px at 0% 0%, rgb(201 162 74 / 0.12), transparent 70%),
-      linear-gradient(180deg, rgb(255 255 255 / 0.03), rgb(255 255 255 / 0) 160px);
-    border-color: rgb(201 162 74 / 0.22);
+    @apply transition-[border-color,background-color] duration-150 ease-out hover:border-line-strong;
   }
 
   .page-title {
-    @apply text-[1.75rem] leading-tight font-semibold tracking-tight sm:text-3xl;
+    @apply text-xl font-semibold tracking-tight sm:text-2xl;
   }
-  /* Small uppercase section label. */
-  .eyebrow {
-    @apply text-xs font-semibold tracking-[0.14em] uppercase;
+  .section-title {
+    @apply text-base font-semibold;
+  }
+  /* Small heading above a group (sentence case, not tracked caps). */
+  .group-title {
+    @apply text-label font-semibold;
   }
 
-  /* Pill-shaped toggle used for stage pickers and tabs. */
+  /* Segmented toggles (stage picker, tabs, filters). */
   .chip {
-    @apply inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-tint/[0.02] px-4 text-sm font-medium text-muted transition-[color,background-color,border-color,transform] duration-200 hover:border-gold/50 hover:text-gold-light active:scale-[0.97] disabled:opacity-60;
+    @apply inline-flex min-h-11 items-center justify-center rounded-control border border-line bg-surface px-3 text-label font-medium text-muted transition-[color,background-color,border-color] duration-150 hover:border-line-strong hover:text-fg sm:min-h-9 disabled:cursor-not-allowed disabled:opacity-60;
   }
   .chip-active {
-    @apply border-transparent text-on-gold hover:text-on-gold;
-    background: linear-gradient(180deg, var(--color-gilt-light), var(--color-gilt));
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.35),
-      0 6px 18px -8px rgb(201 162 74 / 0.6);
+    @apply border-accent bg-accent/[0.12] text-fg hover:border-accent hover:text-fg;
   }
 
-  /* Small count bubble next to a heading. */
+  /* Count next to a heading. */
   .count {
-    @apply inline-flex min-w-6 items-center justify-center rounded-full border border-line bg-tint/[0.03] px-2 py-0.5 text-xs font-semibold text-muted tabular-nums;
+    @apply inline-flex min-w-5 items-center justify-center rounded-control bg-fg/[0.07] px-1.5 text-xs font-medium text-muted;
   }
+
+  /* Soft status pills. */
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-control px-2 py-0.5 text-xs font-medium whitespace-nowrap;
+  }
+  .pill-neutral { @apply bg-fg/[0.07] text-muted; }
+  .pill-accent { @apply bg-accent/[0.14] text-fg; }
+  .pill-success { @apply bg-success/[0.14] text-success; }
+  .pill-warning { @apply bg-warning/[0.14] text-warning; }
+  .pill-danger { @apply bg-danger/[0.13] text-danger; }
+  .pill-info { @apply bg-info/[0.14] text-info; }
+  .pill-violet { @apply bg-violet/[0.14] text-violet; }
+
+  /* Empty state: icon plus the existing copy, centered. */
+  .empty {
+    @apply flex flex-col items-center justify-center gap-2 rounded-card border border-dashed border-line px-6 py-8 text-center text-sm text-muted;
+  }
+  .empty-icon {
+    @apply size-5 text-faint;
+  }
+
+  /* Tables */
+  .table-wrap {
+    @apply -mx-5 overflow-x-auto border-y border-line bg-surface sm:mx-0 sm:rounded-card sm:border-x;
+  }
+  .data-table {
+    @apply w-full min-w-max text-sm;
+  }
+  .data-table th {
+    @apply border-b border-line bg-surface-2 px-4 py-2.5 text-label font-medium text-muted;
+  }
+  .data-table td {
+    @apply px-4 py-3;
+  }
+  .data-table tbody tr + tr {
+    @apply border-t border-line;
+  }
+  .data-table td {
+    @apply transition-colors duration-150;
+  }
+}
+
+/* Row hover. Unlayered so it also covers sticky cells that set their own background. */
+.data-table tbody tr:hover > td {
+  background-color: var(--color-surface-2);
 }

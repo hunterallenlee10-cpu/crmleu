@@ -57,11 +57,11 @@ export function TaskForm({
       />
       <FormMessage state={task ? (state?.error ? state : undefined) : state} />
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={pending} className="btn btn-gold w-full sm:w-auto">
+        <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
           {pending ? "Saving…" : task ? "Save task" : "Add task"}
         </button>
         {onDone && (
-          <button type="button" onClick={onDone} className="btn btn-ghost w-full sm:w-auto">Cancel</button>
+          <button type="button" onClick={onDone} className="btn btn-secondary w-full sm:w-auto">Cancel</button>
         )}
       </div>
     </form>
@@ -109,18 +109,18 @@ function WhoFields({
             role="switch"
             aria-checked={everyone}
             onClick={() => setEveryone(!everyone)}
-            className="flex w-full items-center justify-between gap-4 rounded-xl border border-line bg-field px-4 py-3 text-left transition-colors hover:border-gold/50"
+            className="flex w-full items-center justify-between gap-4 rounded-control border border-line px-3 py-2.5 text-left transition-colors duration-150 hover:border-line-strong"
           >
             <span>
               <span className="block font-medium">Everyone has to check this off</span>
-              <span className="block text-sm text-muted">
+              <span className="block text-label text-muted">
                 {everyone
                   ? "Each rep ticks it off for themselves. It's done when every rep has."
                   : "Off: it's done as soon as anyone ticks it."}
               </span>
             </span>
-            <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${everyone ? "bg-gold shadow-[0_0_14px_-2px_rgb(201_162_74/0.6)]" : "bg-line-strong"}`}>
-              <span className={`absolute top-1 size-5 rounded-full bg-fg shadow-sm transition-all ${everyone ? "left-6" : "left-1"}`} />
+            <span className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-150 ${everyone ? "bg-accent" : "bg-line-strong"}`}>
+              <span className={`absolute top-1 size-4 rounded-full transition-[left,background-color] duration-150 ${everyone ? "left-5 bg-on-accent" : "left-1 bg-muted"}`} />
             </span>
           </button>
         </>

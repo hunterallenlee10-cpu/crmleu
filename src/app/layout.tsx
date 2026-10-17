@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Hanken_Grotesk } from "next/font/google";
 import { getTheme } from "@/lib/theme";
 import { THEME_COLORS } from "@/lib/theme-shared";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Rendered on the server from the cookie, so there's no flash of the wrong theme.
   const theme = await getTheme();
   return (
-    <html lang="en" data-theme={theme} className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="en" data-theme={theme} className={`${hanken.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );

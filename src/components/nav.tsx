@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  CalendarCheck,
+  KanbanSquare,
+  ListChecks,
+  SlidersHorizontal,
+  SquarePlus,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@/lib/types";
@@ -15,6 +24,16 @@ const REP_ITEMS: NavItem[] = [
 ];
 const ADMIN_ITEMS: NavItem[] = [{ href: "/admin", label: "Admin" }];
 
+// Icons for the phone tab bar.
+const ICONS: Record<string, LucideIcon> = {
+  "/today": CalendarCheck,
+  "/leads": Users,
+  "/pipeline": KanbanSquare,
+  "/tasks": ListChecks,
+  "/leads/new": SquarePlus,
+  "/admin": SlidersHorizontal,
+};
+
 function itemsFor(role: Role) {
   return role === "admin" ? [...REP_ITEMS, ...ADMIN_ITEMS] : REP_ITEMS;
 }
@@ -28,16 +47,16 @@ function isActive(pathname: string, href: string) {
 export function DesktopNav({ role }: { role: Role }) {
   const pathname = usePathname();
   return (
-    <nav className="hidden items-center gap-1 rounded-full border border-line bg-panel/70 p-1 shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] md:flex">
+    <nav className="hidden items-center gap-0.5 md:flex">
       {itemsFor(role).map((item) => (
         <Link
           key={item.href}
           href={item.href}
           aria-current={isActive(pathname, item.href) ? "page" : undefined}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+          className={`rounded-control px-3 py-1.5 text-sm font-medium transition-colors duration-150 ${
             isActive(pathname, item.href)
-              ? "bg-gold/[0.12] text-gold-light shadow-[inset_0_0_0_1px_rgb(201_162_74/0.3)]"
-              : "text-muted hover:bg-tint/[0.04] hover:text-fg"
+              ? "bg-accent/[0.12] text-accent"
+              : "text-muted hover:bg-fg/[0.06] hover:text-fg"
           }`}
         >
           {item.label}
@@ -53,28 +72,30 @@ export function MobileNav({ role }: { role: Role }) {
   const items = itemsFor(role);
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-20 border-t border-tint/[0.06] bg-ink/85 backdrop-blur-xl backdrop-saturate-150 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface-2 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item) => {
           const active = isActive(pathname, item.href);
+          const Icon = ICONS[item.href];
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-16 items-center justify-center font-medium transition-colors ${items.length > 5 ? "text-xs min-[400px]:text-sm" : "text-sm"} ${
-                  active ? "text-gold-light" : "text-muted active:text-fg"
+                className={`flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium transition-colors duration-150 ${
+                  active ? "text-accent" : "text-muted active:text-fg"
                 }`}
               >
-                {/* Gold bar above the current tab */}
-                <span
-                  aria-hidden="true"
-                  className={`absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-gold transition-opacity ${
-                    active ? "opacity-100 shadow-[0_0_12px_rgb(201_162_74/0.8)]" : "opacity-0"
-                  }`}
-                />
+                {Icon && (
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-7 w-11 items-center justify-center rounded-control transition-colors duration-150 ${active ? "bg-accent/[0.14]" : ""}`}
+                  >
+                    <Icon className="size-[18px]" strokeWidth={1.75} />
+                  </span>
+                )}
                 {item.label}
               </Link>
             </li>
