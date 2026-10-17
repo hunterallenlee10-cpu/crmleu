@@ -32,7 +32,7 @@ export default async function TeamPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Team</h1>
+      <h1 className="page-title">Team</h1>
       {needsReassign.map((m) => (
         <ReassignPrompt key={m.id} from={{ id: m.id, name: m.full_name }} openLeads={openLeads(m.id)} assignees={assignees} />
       ))}
@@ -44,7 +44,7 @@ export default async function TeamPage() {
       </ul>
       {inactive.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-sm text-muted hover:text-fg">
+          <summary className="cursor-pointer text-sm text-muted transition-colors hover:text-gold-light">
             Inactive ({inactive.length})
           </summary>
           <ul className="mt-3 space-y-3">

@@ -62,7 +62,7 @@ export function LeadForm({
         <Field name="spec_site_url" label="Spec site URL" inputMode="url" defaultValue={value("spec_site_url")} />
         {isNew && <Field name="next_follow_up" label="Next follow-up" type="date" defaultValue={value("next_follow_up")} />}
       </div>
-      <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line px-4">
+      <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-field px-4 transition-colors hover:border-line-strong has-[:checked]:border-danger/50 has-[:checked]:bg-danger/[0.06]">
         <input type="checkbox" name="do_not_contact" defaultChecked={dnc} className="size-5 accent-[var(--color-danger)]" />
         <span>Do not contact</span>
       </label>

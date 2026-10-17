@@ -45,7 +45,7 @@ export function LeadFilters({
     setFilters((f) => ({ ...f, [name]: e.target.value }));
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-2xl border border-line bg-panel/60 p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.03)]">
       <input
         type="search"
         value={filters.q}

@@ -78,9 +78,9 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-2xl font-semibold">Today</h1>
-        <p className="mt-1 text-muted">
-          Hi {firstName}.{" "}
+        <h1 className="page-title">Today</h1>
+        <p className="mt-2 text-muted">
+          Hi <span className="text-fg">{firstName}</span>.{" "}
           {due === 0 ? "No follow-ups due." : `${due} follow-up${due === 1 ? "" : "s"} to do.`}
         </p>
       </div>
@@ -88,10 +88,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-10">
           {tasks.length > 0 && (
-            <section className="space-y-3">
-              <h2 className="flex items-baseline justify-between gap-3 text-sm font-semibold uppercase tracking-wider text-fg">
-                <span>Tasks <span className="text-muted">({tasks.length})</span></span>
-                <Link href="/tasks" className="text-xs font-medium normal-case tracking-normal text-gold underline-offset-4 hover:underline">
+            <section className="space-y-4">
+              <h2 className="eyebrow flex items-center gap-3 text-fg">
+                Tasks <span className="count">{tasks.length}</span>
+                <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
+                <Link href="/tasks" className="text-xs font-medium normal-case tracking-normal text-gold-light underline-offset-4 hover:underline">
                   All tasks
                 </Link>
               </h2>
@@ -168,12 +169,13 @@ function Section({
 }) {
   if (count === 0 && !empty) return null;
   return (
-    <section className="space-y-3">
-      <h2 className={`text-sm font-semibold uppercase tracking-wider ${tone}`}>
-        {title} <span className="text-muted">({count})</span>
+    <section className="space-y-4">
+      <h2 className={`eyebrow flex items-center gap-3 ${tone}`}>
+        {title} <span className="count">{count}</span>
+        <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
       </h2>
       {count === 0 ? (
-        <p className="text-sm text-muted">{empty}</p>
+        <p className="rounded-2xl border border-dashed border-line px-5 py-6 text-center text-sm text-muted">{empty}</p>
       ) : (
         <div className="space-y-3">
           {leads.map((lead) => (

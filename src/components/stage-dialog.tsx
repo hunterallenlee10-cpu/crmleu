@@ -44,9 +44,9 @@ export function StageDialog({
   const shownError = localError || error;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" role="dialog" aria-modal="true">
-      <form onSubmit={submit} className="card w-full max-w-sm space-y-4 p-6">
-        <h2 className="text-lg font-semibold">{stage === "lost" ? "Mark as Lost" : "Mark as Won"}</h2>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 p-4 backdrop-blur-sm motion-safe:animate-fade-in sm:items-center" role="dialog" aria-modal="true">
+      <form onSubmit={submit} className="card w-full max-w-sm space-y-4 border-line-strong p-6 shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] motion-safe:animate-pop-in">
+        <h2 className="text-lg font-semibold tracking-tight">{stage === "lost" ? "Mark as Lost" : "Mark as Won"}</h2>
         {stage === "lost" ? (
           <div>
             <label htmlFor="lost_reason" className="label">Why was it lost?</label>

@@ -79,7 +79,7 @@ export function TaskItem({
   const tickedCount = progress.filter(ticked).length;
 
   return (
-    <li className={`card flex gap-4 ${done ? "opacity-70" : ""}`}>
+    <li className={`card flex gap-4 px-5 py-4 transition-opacity ${done ? "opacity-60" : ""}`}>
       <label className={`-m-2 flex shrink-0 items-start p-2 ${canCheck ? "cursor-pointer" : "cursor-not-allowed"}`}>
         <input
           type="checkbox"
@@ -92,7 +92,7 @@ export function TaskItem({
         />
       </label>
       <div className="min-w-0 flex-1 space-y-1">
-        <p className={`font-medium break-words ${done ? "text-muted line-through" : ""}`}>{task.title}</p>
+        <p className={`font-semibold tracking-tight break-words ${done ? "text-muted line-through" : ""}`}>{task.title}</p>
         {task.details && <p className="text-sm whitespace-pre-line break-words text-muted">{task.details}</p>}
         <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
           {showAssignee && <span className={task.assignee_id ? "" : "text-gold"}>{assignee}</span>}
@@ -116,7 +116,7 @@ export function TaskItem({
               <li
                 key={p.user_id}
                 title={p.checked_at && ticked(p) ? `Checked off ${formatDateTime(p.checked_at)}` : undefined}
-                className={`rounded-full border px-2.5 py-0.5 text-xs ${ticked(p) ? "border-ok/50 text-ok" : "border-line text-muted"}`}
+                className={`rounded-full border px-2.5 py-0.5 text-xs ${ticked(p) ? "border-ok/40 bg-ok/[0.08] text-ok" : "border-line text-muted"}`}
               >
                 {ticked(p) ? "✓" : "○"} {p.full_name}
               </li>
@@ -127,10 +127,10 @@ export function TaskItem({
       </div>
       {isAdmin && (
         <div className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-start">
-          <button type="button" onClick={() => setEditing(true)} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted hover:text-gold">
+          <button type="button" onClick={() => setEditing(true)} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-white/[0.04] hover:text-gold-light">
             Edit
           </button>
-          <button type="button" onClick={remove} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted hover:text-danger">
+          <button type="button" onClick={remove} disabled={isPending} className="rounded-lg px-2 py-1.5 text-sm text-muted transition-colors hover:bg-danger/[0.06] hover:text-danger">
             Delete
           </button>
         </div>

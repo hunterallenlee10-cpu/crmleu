@@ -46,7 +46,7 @@ export function TaskForm({
       </div>
       <div>
         <label htmlFor={id("details")} className="label">Details (optional)</label>
-        <textarea id={id("details")} name="details" rows={2} maxLength={2000} className="input py-3" defaultValue={value("details")} />
+        <textarea id={id("details")} name="details" rows={2} maxLength={2000} className="input resize-y py-3 leading-relaxed" defaultValue={value("details")} />
       </div>
       <WhoFields
         id={id}
@@ -109,7 +109,7 @@ function WhoFields({
             role="switch"
             aria-checked={everyone}
             onClick={() => setEveryone(!everyone)}
-            className="flex w-full items-center justify-between gap-4 rounded-xl border border-line px-4 py-3 text-left hover:border-gold"
+            className="flex w-full items-center justify-between gap-4 rounded-xl border border-line bg-field px-4 py-3 text-left transition-colors hover:border-gold/50"
           >
             <span>
               <span className="block font-medium">Everyone has to check this off</span>
@@ -119,8 +119,8 @@ function WhoFields({
                   : "Off: it's done as soon as anyone ticks it."}
               </span>
             </span>
-            <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${everyone ? "bg-gold" : "bg-line"}`}>
-              <span className={`absolute top-1 size-5 rounded-full bg-fg transition-all ${everyone ? "left-6" : "left-1"}`} />
+            <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${everyone ? "bg-gold shadow-[0_0_14px_-2px_rgb(201_162_74/0.6)]" : "bg-line-strong"}`}>
+              <span className={`absolute top-1 size-5 rounded-full bg-fg shadow-sm transition-all ${everyone ? "left-6" : "left-1"}`} />
             </span>
           </button>
         </>

@@ -55,6 +55,7 @@ export function AdminLeadControls({
       </div>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       {message && <p role="status" className="text-sm text-ok">{message}</p>}
+      <div className="border-t border-line pt-4" />
       <button type="button" className="btn btn-danger" disabled={isPending} onClick={remove}>
         Delete lead
       </button>

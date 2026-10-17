@@ -56,29 +56,29 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
   const tel = lead.phone ? `+1${lead.phone}` : null;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-6">
       {/* Header */}
-      <div className="space-y-2">
+      <div className="card card-glow space-y-3 p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold">{lead.business_name}</h1>
+          <h1 className="page-title">{lead.business_name}</h1>
           <StageBadge stage={lead.stage} />
         </div>
         <p className="text-muted">
           {[lead.contact_name, place, lead.niche].filter(Boolean).join(" · ")}
         </p>
-        {lead.phone && <p className="text-lg">{formatPhone(lead.phone)}</p>}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          {lead.email && <a href={`mailto:${lead.email}`} className="text-gold hover:underline">{lead.email}</a>}
-          {lead.website && <a href={externalUrl(lead.website)} target="_blank" rel="noreferrer" className="text-gold hover:underline">Website</a>}
-          {lead.spec_site_url && <a href={externalUrl(lead.spec_site_url)} target="_blank" rel="noreferrer" className="text-gold hover:underline">Spec site</a>}
+        {lead.phone && <p className="text-2xl font-medium tracking-tight tabular-nums">{formatPhone(lead.phone)}</p>}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          {lead.email && <a href={`mailto:${lead.email}`} className={LINK_PILL}>{lead.email}</a>}
+          {lead.website && <a href={externalUrl(lead.website)} target="_blank" rel="noreferrer" className={LINK_PILL}>Website <span aria-hidden="true">↗</span></a>}
+          {lead.spec_site_url && <a href={externalUrl(lead.spec_site_url)} target="_blank" rel="noreferrer" className={LINK_PILL}>Spec site <span aria-hidden="true">↗</span></a>}
           {lead.service_interest && (
-            <span className="text-muted">
+            <span className="px-1 text-muted">
               Interested in {SERVICE_INTERESTS.find((s) => s.value === lead.service_interest)?.label.toLowerCase()}
             </span>
           )}
         </div>
         {lead.stage === "won" && lead.won_date && (
-          <p className="text-sm text-gold">
+          <p className="text-sm font-medium text-gold-light tabular-nums">
             Won {formatDate(lead.won_date, today)} · ${Number(lead.deal_value).toLocaleString("en-US")}
           </p>
         )}
@@ -89,17 +89,17 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
 
       {/* Call / text, or a do-not-contact warning */}
       {lead.do_not_contact ? (
-        <div role="alert" className="rounded-2xl border border-danger/50 bg-danger/10 p-5 text-danger">
+        <div role="alert" className="rounded-2xl border border-danger/40 bg-danger/[0.08] p-5 text-danger">
           <p className="font-semibold">Do not contact</p>
           <p className="mt-1 text-sm">This business asked not to be contacted. Don&apos;t call or text them.</p>
         </div>
       ) : tel ? (
         <div className="grid grid-cols-2 gap-3">
-          <a href={`tel:${tel}`} className="btn btn-gold min-h-14 text-lg">Call</a>
-          <a href={`sms:${tel}`} className="btn btn-ghost min-h-14 text-lg">Text</a>
+          <a href={`tel:${tel}`} className="btn btn-gold min-h-14 rounded-2xl text-lg">Call</a>
+          <a href={`sms:${tel}`} className="btn btn-ghost min-h-14 rounded-2xl text-lg">Text</a>
         </div>
       ) : (
-        <p className="text-sm text-muted">No phone number yet. Add one below.</p>
+        <p className="rounded-2xl border border-dashed border-line px-5 py-4 text-sm text-muted">No phone number yet. Add one below.</p>
       )}
 
       <Section title="Next follow-up">
@@ -118,11 +118,14 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
         {(activities ?? []).length === 0 ? (
           <p className="text-sm text-muted">Nothing logged yet.</p>
         ) : (
-          <ol className="space-y-4">
+          <ol>
             {(activities ?? []).map((a) => (
-              <li key={a.id} className="border-l-2 border-line pl-4">
+              <li
+                key={a.id}
+                className="relative border-l border-line-strong pb-5 pl-5 before:absolute before:top-1.5 before:-left-[5px] before:size-[9px] before:rounded-full before:border before:border-gold/70 before:bg-panel last:border-transparent last:pb-0"
+              >
                 <p className="text-sm">
-                  <span className="font-medium text-gold">{ACTIVITY_LABELS[a.type]}</span>
+                  <span className="font-semibold text-gold-light">{ACTIVITY_LABELS[a.type]}</span>
                   <span className="text-muted">
                     {" · "}
                     {a.user_id ? names.get(a.user_id) ?? "Someone" : "System"}
@@ -131,7 +134,7 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
                   </span>
                   {isAdmin && <DeleteActivityButton activityId={a.id} />}
                 </p>
-                {a.body && <p className="mt-1 whitespace-pre-wrap">{a.body}</p>}
+                {a.body && <p className="mt-1.5 whitespace-pre-wrap text-fg/90">{a.body}</p>}
               </li>
             ))}
           </ol>
@@ -158,11 +161,14 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="card space-y-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">{title}</h2>
+      <h2 className="eyebrow text-muted">{title}</h2>
       {children}
     </section>
   );
 }
+
+const LINK_PILL =
+  "rounded-full border border-gold/25 bg-gold/[0.06] px-3 py-1 text-gold-light transition-colors hover:border-gold/60 hover:bg-gold/[0.12]";
 
 function externalUrl(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;

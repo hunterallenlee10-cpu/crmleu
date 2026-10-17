@@ -14,7 +14,7 @@ export default async function NewLeadPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold">New lead</h1>
+      <h1 className="page-title">New lead</h1>
       <p className="text-sm text-muted">
         We check the phone number and business name + city so two reps never work the same business.
       </p>

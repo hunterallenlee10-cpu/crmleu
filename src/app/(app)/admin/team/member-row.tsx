@@ -49,20 +49,20 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
   }
 
   return (
-    <li className={`card space-y-4 ${member.active ? "" : "opacity-70"}`}>
+    <li className={`card space-y-4 ${member.active ? "" : "opacity-60"}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-medium">{member.full_name}</p>
+          <p className="font-semibold tracking-tight">{member.full_name}</p>
           <p className="text-sm text-muted">{member.email}</p>
-          <p className="mt-1 text-xs text-muted">{openLeads} open lead{openLeads === 1 ? "" : "s"}</p>
+          <p className="mt-1.5 text-xs text-muted tabular-nums">{openLeads} open lead{openLeads === 1 ? "" : "s"}</p>
         </div>
-        <div className="flex gap-2 text-xs uppercase tracking-wide">
-          <span className={member.role === "admin" ? "text-gold" : "text-muted"}>{member.role}</span>
-          {!member.active && <span className="text-danger">inactive</span>}
+        <div className="flex gap-2 text-xs font-medium tracking-wide uppercase">
+          <span className={`rounded-full border px-2 py-0.5 ${member.role === "admin" ? "border-gold/40 bg-gold/10 text-gold-light" : "border-line text-muted"}`}>{member.role}</span>
+          {!member.active && <span className="rounded-full border border-danger/30 px-2 py-0.5 text-danger">inactive</span>}
         </div>
       </div>
       {(member.role !== "admin" || !isMe) && (
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3 border-t border-line pt-4">
           {member.role !== "admin" && (
             <form onSubmit={saveRate} className="flex items-end gap-2">
               <div>

@@ -62,8 +62,8 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
     <div className="space-y-8">
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold">Tasks</h1>
-          <p className="mt-1 text-muted">
+          <h1 className="page-title">Tasks</h1>
+          <p className="mt-2 text-muted">
             {myOpen === 0 ? "You're all caught up." : `${myOpen} open task${myOpen === 1 ? "" : "s"} for you.`}
           </p>
         </div>
@@ -76,9 +76,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
               key={f.href}
               href={f.href}
               aria-current={f.active ? "page" : undefined}
-              className={`rounded-full border px-4 py-2.5 text-sm font-medium ${
-                f.active ? "border-gold bg-gold text-black" : "border-line text-muted hover:text-fg"
-              }`}
+              className={`chip ${f.active ? "chip-active" : ""}`}
             >
               {f.label}
             </Link>
@@ -87,8 +85,8 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
       </div>
 
       {isAdmin && (
-        <details className="card group" open={tasks.length === 0}>
-          <summary className="cursor-pointer list-none text-lg font-semibold [&::-webkit-details-marker]:hidden">
+        <details className="card card-glow group" open={tasks.length === 0}>
+          <summary className="cursor-pointer list-none text-lg font-semibold tracking-tight [&::-webkit-details-marker]:hidden">
             <span className="text-gold group-open:hidden">+ </span>New task
           </summary>
           <div className="mt-4">
@@ -116,18 +114,19 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
           />
         );
         return (
-          <section key={g.key} className="space-y-3">
-            <h2 className={`text-sm font-semibold uppercase tracking-wider ${g.key === me.id ? "text-gold" : "text-fg"}`}>
-              {g.title} <span className="text-muted">({open.length} open)</span>
+          <section key={g.key} className="space-y-4">
+            <h2 className={`eyebrow flex items-center gap-3 ${g.key === me.id ? "text-gold" : "text-fg"}`}>
+              {g.title} <span className="count normal-case tracking-normal">{open.length} open</span>
+              <span aria-hidden="true" className="h-px flex-1 bg-gradient-to-r from-line to-transparent" />
             </h2>
             {open.length > 0 ? (
               <ul className="space-y-3">{open.map(item)}</ul>
             ) : (
-              <p className="text-sm text-muted">{g.tasks.length === 0 ? g.empty : "All done."}</p>
+              <p className="rounded-2xl border border-dashed border-line px-5 py-5 text-center text-sm text-muted">{g.tasks.length === 0 ? g.empty : "All done."}</p>
             )}
             {done.length > 0 && (
               <details className="space-y-3">
-                <summary className="cursor-pointer text-sm text-muted hover:text-fg">
+                <summary className="cursor-pointer text-sm text-muted transition-colors hover:text-gold-light">
                   Done in the last {DONE_WINDOW_DAYS} days ({done.length})
                 </summary>
                 <ul className="mt-3 space-y-3">{done.map(item)}</ul>

@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { FollowUpBadge } from "@/components/badges";
+import { FollowUpBadge, STAGE_DOT } from "@/components/badges";
 import { needsDetails, StageDialog, type StageExtras } from "@/components/stage-dialog";
 import { STAGES, type Lead, type Stage } from "@/lib/types";
 import { changeStage } from "../leads/actions";
@@ -81,7 +81,7 @@ export function PipelineBoard({ initialLeads, today }: { initialLeads: Lead[]; t
   return (
     <>
       {error && !pending && (
-        <p role="alert" className="mb-4 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="mb-4 rounded-xl border border-danger/35 bg-danger/[0.08] px-4 py-3 text-sm text-danger">
           {error}
         </p>
       )}
@@ -120,13 +120,18 @@ function Column({ stage, label, children }: { stage: Stage; label: string; child
     <section
       ref={setNodeRef}
       aria-label={label}
-      className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-2xl border p-3 transition-colors sm:w-72 ${
-        isOver ? "border-gold bg-gold/5" : "border-line bg-panel/50"
+      className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-2xl border p-2.5 transition-[border-color,background-color,box-shadow] duration-200 sm:w-72 ${
+        isOver
+          ? "border-gold/70 bg-gold/[0.06] shadow-[0_0_0_4px_rgb(201_162_74/0.1)]"
+          : "border-line bg-white/[0.015]"
       }`}
     >
-      <h2 className="mb-3 flex items-center justify-between px-1 text-sm font-semibold">
-        <span className={stage === "won" ? "text-gold" : stage === "lost" ? "text-danger" : ""}>{label}</span>
-        <span className="text-muted">{children.length}</span>
+      <h2 className="mb-2.5 flex items-center justify-between px-1.5 pt-1 text-sm font-semibold">
+        <span className={`flex items-center gap-2 ${stage === "won" ? "text-gold-light" : stage === "lost" ? "text-danger" : ""}`}>
+          <span aria-hidden="true" className={`size-2 rounded-full ${STAGE_DOT[stage]}`} />
+          {label}
+        </span>
+        <span className="count">{children.length}</span>
       </h2>
       <div className="flex min-h-24 flex-1 flex-col gap-2">{children}</div>
     </section>
@@ -146,13 +151,19 @@ function Card({ lead, today, dimmed }: { lead: Lead; today: string; dimmed: bool
 
 function CardBody({ lead, today, lifted }: { lead: Lead; today: string; lifted?: boolean }) {
   return (
-    <div className={`rounded-xl border bg-ink p-3 ${lifted ? "border-gold shadow-2xl" : "border-line hover:border-gold/60"}`}>
-      <p className="truncate font-medium">{lead.business_name}</p>
+    <div
+      className={`rounded-xl border bg-panel p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.04),0_1px_2px_rgb(0_0_0/0.4)] transition-[border-color,background-color,transform] duration-200 ${
+        lifted
+          ? "rotate-[1.5deg] border-gold bg-raised shadow-[0_24px_60px_-12px_rgb(0_0_0/0.9),0_0_0_1px_rgb(201_162_74/0.3)]"
+          : "border-line hover:-translate-y-px hover:border-gold/40 hover:bg-raised"
+      }`}
+    >
+      <p className="truncate font-semibold tracking-tight">{lead.business_name}</p>
       <p className="truncate text-xs text-muted">{[lead.niche, lead.city].filter(Boolean).join(" · ") || " "}</p>
       <div className="mt-2 flex items-center justify-between">
         <FollowUpBadge date={lead.next_follow_up} today={today} />
         {lead.deal_value != null && (
-          <span className="text-xs text-gold">${Number(lead.deal_value).toLocaleString("en-US")}</span>
+          <span className="text-xs font-semibold text-gold-light tabular-nums">${Number(lead.deal_value).toLocaleString("en-US")}</span>
         )}
       </div>
     </div>

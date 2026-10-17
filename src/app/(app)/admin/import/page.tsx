@@ -13,7 +13,7 @@ export default async function ImportPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold">Import leads</h1>
+      <h1 className="page-title">Import leads</h1>
       <ImportWizard members={members} />
     </div>
   );

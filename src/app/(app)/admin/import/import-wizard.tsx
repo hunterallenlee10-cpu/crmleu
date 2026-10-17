@@ -88,8 +88,8 @@ export function ImportWizard({ members }: { members: { id: string; name: string 
   return (
     <div className="space-y-6">
       {step === "upload" && (
-        <div className="card space-y-4">
-          <p className="text-muted">
+        <div className="card space-y-5 border-dashed p-6 text-center sm:p-8">
+          <p className="mx-auto max-w-prose text-muted">
             In Google Sheets, choose <span className="text-fg">File → Download → Comma-separated values (.csv)</span>, then pick that file here.
             The first row should be column headers.
           </p>
@@ -114,7 +114,7 @@ export function ImportWizard({ members }: { members: { id: string; name: string 
       {step === "map" && csv && (
         <>
           <section className="card space-y-4">
-            <h2 className="text-lg font-semibold">1. Match your columns</h2>
+            <h2 className="text-lg font-semibold tracking-tight">1. Match your columns</h2>
             <p className="text-sm text-muted">We guessed from your headers. Fix anything that&apos;s wrong; leave a field blank to skip it.</p>
             <div className="grid gap-4 sm:grid-cols-2">
               {IMPORT_FIELDS.map((f) => (
@@ -135,14 +135,14 @@ export function ImportWizard({ members }: { members: { id: string; name: string 
           </section>
 
           <section className="card space-y-4">
-            <h2 className="text-lg font-semibold">2. Preview</h2>
+            <h2 className="text-lg font-semibold tracking-tight">2. Preview</h2>
             {mappedFields.length === 0 ? (
               <p className="text-sm text-muted">Match at least the business name to see a preview.</p>
             ) : (
               <div className="-mx-5 overflow-x-auto px-5">
-                <table className="w-full min-w-max text-sm">
+                <table className="w-full min-w-max text-sm [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-line/60">
                   <thead>
-                    <tr>{mappedFields.map((f) => <th key={f.key} className="border-b border-line px-3 py-2 text-left font-medium text-muted">{f.label.replace(" (required)", "")}</th>)}</tr>
+                    <tr>{mappedFields.map((f) => <th key={f.key} className="border-b border-line px-3 py-2 text-left text-xs font-semibold tracking-wider text-muted uppercase">{f.label.replace(" (required)", "")}</th>)}</tr>
                   </thead>
                   <tbody>
                     {preview.map((r, i) => (
@@ -167,18 +167,18 @@ export function ImportWizard({ members }: { members: { id: string; name: string 
       {step === "checked" && report && (
         <>
           <section className="card space-y-4">
-            <h2 className="text-lg font-semibold">Ready to import</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Ready to import</h2>
             <p>
               <span className="text-2xl font-semibold text-gold">{report.ready}</span> new lead{report.ready === 1 ? "" : "s"} will be imported.
               {report.skipped.length > 0 && <> {report.skipped.length} row{report.skipped.length === 1 ? "" : "s"} will be skipped (listed below).</>}
             </p>
             <fieldset className="space-y-3">
               <legend className="label">Who gets them?</legend>
-              <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line px-4">
+              <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-field px-4 transition-colors hover:border-line-strong has-[:checked]:border-gold/50 has-[:checked]:bg-gold/[0.06]">
                 <input type="radio" name="mode" checked={mode === "round_robin"} onChange={() => setMode("round_robin")} className="size-5 accent-[var(--color-gold)]" />
                 Share evenly between active reps (round robin)
               </label>
-              <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line px-4">
+              <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-line bg-field px-4 transition-colors hover:border-line-strong has-[:checked]:border-gold/50 has-[:checked]:bg-gold/[0.06]">
                 <input type="radio" name="mode" checked={mode === "single"} onChange={() => setMode("single")} className="size-5 accent-[var(--color-gold)]" />
                 Give them all to one person
               </label>
@@ -203,7 +203,7 @@ export function ImportWizard({ members }: { members: { id: string; name: string 
       {step === "done" && report && (
         <>
           <section className="card space-y-3" role="status">
-            <h2 className="text-lg font-semibold">Import finished</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Import finished</h2>
             <p>
               <span className="text-2xl font-semibold text-gold">{report.imported}</span> imported ·{" "}
               <span className="text-2xl font-semibold">{report.skipped.length}</span> skipped
@@ -214,7 +214,7 @@ export function ImportWizard({ members }: { members: { id: string; name: string 
         </>
       )}
 
-      {error && <p role="alert" className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">{error}</p>}
+      {error && <p role="alert" className="rounded-xl border border-danger/35 bg-danger/[0.08] px-4 py-3 text-sm text-danger">{error}</p>}
     </div>
   );
 }
@@ -223,7 +223,7 @@ function SkippedList({ skipped, title }: { skipped: ImportReport["skipped"]; tit
   if (skipped.length === 0) return null;
   return (
     <section className="card space-y-3">
-      <h2 className="text-lg font-semibold">{title} ({skipped.length})</h2>
+      <h2 className="text-lg font-semibold tracking-tight">{title} ({skipped.length})</h2>
       <ul className="divide-y divide-line text-sm">
         {skipped.map((s) => (
           <li key={s.row} className="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">

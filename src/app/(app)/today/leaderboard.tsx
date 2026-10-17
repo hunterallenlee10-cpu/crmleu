@@ -27,9 +27,9 @@ const POINT_RULES = [
 ];
 
 const RANK_STYLES: Record<number, string> = {
-  1: "bg-gold text-black",
-  2: "bg-zinc-300 text-black",
-  3: "bg-amber-700 text-fg",
+  1: "bg-gradient-to-b from-gold-light to-gold text-ink shadow-[0_0_14px_-4px_rgb(201_162_74/0.8)]",
+  2: "bg-gradient-to-b from-zinc-200 to-zinc-400 text-ink",
+  3: "bg-gradient-to-b from-amber-600 to-amber-800 text-fg",
 };
 
 // Opaque, so the sticky name column still covers the numbers scrolling under it.
@@ -61,18 +61,18 @@ export function Leaderboard({
     <section className="space-y-4" aria-labelledby="leaderboard-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="leaderboard-title" className="text-lg font-semibold">Leaderboard</h2>
-          <p className="text-sm text-muted">Ranked by points. Click a card or column to rank by something else.</p>
+          <h2 id="leaderboard-title" className="text-lg font-semibold tracking-tight">Leaderboard</h2>
+          <p className="mt-0.5 text-sm text-muted">Ranked by points. Click a card or column to rank by something else.</p>
         </div>
-        <nav className="flex rounded-xl border border-line p-1" aria-label="Leaderboard period">
+        <nav className="flex rounded-full border border-line bg-panel/70 p-1 shadow-[inset_0_1px_0_rgb(255_255_255/0.04)]" aria-label="Leaderboard period">
           {PERIODS.map((p) => (
             <Link
               key={p.value}
               href={href(p.value, sort)}
               scroll={false}
               aria-current={p.value === period ? "page" : undefined}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-                p.value === period ? "bg-gold text-black" : "text-muted hover:text-fg"
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                p.value === period ? "chip-active" : "text-muted hover:text-fg"
               }`}
             >
               {p.label}
@@ -91,13 +91,13 @@ export function Leaderboard({
               key={metric}
               href={href(period, metric)}
               scroll={false}
-              className="card flex flex-col gap-1 p-4 transition-colors hover:border-gold/60"
+              className="card card-link flex flex-col gap-1 p-4"
             >
               <span className="text-xs text-muted">{label}</span>
-              <span className="truncate font-medium">
+              <span className="truncate font-semibold tracking-tight">
                 {leader ? (leader.user_id === meId ? "You" : leader.full_name) : "Up for grabs"}
               </span>
-              <span className={`text-xl font-semibold tabular-nums ${leader ? "text-gold" : "text-muted/60"}`}>
+              <span className={`mt-1 text-xl font-semibold tracking-tight tabular-nums ${leader ? "text-gold-light" : "text-muted/60"}`}>
                 {leader ? show(metric, metricValue(leader, metric)) : "–"}
               </span>
             </Link>
@@ -108,18 +108,18 @@ export function Leaderboard({
       {ranked.length === 0 ? (
         <p className="text-sm text-muted">No reps yet.</p>
       ) : (
-        <div className="card -mx-5 overflow-x-auto rounded-none border-x-0 p-0 sm:mx-0 sm:rounded-2xl sm:border-x">
-          <table className="w-full min-w-max text-sm tabular-nums">
+        <div className="card -mx-5 overflow-x-auto rounded-none border-x-0 bg-none p-0 sm:mx-0 sm:rounded-2xl sm:border-x">
+          <table className="w-full min-w-max text-sm tabular-nums [&_tbody_tr+tr]:border-t [&_tbody_tr+tr]:border-line/70">
             <thead>
               <tr>
-                <th className="sticky left-0 border-b border-line bg-panel px-4 py-3 text-left font-medium text-muted">Rep</th>
+                <th className="sticky left-0 border-b border-line bg-raised px-4 py-3 text-left text-xs font-semibold tracking-wider text-muted uppercase">Rep</th>
                 {METRICS.map((m) => (
-                  <th key={m.value} className="border-b border-line px-3 py-3 text-right font-medium">
+                  <th key={m.value} className="border-b border-line bg-raised px-3 py-3 text-right text-xs font-semibold tracking-wider uppercase">
                     <Link
                       href={href(period, m.value)}
                       scroll={false}
                       aria-sort={m.value === sort ? "descending" : undefined}
-                      className={m.value === sort ? "text-gold" : "text-muted hover:text-fg"}
+                      className={m.value === sort ? "text-gold-light" : "text-muted hover:text-fg"}
                     >
                       {m.short}
                       {m.value === sort && " ↓"}
@@ -134,7 +134,7 @@ export function Leaderboard({
                 const scored = metricValue(r, sort) > 0;
                 return (
                   <tr key={r.user_id} className={me ? ME_BG : undefined}>
-                    <td className={`sticky left-0 px-4 py-3 text-left ${me ? ME_BG : "bg-panel"}`}>
+                    <td className={`sticky left-0 px-4 py-3.5 text-left ${me ? ME_BG : "bg-panel"}`}>
                       <span className="flex items-center gap-3">
                         <span
                           className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
@@ -154,7 +154,7 @@ export function Leaderboard({
                       return (
                         <td
                           key={m.value}
-                          className={`px-3 py-3 text-right ${
+                          className={`px-3 py-3.5 text-right ${
                             n === 0 ? "text-muted/50" : m.value === sort ? "font-semibold text-fg" : "text-muted"
                           }`}
                         >
@@ -176,12 +176,12 @@ export function Leaderboard({
 // The scoring rules, shown right on the board so reps know how to climb it.
 function PointsKey() {
   return (
-    <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
-      <h3 className="text-sm font-semibold text-gold">How points work</h3>
+    <div className="rounded-2xl border border-gold/25 bg-gold/[0.05] p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.03)]">
+      <h3 className="text-sm font-semibold text-gold-light">How points work</h3>
       <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {POINT_RULES.map((rule) => (
           <li key={rule.label} className="flex items-center gap-3">
-            <span className="inline-flex h-9 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gold px-2 text-sm font-bold text-black tabular-nums">
+            <span className="inline-flex h-9 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-gold-light to-gold px-2 text-sm font-bold text-ink tabular-nums shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]">
               +{rule.points}
             </span>
             <span className="text-sm leading-snug">{rule.label}</span>
