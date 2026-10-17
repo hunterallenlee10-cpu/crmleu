@@ -4,9 +4,9 @@ import { stageLabel, type Stage } from "@/lib/types";
 const STAGE_STYLES: Record<Stage, string> = {
   new: "border-line-strong bg-white/[0.03] text-muted",
   contacted: "border-sky-400/30 bg-sky-400/[0.08] text-sky-300",
-  spec_sent: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
+  warm_up_program: "border-violet-400/30 bg-violet-400/[0.08] text-violet-300",
   call_booked: "border-teal-400/30 bg-teal-400/[0.08] text-teal-300",
-  proposal_sent: "border-amber-400/30 bg-amber-400/[0.08] text-amber-300",
+  quote_given: "border-amber-400/30 bg-amber-400/[0.08] text-amber-300",
   won: "border-gold/60 bg-gold/15 text-gold-light",
   lost: "border-danger/30 bg-danger/[0.08] text-danger",
 };
@@ -15,9 +15,9 @@ const STAGE_STYLES: Record<Stage, string> = {
 export const STAGE_DOT: Record<Stage, string> = {
   new: "bg-muted",
   contacted: "bg-sky-400",
-  spec_sent: "bg-violet-400",
+  warm_up_program: "bg-violet-400",
   call_booked: "bg-teal-400",
-  proposal_sent: "bg-amber-400",
+  quote_given: "bg-amber-400",
   won: "bg-gold",
   lost: "bg-danger",
 };

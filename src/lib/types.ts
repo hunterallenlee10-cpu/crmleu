@@ -5,9 +5,9 @@ export type Role = "admin" | "rep";
 export type Stage =
   | "new"
   | "contacted"
-  | "spec_sent"
+  | "warm_up_program"
   | "call_booked"
-  | "proposal_sent"
+  | "quote_given"
   | "won"
   | "lost";
 
@@ -71,9 +71,9 @@ export type Activity = {
 export const STAGES: { value: Stage; label: string }[] = [
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
-  { value: "spec_sent", label: "Spec Sent" },
+  { value: "warm_up_program", label: "Warm Up Program" },
   { value: "call_booked", label: "Call Booked" },
-  { value: "proposal_sent", label: "Proposal Sent" },
+  { value: "quote_given", label: "Quote Given" },
   { value: "won", label: "Won" },
   { value: "lost", label: "Lost" },
 ];
@@ -88,3 +88,33 @@ export const SERVICE_INTERESTS: { value: ServiceInterest; label: string }[] = [
 export function stageLabel(stage: Stage) {
   return STAGES.find((s) => s.value === stage)?.label ?? stage;
 }
+
+export type Task = {
+  id: string;
+  title: string;
+  details: string | null;
+  assignee_id: string | null; // null = whole team
+  everyone_must_complete: boolean; // whole-team task every rep ticks off for themselves
+  due_date: string | null; // YYYY-MM-DD
+  created_by: string | null;
+  completed_at: string | null;
+  completed_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// From everyone_task_progress(): one row per rep who has to tick an everyone task.
+export type EveryoneProgress = {
+  task_id: string;
+  user_id: string;
+  full_name: string;
+  checked_at: string | null;
+};
+
+// From the team_members view: names only, readable by everyone on the team.
+export type TeamMember = {
+  id: string;
+  full_name: string;
+  role: Role;
+  active: boolean;
+};

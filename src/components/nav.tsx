@@ -10,6 +10,7 @@ const REP_ITEMS: NavItem[] = [
   { href: "/today", label: "Today" },
   { href: "/leads", label: "Leads" },
   { href: "/pipeline", label: "Pipeline" },
+  { href: "/tasks", label: "Tasks" },
   { href: "/leads/new", label: "+ New" },
 ];
 const ADMIN_ITEMS: NavItem[] = [{ href: "/admin", label: "Admin" }];
@@ -63,7 +64,7 @@ export function MobileNav({ role }: { role: Role }) {
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-16 items-center justify-center text-sm font-medium transition-colors ${
+                className={`relative flex min-h-16 items-center justify-center font-medium transition-colors ${items.length > 5 ? "text-xs min-[400px]:text-sm" : "text-sm"} ${
                   active ? "text-gold-light" : "text-muted active:text-fg"
                 }`}
               >
