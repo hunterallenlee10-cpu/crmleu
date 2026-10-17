@@ -26,12 +26,12 @@ export function TeamFeed({ items, meId, capped }: { items: FeedItem[]; meId: str
   const totals = people.reduce(
     (t, p) => ({
       outreach: t.outreach + p.calls + p.texts + p.emails + p.meetings,
-      specs: t.specs + p.specs,
+      warmUps: t.warmUps + p.warmUps,
       booked: t.booked + p.booked,
       wins: t.wins + p.wins,
       revenue: t.revenue + p.revenue,
     }),
-    { outreach: 0, specs: 0, booked: 0, wins: 0, revenue: 0 },
+    { outreach: 0, warmUps: 0, booked: 0, wins: 0, revenue: 0 },
   );
 
   return (
@@ -43,7 +43,7 @@ export function TeamFeed({ items, meId, capped }: { items: FeedItem[]; meId: str
 
       <div className="grid grid-cols-4 gap-2 text-center">
         <Stat label="Outreach" value={totals.outreach.toLocaleString("en-US")} />
-        <Stat label="Specs" value={totals.specs.toLocaleString("en-US")} />
+        <Stat label="Warm ups" value={totals.warmUps.toLocaleString("en-US")} />
         <Stat label="Booked" value={totals.booked.toLocaleString("en-US")} />
         <Stat label="Won" value={totals.wins.toLocaleString("en-US")} gold={totals.wins > 0} />
       </div>

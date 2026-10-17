@@ -154,7 +154,7 @@ If `WEBHOOK_URL` is set, every stage change (from a lead's page or by dragging o
 ```json
 {
   "event": "stage_changed",
-  "from_stage": "proposal_sent",
+  "from_stage": "quote_given",
   "to_stage": "won",
   "changed_at": "2026-10-10T15:04:05.000Z",
   "lead": { "id": "…", "business_name": "Harbor Plumbing", "phone": "4105550123", "deal_value": 3000, "won_date": "2026-10-10", "…": "every lead field" },
@@ -162,7 +162,7 @@ If `WEBHOOK_URL` is set, every stage change (from a lead's page or by dragging o
 }
 ```
 
-Stages are `new`, `contacted`, `spec_sent`, `call_booked`, `proposal_sent`, `won` and `lost`.
+Stages are `new`, `contacted`, `warm_up_program`, `call_booked`, `quote_given`, `won` and `lost`.
 
 To kick off onboarding when a deal is won:
 1. In n8n, add a **Webhook** node (POST) and put its **production** URL in `WEBHOOK_URL`.
@@ -210,7 +210,7 @@ Admins get an **Admin** tab with four pages:
 
 Besides each person's own overdue, due and new leads, **Today** shows the whole team:
 
-- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Spec Sent, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, specs, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Warm Up Program, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, warm ups, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
 - **Last 24 hours:** a line per person with what they did, then every entry, newest first.
 
 Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown, and admins' own work isn't counted or shown: only reps appear on the leaderboard and in the feed.
