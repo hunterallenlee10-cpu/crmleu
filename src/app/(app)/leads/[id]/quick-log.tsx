@@ -42,14 +42,14 @@ export function QuickLog({ leadId }: { leadId: string }) {
             type="button"
             onClick={() => { setOpen(open === t.type ? null : t.type); setSaved(""); setError(""); }}
             aria-pressed={open === t.type}
-            className={`btn px-2 text-sm ${open === t.type ? "btn-gold" : "btn-ghost"}`}
+            className={`btn btn-secondary px-2 ${open === t.type ? "border-accent bg-accent/[0.12] hover:border-accent" : ""}`}
           >
             {t.label}
           </button>
         ))}
       </div>
       {current && (
-        <div className="space-y-3">
+        <div className="space-y-3 motion-safe:animate-pop-in">
           <textarea
             autoFocus
             rows={3}
@@ -57,15 +57,15 @@ export function QuickLog({ leadId }: { leadId: string }) {
             onChange={(e) => setBody(e.target.value)}
             placeholder={current.placeholder}
             aria-label={current.label}
-            className="input py-3"
+            className="input resize-y py-2.5 leading-relaxed"
           />
-          <button type="button" onClick={save} disabled={isPending} className="btn btn-gold w-full">
+          <button type="button" onClick={save} disabled={isPending} className="btn btn-primary w-full">
             {isPending ? "Saving…" : "Save"}
           </button>
         </div>
       )}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      {saved && <p role="status" className="text-sm text-ok">{saved}</p>}
+      {saved && <p role="status" className="text-sm text-success">{saved}</p>}
     </div>
   );
 }

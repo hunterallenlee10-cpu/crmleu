@@ -52,7 +52,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[id]"
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold">{project.name}</h1>
+        <h1 className="page-title">{project.name}</h1>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
           <span>
             Assigned to <span className="text-fg">{project.assignee_id === profile.id ? "you" : assignee}</span>
@@ -100,7 +100,7 @@ function doneNote(t: ProjectTask, names: Map<string, string>, today: string) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="card space-y-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">{title}</h2>
+      <h2 className="text-sm font-semibold">{title}</h2>
       {children}
     </section>
   );

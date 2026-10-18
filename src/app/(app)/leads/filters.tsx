@@ -54,7 +54,7 @@ export function LeadFilters({
         aria-label="Search leads"
         className="input"
       />
-      <div className={`grid gap-3 sm:flex ${owners ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`grid gap-2 sm:flex sm:gap-3 ${owners ? "grid-cols-3" : "grid-cols-2"}`}>
         <select aria-label="Stage" className="input sm:w-48" value={filters.stage} onChange={set("stage")}>
           <option value="">All stages</option>
           {STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}

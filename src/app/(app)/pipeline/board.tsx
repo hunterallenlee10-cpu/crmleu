@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { FollowUpBadge } from "@/components/badges";
+import { FollowUpBadge, STAGE_DOT } from "@/components/badges";
 import { needsDetails, StageDialog, type StageExtras } from "@/components/stage-dialog";
 import { STAGES, type Lead, type Stage } from "@/lib/types";
 import { changeStage } from "../leads/actions";
@@ -81,7 +81,7 @@ export function PipelineBoard({ initialLeads, today }: { initialLeads: Lead[]; t
   return (
     <>
       {error && !pending && (
-        <p role="alert" className="mb-4 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="mb-4 rounded-control bg-danger/[0.1] px-3 py-2.5 text-sm text-danger">
           {error}
         </p>
       )}
@@ -120,13 +120,16 @@ function Column({ stage, label, children }: { stage: Stage; label: string; child
     <section
       ref={setNodeRef}
       aria-label={label}
-      className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-2xl border p-3 transition-colors sm:w-72 ${
-        isOver ? "border-gold bg-gold/5" : "border-line bg-panel/50"
+      className={`flex w-[78vw] max-w-72 shrink-0 snap-start flex-col rounded-card border bg-surface-2 p-2 transition-[border-color,background-color] duration-150 sm:w-72 ${
+        isOver ? "border-accent" : "border-line"
       }`}
     >
-      <h2 className="mb-3 flex items-center justify-between px-1 text-sm font-semibold">
-        <span className={stage === "won" ? "text-gold" : stage === "lost" ? "text-danger" : ""}>{label}</span>
-        <span className="text-muted">{children.length}</span>
+      <h2 className="mb-2 flex items-center justify-between px-1.5 pt-1 text-label font-semibold">
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true" className={`size-2 rounded-full ${STAGE_DOT[stage]}`} />
+          {label}
+        </span>
+        <span className="count">{children.length}</span>
       </h2>
       <div className="flex min-h-24 flex-1 flex-col gap-2">{children}</div>
     </section>
@@ -137,7 +140,7 @@ function Card({ lead, today, dimmed }: { lead: Lead; today: string; dimmed: bool
   const { attributes, listeners, setNodeRef } = useDraggable({ id: lead.id });
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} className={`touch-manipulation ${dimmed ? "opacity-30" : ""}`}>
-      <Link href={`/leads/${lead.id}`} draggable={false} className="block">
+      <Link href={`/leads/${lead.id}`} draggable={false} className="block rounded-card">
         <CardBody lead={lead} today={today} />
       </Link>
     </div>
@@ -146,13 +149,17 @@ function Card({ lead, today, dimmed }: { lead: Lead; today: string; dimmed: bool
 
 function CardBody({ lead, today, lifted }: { lead: Lead; today: string; lifted?: boolean }) {
   return (
-    <div className={`rounded-xl border bg-ink p-3 ${lifted ? "border-gold shadow-2xl" : "border-line hover:border-gold/60"}`}>
-      <p className="truncate font-medium">{lead.business_name}</p>
-      <p className="truncate text-xs text-muted">{[lead.niche, lead.city].filter(Boolean).join(" · ") || " "}</p>
-      <div className="mt-2 flex items-center justify-between">
+    <div
+      className={`rounded-card border bg-surface p-3 transition-[border-color,box-shadow] duration-150 ${
+        lifted ? "cursor-grabbing border-line-strong shadow-float" : "border-line hover:border-line-strong"
+      }`}
+    >
+      <p className="truncate font-medium" title={lead.business_name}>{lead.business_name}</p>
+      <p className="mt-0.5 truncate text-xs text-muted">{[lead.niche, lead.city].filter(Boolean).join(" · ") || " "}</p>
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <FollowUpBadge date={lead.next_follow_up} today={today} />
         {lead.deal_value != null && (
-          <span className="text-xs text-gold">${Number(lead.deal_value).toLocaleString("en-US")}</span>
+          <span className="text-xs font-medium text-fg">${Number(lead.deal_value).toLocaleString("en-US")}</span>
         )}
       </div>
     </div>

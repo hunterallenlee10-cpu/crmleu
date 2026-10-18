@@ -1,5 +1,6 @@
 "use client";
 
+import { ListChecks } from "lucide-react";
 import { useOptimistic, useState, useTransition } from "react";
 import { addTasks, deleteTask, renameTask, setTaskDone } from "../actions";
 
@@ -36,9 +37,10 @@ export function Checklist({
   return (
     <div className="space-y-4">
       {optimistic.length === 0 ? (
-        <p className="text-sm text-muted">
-          {isAdmin ? "No items yet. Add the first one below." : "No items on this checklist yet."}
-        </p>
+        <div className="empty py-6">
+          <ListChecks aria-hidden="true" className="empty-icon" strokeWidth={1.75} />
+          <p>{isAdmin ? "No items yet. Add the first one below." : "No items on this checklist yet."}</p>
+        </div>
       ) : (
         <ul className="divide-y divide-line">
           {optimistic.map((item) => (
@@ -100,8 +102,8 @@ function ChecklistRow({
           maxLength={300}
         />
         <div className="flex gap-2">
-          <button type="button" className="btn btn-gold flex-1 sm:flex-none" disabled={isPending} onClick={save}>Save</button>
-          <button type="button" className="btn btn-ghost flex-1 sm:flex-none" onClick={() => { setTitle(item.title); setEditing(false); }}>Cancel</button>
+          <button type="button" className="btn btn-primary flex-1 sm:flex-none" disabled={isPending} onClick={save}>Save</button>
+          <button type="button" className="btn btn-secondary flex-1 sm:flex-none" onClick={() => { setTitle(item.title); setEditing(false); }}>Cancel</button>
         </div>
       </li>
     );
@@ -114,19 +116,19 @@ function ChecklistRow({
           type="checkbox"
           checked={item.done}
           onChange={onToggle}
-          className="mt-0.5 size-5 shrink-0 cursor-pointer accent-gold"
+          className="mt-0.5 size-5 shrink-0 cursor-pointer"
         />
         <span className="min-w-0">
           <span className={`block break-words ${item.done ? "text-muted line-through" : ""}`}>{item.title}</span>
-          {item.doneNote && <span className="mt-0.5 block text-xs text-ok/80">Done by {item.doneNote}</span>}
+          {item.doneNote && <span className="mt-0.5 block text-xs text-success">Done by {item.doneNote}</span>}
         </span>
       </label>
       {isAdmin && (
         <div className="flex shrink-0 items-center gap-1 pt-2">
-          <button type="button" onClick={() => setEditing(true)} className="rounded-lg px-2 py-1.5 text-xs text-muted hover:text-gold">
+          <button type="button" onClick={() => setEditing(true)} className="rounded-control px-2 py-1.5 text-xs text-muted hover:text-fg">
             Edit
           </button>
-          <button type="button" onClick={remove} disabled={isPending} className="rounded-lg px-2 py-1.5 text-xs text-muted hover:text-danger">
+          <button type="button" onClick={remove} disabled={isPending} className="rounded-control px-2 py-1.5 text-xs text-muted hover:text-danger">
             Remove
           </button>
         </div>
@@ -167,7 +169,7 @@ function AddItems({ projectId }: { projectId: string }) {
           placeholder="New item"
           className="input py-3"
         />
-        <button type="button" className="btn btn-ghost" disabled={isPending || !text.trim()} onClick={add}>
+        <button type="button" className="btn btn-secondary" disabled={isPending || !text.trim()} onClick={add}>
           {isPending ? "Adding…" : "Add"}
         </button>
       </div>

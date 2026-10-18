@@ -44,11 +44,7 @@ export function StageControl({
             onClick={() => pick(s.value)}
             aria-pressed={s.value === stage}
             disabled={isPending}
-            className={`min-h-11 rounded-full border px-4 text-sm font-medium transition-colors ${
-              s.value === stage
-                ? "border-gold bg-gold text-black"
-                : "border-line text-muted hover:border-gold hover:text-gold"
-            }`}
+            className={`chip ${s.value === stage ? "chip-active" : ""}`}
           >
             {s.label}
           </button>

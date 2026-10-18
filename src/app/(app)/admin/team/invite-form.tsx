@@ -1,15 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { FormMessage } from "@/components/form-message";
 import { inviteRep } from "./actions";
 
-export function InviteForm() {
+export function InviteForm({ emailEnabled }: { emailEnabled: boolean }) {
   const [state, action, pending] = useActionState(inviteRep, undefined);
 
   return (
     <form action={action} className="card space-y-4">
-      <h2 className="text-lg font-semibold">Invite a rep</h2>
+      <h2 className="section-title">Invite a rep</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="full_name" className="label">Name</label>
@@ -21,9 +21,49 @@ export function InviteForm() {
         </div>
       </div>
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full sm:w-auto">
-        {pending ? "Sending…" : "Send invite"}
-      </button>
+      {state?.link && <CopyLink link={state.link} key={state.link} />}
+      <div className="flex flex-wrap gap-3">
+        {/* The link button comes first so pressing Enter makes a link, not an email. */}
+        <button type="submit" name="mode" value="link" disabled={pending} className="btn btn-primary w-full sm:w-auto">
+          {pending ? "Working…" : "Create invite link"}
+        </button>
+        {emailEnabled && (
+          <button type="submit" name="mode" value="email" disabled={pending} className="btn btn-secondary w-full sm:w-auto">
+            Send invite email
+          </button>
+        )}
+      </div>
+      <p className="max-w-prose text-xs text-muted">
+        Text the link to the rep yourself. Each link works once, and making a new one cancels the last. If someone already has an account, you get a link for them to choose a new password.
+      </p>
     </form>
+  );
+}
+
+function CopyLink({ link }: { link: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+    } catch {
+      // Clipboard blocked: the field is selectable, so they can copy by hand.
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row">
+      <input
+        readOnly
+        aria-label="Invite link"
+        className="input flex-1 text-sm"
+        value={link}
+        onFocus={(e) => e.currentTarget.select()}
+      />
+      <button type="button" onClick={copy} className="btn btn-secondary">
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
   );
 }

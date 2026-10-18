@@ -70,7 +70,7 @@ export function ProjectForm({
         </div>
       )}
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-gold w-full sm:w-auto">
+      <button type="submit" disabled={pending} className="btn btn-primary w-full sm:w-auto">
         {pending ? "Saving…" : submitLabel}
       </button>
     </form>

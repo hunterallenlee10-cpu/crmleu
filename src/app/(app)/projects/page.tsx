@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import { ProjectRow, type ProjectSummary } from "@/components/project-row";
@@ -51,12 +52,12 @@ export default async function ProjectsPage({ searchParams }: PageProps<"/project
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Projects</h1>
-          <p className="mt-1 text-muted">
+          <h1 className="page-title">Projects</h1>
+          <p className="mt-1.5 text-muted">
             {isAdmin ? "Hand out projects and track each checklist." : "Projects assigned to you. Tick items off as you go."}
           </p>
         </div>
-        {isAdmin && <Link href="/projects/new" className="btn btn-gold">+ New project</Link>}
+        {isAdmin && <Link href="/projects/new" className="btn btn-primary">+ New project</Link>}
       </div>
 
       {isAdmin && (
@@ -70,13 +71,16 @@ export default async function ProjectsPage({ searchParams }: PageProps<"/project
       )}
 
       {projects.length === 0 ? (
-        <p className="text-sm text-muted">
-          {isAdmin
-            ? personFilter
-              ? "No projects here."
-              : "No projects yet. Create one to delegate work to your team."
-            : "No projects assigned to you yet."}
-        </p>
+        <div className="empty">
+          <FolderKanban aria-hidden="true" className="empty-icon" strokeWidth={1.75} />
+          <p>
+            {isAdmin
+              ? personFilter
+                ? "No projects here."
+                : "No projects yet. Create one to delegate work to your team."
+              : "No projects assigned to you yet."}
+          </p>
+        </div>
       ) : (
         <>
           <List title="In progress" items={open} today={today} names={isAdmin ? names : undefined} />
@@ -101,8 +105,8 @@ function List({
   if (!items.length) return null;
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-        {title} <span className="text-muted/70">({items.length})</span>
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
+        {title} <span className="count">{items.length}</span>
       </h2>
       <div className="grid gap-3 md:grid-cols-2">
         {items.map((p) => (

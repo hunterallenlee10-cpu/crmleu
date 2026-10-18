@@ -72,12 +72,12 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{isAdmin ? "All leads" : "My leads"}</h1>
-        <Link href="/leads/new" className="btn btn-gold">+ New lead</Link>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="page-title">{isAdmin ? "All leads" : "My leads"}</h1>
+        <Link href="/leads/new" className="btn btn-primary">+ New lead</Link>
       </div>
       <LeadFilters niches={niches} owners={isAdmin ? ownerFilter : undefined} />
-      <p className="text-sm text-muted">
+      <p className="text-label text-muted">
         {total} lead{total === 1 ? "" : "s"}
         {pages > 1 && ` · page ${page} of ${pages}`}
       </p>
@@ -85,17 +85,17 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
       {isAdmin ? (
         <BulkLeadList leads={list} today={today} ownerNames={ownerNames} assignees={assignees} />
       ) : (
-        <div className="space-y-3">
+        <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface empty:hidden">
           {list.map((lead) => (
-            <LeadRow key={lead.id} lead={lead} today={today} />
+            <LeadRow key={lead.id} lead={lead} today={today} inList />
           ))}
         </div>
       )}
 
       {pages > 1 && (
-        <nav className="flex items-center justify-between gap-3" aria-label="Pages">
-          {page > 1 ? <Link href={pageHref(page - 1)} className="btn btn-ghost">← Previous</Link> : <span />}
-          {page < pages ? <Link href={pageHref(page + 1)} className="btn btn-ghost">Next →</Link> : <span />}
+        <nav className="flex items-center justify-between gap-3 pt-2" aria-label="Pages">
+          {page > 1 ? <Link href={pageHref(page - 1)} className="btn btn-secondary">← Previous</Link> : <span />}
+          {page < pages ? <Link href={pageHref(page + 1)} className="btn btn-secondary">Next →</Link> : <span />}
         </nav>
       )}
     </div>

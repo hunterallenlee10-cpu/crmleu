@@ -1,5 +1,6 @@
 "use client";
 
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,20 +13,20 @@ const TABS = [
 export function AdminTabs() {
   const pathname = usePathname();
   return (
-    <nav className="-mx-5 flex gap-2 overflow-x-auto px-5" aria-label="Admin">
+    <nav className="-mx-5 flex gap-2 overflow-x-auto border-b border-line px-5 pb-4" aria-label="Admin">
       {TABS.map((t) => (
         <Link
           key={t.href}
           href={t.href}
-          className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-medium ${
-            pathname === t.href ? "border-gold bg-gold text-black" : "border-line text-muted hover:text-fg"
-          }`}
+          aria-current={pathname === t.href ? "page" : undefined}
+          className={`chip shrink-0 ${pathname === t.href ? "chip-active" : ""}`}
         >
           {t.label}
         </Link>
       ))}
       {/* A plain link: the browser downloads the CSV. */}
-      <a href="/api/export" className="shrink-0 rounded-full border border-line px-4 py-2.5 text-sm font-medium text-muted hover:text-fg">
+      <a href="/api/export" className="btn btn-secondary shrink-0 sm:ml-auto">
+        <Download aria-hidden="true" className="size-4 text-muted" strokeWidth={1.75} />
         Export CSV
       </a>
     </nav>

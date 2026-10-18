@@ -14,9 +14,13 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
   - They can't reassign or delete leads.
   - They can't edit or delete activity entries.
   - They can't change their own role or commission rate.
+- **Tasks** are visible to the whole team. Only admins create, edit, assign or delete them.
+  - A rep can tick off (or un-tick) tasks assigned to them, and tasks for the whole team.
+  - They can see, but not tick off, tasks assigned to someone else.
+  - On an "everyone has to check this off" task, each rep can only tick (or un-tick) their own box.
 - **Projects** are only visible to the person they're assigned to (and admins). That person can tick checklist items on and off, but only an admin can create, edit, reassign or delete projects and checklist items.
 - **Admins** can see and do everything.
-- **No public sign-up.** The admin invites people by email, and every new user starts as a rep.
+- **No public sign-up.** The admin invites people with a one-time link (or by email once custom SMTP is set up), and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
 
 ---
@@ -38,14 +42,17 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
    - **URL Configuration:**
      - Set **Site URL** to your app's address, e.g. `https://crm.yourdomain.com`.
      - Under **Redirect URLs**, add `https://crm.yourdomain.com/**`. Invite and reset links return to `/auth/callback`, so the `/**` matters. Add `http://localhost:3000/**` too if you run the app locally.
-   - **Email (works out of the box).** Invites and password resets work with Supabase's built-in email; there are no templates to change.
-     - The catch: it sends at most **2 emails an hour**, from a Supabase address, and Supabase calls it "for testing".
-     - Fine for inviting a handful of reps over an afternoon.
-   - **Optional, for production email from your own domain:**
-     1. Add an SMTP provider under **Emails → SMTP settings**, e.g. Resend (free for 3,000 emails a month).
-     2. Then you can replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`.
-     - On a free project, Supabase only allows template changes once custom SMTP is set up.
-     - The app handles both kinds of links.
+   - **Email: off until you add your own email provider.**
+     - Supabase's built-in email only delivers to members of your Supabase team. Emails to reps bounce, and too many bounces get the project's email blocked.
+     - So the app sends no email unless `AUTH_EMAIL_ENABLED=true` (see section 2). Until then:
+       - **Inviting:** on the Team page, **Create invite link** makes a one-time link that you text to the rep. It sends nothing.
+       - **Someone who already has an account** (say they accepted a link but never set a password, or forgot it): use **Create invite link** with their name and email. You get a link for them to sign in and choose a new password. If they're deactivated, reactivate them first.
+       - **Forgot password** tells reps to ask you for a link.
+   - **To turn email on:**
+     1. Add an SMTP provider under **Authentication → Emails → SMTP Settings**, e.g. Resend (free for 3,000 emails a month). Verify your domain with the provider first.
+     2. Raise the email limit under **Authentication → Rate Limits** if you need more than the default.
+     3. Optional: replace two templates under **Emails → Templates**: **Invite user** with `supabase/templates/invite.html`, and **Reset password** with `supabase/templates/recovery.html`. The app handles both kinds of links.
+     4. Set `AUTH_EMAIL_ENABLED=true` in Vercel and redeploy. **Send invite email** then appears on the Team page, and Forgot password sends reset emails.
 
 ## 2. Environment variables
 
@@ -59,6 +66,7 @@ Copy `.env.example` to `.env.local` and fill it in. The keys are under **Project
 | `NEXT_PUBLIC_SITE_URL` | Where the app lives, e.g. `https://crm.yourdomain.com` (no trailing slash) |
 | `LEADS_API_KEY` | A long random secret that n8n sends to create leads. Generate one with `openssl rand -hex 32`. If it's empty, the API is turned off. |
 | `WEBHOOK_URL` | *Optional.* If set, every stage change is POSTed here, e.g. an n8n webhook. |
+| `AUTH_EMAIL_ENABLED` | *Optional.* Set to `true` only after custom SMTP is set up (section 1.3). Turns on invite and password-reset emails. |
 
 ## 3. Create your first admin account
 
@@ -90,7 +98,7 @@ npx supabase start   # prints a local URL plus publishable and secret keys for .
 npm run dev
 ```
 
-Locally, emails (invites, password resets) don't actually send. They show up in Mailpit at http://127.0.0.1:54324. The local auth settings, including sign-up being off and the email templates, come from `supabase/config.toml`.
+Locally, emails (invites, password resets) don't actually send. Set `AUTH_EMAIL_ENABLED=true` in `.env.local` and they show up in Mailpit at http://127.0.0.1:54324. The local auth settings, including sign-up being off and the email templates, come from `supabase/config.toml`.
 
 ## 5. Demo data (seed script)
 
@@ -147,7 +155,7 @@ If `WEBHOOK_URL` is set, every stage change (from a lead's page or by dragging o
 ```json
 {
   "event": "stage_changed",
-  "from_stage": "proposal_sent",
+  "from_stage": "quote_given",
   "to_stage": "won",
   "changed_at": "2026-10-10T15:04:05.000Z",
   "lead": { "id": "…", "business_name": "Harbor Plumbing", "phone": "4105550123", "deal_value": 3000, "won_date": "2026-10-10", "…": "every lead field" },
@@ -155,7 +163,7 @@ If `WEBHOOK_URL` is set, every stage change (from a lead's page or by dragging o
 }
 ```
 
-Stages are `new`, `contacted`, `spec_sent`, `call_booked`, `proposal_sent`, `won` and `lost`.
+Stages are `new`, `contacted`, `warm_up_program`, `call_booked`, `quote_given`, `won` and `lost`.
 
 To kick off onboarding when a deal is won:
 1. In n8n, add a **Webhook** node (POST) and put its **production** URL in `WEBHOOK_URL`.
@@ -187,19 +195,39 @@ Admins get an **Admin** tab with four pages:
   A Notes column becomes a note in each lead's history. Won rows without a won date count as won on the day you import. Up to 5,000 rows per file.
 - **Export CSV:** downloads every lead with its owner. Only admins can download it.
 
-**Projects** (in the main nav, for everyone):
+**Tasks** (in the main nav, for everyone):
+- Admins add a task with **+ New task**: a title, optional details, an optional due date, and who it's for (one person, or **Whole team**).
+- **Everyone has to check this off:** a switch that appears when a task is for the **Whole team**.
+  - **Off:** the task is done as soon as anyone ticks it.
+  - **On:** each rep ticks it off for themselves, and the task is only done once every rep has. The task lists each rep with ✓ or ○ and shows "3 of 5 done".
+  - "Every rep" means the active reps who were on the team when the task was added. People who join later aren't asked to do it, and deactivating someone stops a task from waiting on them. Admins don't tick these; they just watch the progress.
+  - You can flip the switch when editing a task too.
+- Everyone sees every task, grouped by person, with **Everyone / Mine** filters. Overdue tasks show in red.
+- Ticking a task off records who did it and when. Done tasks stay listed under each person for 30 days.
+- Admins can edit, reassign or delete any task, and tick off anyone's.
+- Each person's open tasks (theirs plus whole-team ones) also show at the top of **Today**.
 
+**Projects** (in the main nav, for everyone):
 - Admins click **+ New project**, give it a name, pick who it's for, set an optional due date and description, and paste a checklist (one item per line; bullets and numbers are stripped).
 - On a project's page, admins can add items, edit or remove them, tick them off, change the details (including who it's assigned to), or delete the project.
 - The person it's assigned to sees it under **Projects** and on their **Today** page until every item is done. They can tick items off but can't change the list. Each ticked item shows who did it and when.
 - The list splits projects into **In progress** and **Done** (every item ticked). Admins can filter it by person.
+
+### The Today page (everyone)
+
+Besides each person's own overdue, due and new leads, **Today** shows the whole team:
+
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Warm Up Program, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, warm ups, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
+- **Last 24 hours:** a line per person with what they did, then every entry, newest first.
+
+Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown, and admins' own work isn't counted or shown: only reps appear on the leaderboard and in the feed.
 
 On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
 
 ## 9. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing, checklists)
+npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, checklists)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -212,7 +240,9 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - a deactivated rep sees nothing, and logged-out visitors are refused;
 - an admin can see, reassign and delete anything;
 - duplicates are blocked: the same phone in any format, or the same business name and city;
-- Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged.
+- Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged;
+- every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks;
+- an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box;
 - a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects.
 
 ## Project layout
@@ -230,6 +260,7 @@ src/lib/dates.ts        "today" and follow-up dates in America/New_York
 src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
+src/app/(app)/tasks     team task list (admins assign; everyone ticks off their own)
 src/app/(app)/projects  project list, new project (admins), project page with checklist
 src/lib/projects.ts     project form validation and checklist parsing
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
@@ -239,5 +270,6 @@ src/lib/webhook.ts      stage-change webhook (WEBHOOK_URL)
 scripts/seed.mjs        demo data
 src/lib/import-fields.ts  column matching and parsing for CSV import
 src/app/login, auth/, set-password, forgot-password   sign-in flows
-src/app/auth/callback   finishes sign-in from Supabase's built-in invite/reset emails
+src/app/auth/callback   finishes sign-in from invite/reset emails
+src/app/auth/accept     invite links an admin copies and texts (signs in on tap)
 ```

@@ -44,9 +44,9 @@ export function StageDialog({
   const shownError = localError || error;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center" role="dialog" aria-modal="true">
-      <form onSubmit={submit} className="card w-full max-w-sm space-y-4 p-6">
-        <h2 className="text-lg font-semibold">{stage === "lost" ? "Mark as Lost" : "Mark as Won"}</h2>
+    <div className="fixed inset-0 z-50 flex items-end justify-center overscroll-contain bg-bg/70 p-4 motion-safe:animate-fade-in sm:items-center" role="dialog" aria-modal="true">
+      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-modal border border-line-strong bg-surface p-6 shadow-float motion-safe:animate-pop-in">
+        <h2 className="text-base font-semibold">{stage === "lost" ? "Mark as Lost" : "Mark as Won"}</h2>
         {stage === "lost" ? (
           <div>
             <label htmlFor="lost_reason" className="label">Why was it lost?</label>
@@ -74,9 +74,9 @@ export function StageDialog({
           </div>
         )}
         {shownError && <p role="alert" className="text-sm text-danger">{shownError}</p>}
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" onClick={onCancel} className="btn btn-ghost">Cancel</button>
-          <button type="submit" disabled={pending} className="btn btn-gold">
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <button type="button" onClick={onCancel} className="btn btn-secondary">Cancel</button>
+          <button type="submit" disabled={pending} className="btn btn-primary">
             {pending ? "Saving…" : "Save"}
           </button>
         </div>

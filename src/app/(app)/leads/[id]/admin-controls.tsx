@@ -46,7 +46,7 @@ export function AdminLeadControls({
         </select>
         <button
           type="button"
-          className="btn btn-ghost"
+          className="btn btn-secondary"
           disabled={isPending || !owner || owner === (ownerId ?? "")}
           onClick={reassign}
         >
@@ -54,7 +54,8 @@ export function AdminLeadControls({
         </button>
       </div>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      {message && <p role="status" className="text-sm text-ok">{message}</p>}
+      {message && <p role="status" className="text-sm text-success">{message}</p>}
+      <div className="border-t border-line" />
       <button type="button" className="btn btn-danger" disabled={isPending} onClick={remove}>
         Delete lead
       </button>
@@ -71,7 +72,7 @@ export function DeleteActivityButton({ activityId }: { activityId: number }) {
       onClick={() => {
         if (confirm("Delete this history entry?")) startTransition(async () => { await deleteActivity(activityId); });
       }}
-      className="ml-2 text-xs text-muted underline-offset-2 hover:text-danger hover:underline"
+      className="ml-2 rounded-[4px] text-xs text-muted underline-offset-2 transition-colors duration-150 hover:text-danger hover:underline"
     >
       Delete
     </button>

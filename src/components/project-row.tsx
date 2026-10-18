@@ -21,11 +21,11 @@ export function ProjectRow({
   assignee?: string;
 }) {
   return (
-    <Link href={`/projects/${project.id}`} className="card block space-y-3 transition-colors hover:border-gold/60">
+    <Link href={`/projects/${project.id}`} className="card card-link block space-y-3">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate font-medium">{project.name}</p>
-          {assignee && <p className="mt-1 truncate text-xs text-gold/80">{assignee}</p>}
+          {assignee && <p className="mt-1 truncate text-xs text-muted">{assignee}</p>}
         </div>
         <DueBadge date={project.due_date} today={today} complete={project.complete} />
       </div>
@@ -35,10 +35,10 @@ export function ProjectRow({
 }
 
 export function DueBadge({ date, today, complete }: { date: string | null; today: string; complete: boolean }) {
-  if (complete) return <span className="shrink-0 text-xs font-medium text-ok">Done</span>;
-  if (!date) return <span className="shrink-0 text-xs text-muted/70">No due date</span>;
+  if (complete) return <span className="shrink-0 text-xs font-medium text-success">Done</span>;
+  if (!date) return <span className="shrink-0 text-xs text-faint">No due date</span>;
   const { text, tone } = followUpLabel(date, today);
-  const color = tone === "overdue" ? "text-danger" : tone === "today" ? "text-gold" : "text-muted";
+  const color = tone === "overdue" ? "text-danger" : tone === "today" ? "text-warning" : "text-muted";
   const label =
     tone === "overdue" ? text : tone === "today" ? "Due today" : text === "Tomorrow" ? "Due tomorrow" : `Due ${text}`;
   return <span className={`shrink-0 text-xs font-medium ${color}`}>{label}</span>;
@@ -57,7 +57,7 @@ export function ProgressBar({ done, total }: { done: number; total: number }) {
         aria-valuenow={done}
       >
         <div
-          className={`h-full rounded-full ${total > 0 && done === total ? "bg-ok" : "bg-gold"}`}
+          className={`h-full rounded-full ${total > 0 && done === total ? "bg-success" : "bg-accent"}`}
           style={{ width: `${pct}%` }}
         />
       </div>

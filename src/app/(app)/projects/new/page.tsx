@@ -14,7 +14,7 @@ export default async function NewProjectPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold">New project</h1>
+      <h1 className="page-title">New project</h1>
       <p className="text-sm text-muted">
         Only the person you assign it to (and admins) can see it. They tick items off; you control the list.
       </p>

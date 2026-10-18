@@ -1,29 +1,27 @@
-"use client";
-
-import { useActionState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { AuthShell } from "@/components/brand";
-import { FormMessage } from "@/components/form-message";
-import { sendResetLink } from "./actions";
+import { emailEnabled } from "@/lib/email";
+import { ForgotPasswordForm } from "./forgot-password-form";
 
-export default function ForgotPasswordPage() {
-  const [state, action, pending] = useActionState(sendResetLink, undefined);
+export const metadata: Metadata = { title: "Reset your password" };
 
+export default async function ForgotPasswordPage() {
+  await connection(); // read AUTH_EMAIL_ENABLED per request, not at build time
   return (
     <AuthShell title="Reset your password">
-      <form action={action} className="space-y-5">
-        <div>
-          <label htmlFor="email" className="label">Email</label>
-          <input id="email" name="email" type="email" autoComplete="email" required className="input" />
+      {emailEnabled() ? (
+        <ForgotPasswordForm />
+      ) : (
+        // Email is off (see lib/email.ts), so the admin sends a sign-in link instead.
+        <div className="space-y-5">
+          <p className="text-sm text-muted">
+            Ask your admin for a sign-in link. They can make one from the Team page, and it lets you choose a new password.
+          </p>
+          <Link href="/login" className="btn btn-secondary w-full">Back to sign in</Link>
         </div>
-        <FormMessage state={state} />
-        <button type="submit" disabled={pending} className="btn btn-gold w-full">
-          {pending ? "Sending…" : "Email me a reset link"}
-        </button>
-        <p className="text-center text-sm">
-          <Link href="/login" className="text-muted hover:text-gold">Back to sign in</Link>
-        </p>
-      </form>
+      )}
     </AuthShell>
   );
 }

@@ -42,7 +42,7 @@ export default function AuthCallbackPage() {
       {error ? (
         <div className="space-y-5">
           <p role="alert" className="text-sm text-danger">{error}</p>
-          <Link href="/login" className="btn btn-ghost w-full">Back to sign in</Link>
+          <Link href="/login" className="btn btn-secondary w-full">Back to sign in</Link>
         </div>
       ) : (
         <p className="text-sm text-muted">One moment.</p>
