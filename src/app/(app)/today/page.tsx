@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
+import { ProjectRow } from "@/components/project-row";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
+import { progress } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
-import type { Lead } from "@/lib/types";
+import type { Lead, Project } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Today" };
 
@@ -17,14 +19,26 @@ export default async function TodayPage() {
 
   // My open leads that are due (or overdue), plus fresh New leads assigned to me.
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("leads")
-    .select("*")
-    .eq("owner_id", profile.id)
-    .not("stage", "in", "(won,lost)")
-    .or(`next_follow_up.lte.${today},and(stage.eq.new,assigned_at.gte.${newSince})`)
-    .order("next_follow_up", { ascending: true, nullsFirst: false })
-    .returns<Lead[]>();
+  const [{ data }, { data: projectRows }] = await Promise.all([
+    supabase
+      .from("leads")
+      .select("*")
+      .eq("owner_id", profile.id)
+      .not("stage", "in", "(won,lost)")
+      .or(`next_follow_up.lte.${today},and(stage.eq.new,assigned_at.gte.${newSince})`)
+      .order("next_follow_up", { ascending: true, nullsFirst: false })
+      .returns<Lead[]>(),
+    // Projects assigned to me (admins included) that still have open items.
+    supabase
+      .from("projects")
+      .select("id, name, due_date, project_tasks(done)")
+      .eq("assignee_id", profile.id)
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .returns<(Pick<Project, "id" | "name" | "due_date"> & { project_tasks: { done: boolean }[] })[]>(),
+  ]);
+  const projects = (projectRows ?? [])
+    .map((p) => ({ id: p.id, name: p.name, due_date: p.due_date, ...progress(p.project_tasks) }))
+    .filter((p) => !p.complete);
 
   const leads = data ?? [];
   const overdue = leads.filter((l) => l.next_follow_up && l.next_follow_up < today);
@@ -62,6 +76,19 @@ export default async function TodayPage() {
           </>
         }
       />
+
+      {projects.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-fg">
+            Your projects <span className="text-muted">({projects.length})</span>
+          </h2>
+          <div className="space-y-3">
+            {projects.map((p) => (
+              <ProjectRow key={p.id} project={p} today={today} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

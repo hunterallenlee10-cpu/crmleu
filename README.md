@@ -14,6 +14,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
   - They can't reassign or delete leads.
   - They can't edit or delete activity entries.
   - They can't change their own role or commission rate.
+- **Projects** are only visible to the person they're assigned to (and admins). That person can tick checklist items on and off, but only an admin can create, edit, reassign or delete projects and checklist items.
 - **Admins** can see and do everything.
 - **No public sign-up.** The admin invites people by email, and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
@@ -186,12 +187,19 @@ Admins get an **Admin** tab with four pages:
   A Notes column becomes a note in each lead's history. Won rows without a won date count as won on the day you import. Up to 5,000 rows per file.
 - **Export CSV:** downloads every lead with its owner. Only admins can download it.
 
+**Projects** (in the main nav, for everyone):
+
+- Admins click **+ New project**, give it a name, pick who it's for, set an optional due date and description, and paste a checklist (one item per line; bullets and numbers are stripped).
+- On a project's page, admins can add items, edit or remove them, tick them off, change the details (including who it's assigned to), or delete the project.
+- The person it's assigned to sees it under **Projects** and on their **Today** page until every item is done. They can tick items off but can't change the list. Each ticked item shows who did it and when.
+- The list splits projects into **In progress** and **Done** (every item ticked). Admins can filter it by person.
+
 On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
 
 ## 9. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing)
+npm test                    # unit tests (normalization, New York dates, CSV parsing, checklists)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -205,6 +213,7 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - an admin can see, reassign and delete anything;
 - duplicates are blocked: the same phone in any format, or the same business name and city;
 - Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged.
+- a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects.
 
 ## Project layout
 
@@ -221,6 +230,8 @@ src/lib/dates.ts        "today" and follow-up dates in America/New_York
 src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
+src/app/(app)/projects  project list, new project (admins), project page with checklist
+src/lib/projects.ts     project form validation and checklist parsing
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
 src/app/api/export      CSV export (admins only)
 src/app/api/leads       POST endpoint for n8n (API key)
