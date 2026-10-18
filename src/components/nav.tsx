@@ -2,6 +2,7 @@
 
 import {
   CalendarCheck,
+  FolderKanban,
   KanbanSquare,
   ListChecks,
   SlidersHorizontal,
@@ -20,6 +21,7 @@ const REP_ITEMS: NavItem[] = [
   { href: "/leads", label: "Leads" },
   { href: "/pipeline", label: "Pipeline" },
   { href: "/tasks", label: "Tasks" },
+  { href: "/projects", label: "Projects" },
   { href: "/leads/new", label: "+ New" },
 ];
 const ADMIN_ITEMS: NavItem[] = [{ href: "/admin", label: "Admin" }];
@@ -30,6 +32,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/leads": Users,
   "/pipeline": KanbanSquare,
   "/tasks": ListChecks,
+  "/projects": FolderKanban,
   "/leads/new": SquarePlus,
   "/admin": SlidersHorizontal,
 };

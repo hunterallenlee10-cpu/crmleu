@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import { AlarmClock, CircleAlert, Inbox, ListChecks, type LucideIcon } from "lucide-react";
+import { AlarmClock, CircleAlert, FolderKanban, Inbox, ListChecks, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
+import { ProjectRow } from "@/components/project-row";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
+import { progress as checklistProgress } from "@/lib/projects";
 import { METRICS, PERIODS, toBoardRows, toFeedItems, type Metric, type Period } from "@/lib/leaderboard";
 import { createClient } from "@/lib/supabase/server";
 import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
-import type { Lead, Task } from "@/lib/types";
+import type { Lead, Project, Task } from "@/lib/types";
 import { TaskItem } from "../tasks/task-item";
 import { Leaderboard } from "./leaderboard";
 import { TeamFeed } from "./team-feed";
@@ -48,9 +50,18 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     .order("created_at")
     .returns<Task[]>();
 
-  const [{ data }, { data: taskData }, members, boardRes, feedRes] = await Promise.all([
+  // Projects assigned to me that still have unticked checklist items.
+  const projectsQuery = supabase
+    .from("projects")
+    .select("id, name, due_date, project_tasks(done)")
+    .eq("assignee_id", profile.id)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .returns<(Pick<Project, "id" | "name" | "due_date"> & { project_tasks: { done: boolean }[] })[]>();
+
+  const [{ data }, { data: taskData }, { data: projectData }, members, boardRes, feedRes] = await Promise.all([
     leadsQuery,
     tasksQuery,
+    projectsQuery,
     getTeamMembers(supabase),
     // The whole team. These only return names and counts for other people's work.
     supabase.rpc("team_leaderboard", { p_period: period }),
@@ -62,6 +73,9 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     (t) => !t.everyone_must_complete || progress[t.id]?.some((p) => p.user_id === profile.id && !p.checked_at),
   );
   const names = Object.fromEntries(members.map((m) => [m.id, m.full_name]));
+  const projects = (projectData ?? [])
+    .map((p) => ({ id: p.id, name: p.name, due_date: p.due_date, ...checklistProgress(p.project_tasks) }))
+    .filter((p) => !p.complete);
 
   const board = toBoardRows(boardRes.data);
   const feed = toFeedItems(feedRes.data);
@@ -113,6 +127,23 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
                   />
                 ))}
               </ul>
+            </section>
+          )}
+
+          {projects.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 text-sm font-semibold">
+                <FolderKanban aria-hidden="true" className="size-4 text-muted" strokeWidth={1.75} />
+                Projects <span className="count">{projects.length}</span>
+                <Link href="/projects" className="ml-auto text-label font-medium text-muted underline-offset-4 hover:text-fg hover:underline">
+                  All projects
+                </Link>
+              </h2>
+              <div className="grid gap-2">
+                {projects.map((p) => (
+                  <ProjectRow key={p.id} project={p} today={today} />
+                ))}
+              </div>
             </section>
           )}
 

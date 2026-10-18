@@ -118,3 +118,25 @@ export type TeamMember = {
   role: Role;
   active: boolean;
 };
+
+export type Project = {
+  id: string;
+  name: string;
+  description: string | null;
+  assignee_id: string | null;
+  due_date: string | null; // YYYY-MM-DD
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectTask = {
+  id: number;
+  project_id: string;
+  title: string;
+  position: number;
+  done: boolean;
+  done_at: string | null;
+  done_by: string | null;
+  created_at: string;
+};
