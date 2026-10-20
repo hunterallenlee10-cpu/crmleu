@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { FormMessage, type FormState } from "@/components/form-message";
-import type { Project } from "@/lib/types";
+import type { Project, ProjectDivision } from "@/lib/types";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 export type AssigneeOption = { value: string; label: string };
@@ -13,20 +13,25 @@ export function ProjectForm({
   action,
   project,
   assignees,
+  divisions,
+  defaultDivision,
   submitLabel,
 }: {
   action: Action;
   project?: Project;
   assignees: AssigneeOption[];
+  divisions: Pick<ProjectDivision, "id" | "name">[];
+  defaultDivision?: string;
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const isNew = !project;
 
   // After a submit, show what was typed; otherwise show the saved project.
-  const value = (name: "name" | "description" | "assignee_id" | "due_date" | "checklist") => {
+  const value = (name: "name" | "description" | "division_id" | "assignee_id" | "due_date" | "checklist") => {
     if (state?.fields) return state.fields[name] ?? "";
     if (name === "checklist") return "";
+    if (name === "division_id" && !project) return defaultDivision ?? "";
     return project?.[name] ?? "";
   };
   // Remount inputs when the values behind them change.
@@ -37,6 +42,16 @@ export function ProjectForm({
       <div>
         <label htmlFor="name" className="label">Project name</label>
         <input id="name" name="name" required maxLength={200} defaultValue={value("name")} className="input" placeholder="e.g. Launch Joe's Pizza website" />
+      </div>
+      <div>
+        <label htmlFor="division_id" className="label">Division</label>
+        <select id="division_id" name="division_id" required defaultValue={value("division_id")} className="input">
+          <option value="" disabled>Pick a division</option>
+          {divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+        </select>
+        {project && !project.division_id && (
+          <p className="mt-1.5 text-xs text-warning">This project doesn&apos;t have a division yet, so it isn&apos;t on the map.</p>
+        )}
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <div>

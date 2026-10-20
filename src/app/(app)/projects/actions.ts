@@ -17,10 +17,15 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 
 function projectFields(formData: FormData) {
   const fields: Record<string, string> = {};
-  for (const name of ["name", "description", "assignee_id", "due_date", "checklist"]) {
+  for (const name of ["name", "description", "division_id", "assignee_id", "due_date", "checklist"]) {
     fields[name] = String(formData.get(name) ?? "");
   }
   return fields;
+}
+
+async function divisionExists(supabase: Supabase, id: string) {
+  const { data } = await supabase.from("project_divisions").select("id").eq("id", id).maybeSingle();
+  return Boolean(data);
 }
 
 async function isActiveMember(supabase: Supabase, id: string) {
@@ -37,6 +42,9 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
   if (items.length > MAX_TASKS) return { error: `Keep the checklist to ${MAX_TASKS} items or fewer.`, fields };
 
   const supabase = await createClient();
+  if (!(await divisionExists(supabase, parsed.data.division_id))) {
+    return { error: "That division doesn't exist anymore. Pick another one.", fields };
+  }
   if (parsed.data.assignee_id && !(await isActiveMember(supabase, parsed.data.assignee_id))) {
     return { error: "That person isn't an active team member.", fields };
   }
@@ -79,6 +87,9 @@ export async function updateProject(
     .eq("id", projectId)
     .maybeSingle();
   if (!current) return { error: "Project not found.", fields };
+  if (!(await divisionExists(supabase, parsed.data.division_id))) {
+    return { error: "That division doesn't exist anymore. Pick another one.", fields };
+  }
 
   // Only check when it changes, so a project can still be saved while its
   // assignee is deactivated.

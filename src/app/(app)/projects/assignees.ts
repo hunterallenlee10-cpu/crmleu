@@ -1,6 +1,7 @@
 import "server-only";
 import type { AssigneeOption } from "@/components/project-form";
 import type { createClient } from "@/lib/supabase/server";
+import type { ProjectDivision } from "@/lib/types";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -15,4 +16,15 @@ export async function activeAssignees(supabase: Supabase, currentId?: string | n
       value: m.id as string,
       label: `${m.full_name}${m.active ? "" : " (inactive)"}`,
     }));
+}
+
+// Divisions in map order (clockwise from the top).
+export async function projectDivisions(supabase: Supabase): Promise<ProjectDivision[]> {
+  const { data } = await supabase
+    .from("project_divisions")
+    .select("*")
+    .order("position")
+    .order("created_at")
+    .returns<ProjectDivision[]>();
+  return data ?? [];
 }

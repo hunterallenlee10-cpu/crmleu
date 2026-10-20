@@ -9,7 +9,7 @@ import { progress } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import type { Project, ProjectTask } from "@/lib/types";
 import { updateProject } from "../actions";
-import { activeAssignees } from "../assignees";
+import { activeAssignees, projectDivisions } from "../assignees";
 import { Checklist } from "./checklist";
 import { DeleteProjectButton } from "./delete-project";
 
@@ -26,7 +26,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[id]"
   const { data: project } = await supabase.from("projects").select("*").eq("id", id).maybeSingle<Project>();
   if (!project) notFound();
 
-  const [{ data: tasks }, { data: team }, assignees] = await Promise.all([
+  const [{ data: tasks }, { data: team }, assignees, divisions] = await Promise.all([
     supabase
       .from("project_tasks")
       .select("*")
@@ -36,7 +36,9 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[id]"
       .returns<ProjectTask[]>(),
     supabase.from("team_members").select("id, full_name"),
     isAdmin ? activeAssignees(supabase, project.assignee_id) : Promise.resolve([]),
+    projectDivisions(supabase),
   ]);
+  const division = divisions.find((d) => d.id === project.division_id);
 
   const names = new Map((team ?? []).map((m) => [m.id as string, m.full_name as string]));
   const today = todayNY();
@@ -58,6 +60,8 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[id]"
             Assigned to <span className="text-fg">{project.assignee_id === profile.id ? "you" : assignee}</span>
           </span>
           <span aria-hidden>·</span>
+          <span>{division ? division.name : "No division"}</span>
+          <span aria-hidden>·</span>
           <DueBadge date={project.due_date} today={today} complete={complete} />
         </p>
         <ProgressBar done={done} total={total} />
@@ -75,6 +79,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[id]"
               action={updateProject.bind(null, project.id)}
               project={project}
               assignees={assignees}
+              divisions={divisions}
               submitLabel="Save changes"
             />
           </Section>
