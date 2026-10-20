@@ -63,10 +63,16 @@
 
   --animate-fade-in: fade-in 160ms ease-out both;
   --animate-pop-in: pop-in 180ms ease-out both;
+  --animate-core-pulse: core-pulse 1.1s ease-out both;
 
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+  /* A project reaching the LEU core on the Projects map. */
+  @keyframes core-pulse {
+    from { opacity: 0.9; transform: scale(1); }
+    to { opacity: 0; transform: scale(2.4); }
   }
   @keyframes pop-in {
     from { opacity: 0; transform: translateY(6px) scale(0.99); }
@@ -94,6 +100,20 @@ h3 {
   text-wrap: balance;
 }
 
+/* People on the Projects map. Distinct from each other and from the
+   danger/warning meanings, readable as small dots in both themes. Kept out
+   of @theme because they're only used through var(), which Tailwind can't see. */
+:root {
+  --color-person-1: #6ea8fe;
+  --color-person-2: #4fb286;
+  --color-person-3: #e0a84a;
+  --color-person-4: #a99bf5;
+  --color-person-5: #ef8f6a;
+  --color-person-6: #5cc6d3;
+  --color-person-7: #dc8fc6;
+  --color-person-8: #b8c86a;
+}
+
 [data-theme="light"] {
   color-scheme: light;
   --color-bg: #f6f7f9;
@@ -114,6 +134,14 @@ h3 {
   --color-danger-solid: #c1363b;
   --color-info: #1f5fbf;
   --color-violet: #5b46c4;
+  --color-person-1: #1f5fbf;
+  --color-person-2: #1a744c;
+  --color-person-3: #935a00;
+  --color-person-4: #5b46c4;
+  --color-person-5: #b4502f;
+  --color-person-6: #0e7482;
+  --color-person-7: #9c3b84;
+  --color-person-8: #5c7413;
   --shadow-float: 0 8px 24px -6px rgb(15 27 45 / 0.16), 0 2px 6px -2px rgb(15 27 45 / 0.1);
 }
 

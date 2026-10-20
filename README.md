@@ -19,6 +19,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
   - They can see, but not tick off, tasks assigned to someone else.
   - On an "everyone has to check this off" task, each rep can only tick (or un-tick) their own box.
 - **Projects** are only visible to the person they're assigned to (and admins). That person can tick checklist items on and off, but only an admin can create, edit, reassign or delete projects and checklist items.
+- **Divisions** (the spokes on the Projects map) are visible to the whole team. Only admins add, rename, reorder or remove them, and a division can't be removed while it still has projects.
 - **Admins** can see and do everything.
 - **No public sign-up.** The admin invites people with a one-time link (or by email once custom SMTP is set up), and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
@@ -208,10 +209,13 @@ Admins get an **Admin** tab with four pages:
 - Each person's open tasks (theirs plus whole-team ones) also show at the top of **Today**.
 
 **Projects** (in the main nav, for everyone):
-- Admins click **+ New project**, give it a name, pick who it's for, set an optional due date and description, and paste a checklist (one item per line; bullets and numbers are stripped).
-- On a project's page, admins can add items, edit or remove them, tick them off, change the details (including who it's assigned to), or delete the project.
+- The page opens on a **map**: LEU sits in the middle and each division (AI Auto, Websites, SEO / Google Rank, Social Media, Consulting, CRM, Ecom, BM, Ads, Selling TRW, Crypto, Clothes) is a spoke around it. Every project is a dot on its division's spoke, coloured by the person it's assigned to. A new project starts at the tip and moves toward LEU as its checklist gets ticked off; finished projects join the core. A busy spoke is thicker and brighter, and a division nobody is working on is a faint dashed line.
+- Click a dot to see its checklist in the side panel and tick items off right there. Click a spoke to see that division's projects, or LEU for the overview (what's stuck at the edge, what's almost done). **List** shows the same projects grouped by division; phones always get the list.
+- Admins click **+ New project**, or hover a spoke and press **+** to start one in that division. A project needs a name and a division; who it's for, a due date, a description and a checklist (one item per line; bullets and numbers are stripped) are optional.
+- **Edit divisions** (admins) renames, reorders, adds or removes spokes. A division with projects can't be removed until they're moved to another division. Projects made before divisions existed show on a **No division** spoke until an admin picks one on the project's page.
+- On a project's page, admins can add items, edit or remove them, tick them off, change the details (including its division and who it's assigned to), or delete the project.
 - The person it's assigned to sees it under **Projects** and on their **Today** page until every item is done. They can tick items off but can't change the list. Each ticked item shows who did it and when.
-- The list splits projects into **In progress** and **Done** (every item ticked). Admins can filter it by person.
+- Admins can pick a person above the map to fade everyone else's dots (and narrow the list).
 
 ### The Today page (everyone)
 
@@ -227,7 +231,7 @@ On **Leads**, admins see every lead, can filter by owner, and can tick leads to 
 ## 9. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, checklists)
+npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, checklists, projects map)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -243,7 +247,8 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged;
 - every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks;
 - an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box;
-- a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects.
+- a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects;
+- everyone on the team can read the divisions, only an admin can change them, names are unique and can't be blank, and a division with projects can't be removed.
 
 ## Project layout
 
@@ -261,8 +266,9 @@ src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
 src/app/(app)/tasks     team task list (admins assign; everyone ticks off their own)
-src/app/(app)/projects  project list, new project (admins), project page with checklist
-src/lib/projects.ts     project form validation and checklist parsing
+src/app/(app)/projects  projects map and list, new project and edit divisions (admins), project page with checklist
+src/lib/projects.ts     project and division validation, checklist parsing
+src/lib/project-map.ts  where each spoke, label and project dot goes on the map
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
 src/app/api/export      CSV export (admins only)
 src/app/api/leads       POST endpoint for n8n (API key)

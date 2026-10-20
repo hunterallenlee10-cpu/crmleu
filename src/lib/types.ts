@@ -124,10 +124,19 @@ export type Project = {
   name: string;
   description: string | null;
   assignee_id: string | null;
+  division_id: string | null; // null only for projects made before divisions existed
   due_date: string | null; // YYYY-MM-DD
   created_by: string | null;
   created_at: string;
   updated_at: string;
+};
+
+// A part of the business a project belongs to; a spoke on the Projects map.
+export type ProjectDivision = {
+  id: string;
+  name: string;
+  position: number;
+  created_at: string;
 };
 
 export type ProjectTask = {
