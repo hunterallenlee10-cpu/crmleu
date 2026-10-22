@@ -94,17 +94,16 @@ describe("layoutDots", () => {
     expect(bandOf(overflow[0])).toBe(0);
   });
 
-  it("puts finished tasks inside the core, a few per spoke", () => {
-    const dots = Array.from({ length: 5 }, (_, i) => ({ id: `d${i}`, spoke: 2, due: null, done: true }));
-    const { positions } = layoutDots(3, dots, TODAY);
-    expect(positions.size).toBe(3);
-    // The last ones listed (most recently finished) are the ones shown.
-    expect(positions.has("d4")).toBe(true);
-    expect(positions.has("d0")).toBe(false);
-    for (const p of positions.values()) {
-      expect(p.done).toBe(true);
-      expect(dist(p)).toBeLessThan(MAP.coreRadius);
-    }
+  it("leaves finished tasks off the map", () => {
+    const { positions } = layoutDots(
+      3,
+      [
+        { id: "done", spoke: 2, due: null, done: true },
+        { id: "open", spoke: 2, due: null, done: false },
+      ],
+      TODAY,
+    );
+    expect([...positions.keys()]).toEqual(["open"]);
   });
 
   it("skips dots on a spoke that doesn't exist", () => {

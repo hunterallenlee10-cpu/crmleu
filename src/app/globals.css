@@ -64,15 +64,21 @@
   --animate-fade-in: fade-in 160ms ease-out both;
   --animate-pop-in: pop-in 180ms ease-out both;
   --animate-core-pulse: core-pulse 1.1s ease-out both;
+  --animate-leu-float: leu-float 5s ease-in-out infinite;
 
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  /* A project reaching the LEU core on the Projects map. */
+  /* A task reaching the LEU core on the Ventures map. */
   @keyframes core-pulse {
     from { opacity: 0.9; transform: scale(1); }
     to { opacity: 0; transform: scale(2.4); }
+  }
+  /* The LEU logo hovering in the middle of the Ventures map. */
+  @keyframes leu-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
   }
   @keyframes pop-in {
     from { opacity: 0; transform: translateY(6px) scale(0.99); }
