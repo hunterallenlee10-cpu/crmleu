@@ -115,27 +115,20 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       {view === "list" ? (
         <VentureList {...listProps} />
       ) : (
-        <>
-          <div className="hidden md:block">
-            <VentureMap
-              ventures={ventures}
-              tasks={tasks}
-              people={people}
-              person={personFilter}
-              isAdmin={isAdmin}
-              today={today}
-            />
-          </div>
-          <div className="md:hidden">
-            <VentureList {...listProps} />
-          </div>
-        </>
+        <VentureMap
+          ventures={ventures}
+          tasks={tasks}
+          people={people}
+          person={personFilter}
+          isAdmin={isAdmin}
+          today={today}
+        />
       )}
     </div>
   );
 }
 
-// The same ventures and tasks as a list. Phones always get this view.
+// The same ventures and tasks as a list.
 async function VentureList({
   ventures,
   rows,

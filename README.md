@@ -214,7 +214,7 @@ Admins get an **Admin** tab with four pages:
 - The side panel shows the overview (open, overdue and done counts, what's due this week, every venture's progress), one venture (details, its tasks with checkboxes, and for admins **Add a task**), or one task. Hover a dot for its title and due date, click it to tick it off.
 - Admins press **+** on a branch to add a task there, or pick a **Venture** when adding a task on the **Tasks** page. Venture tasks are ordinary tasks: they show on the Tasks page and on each person's **Today** page too.
 - **Edit ventures** (admins) renames, reorders, adds or removes branches.
-- Pick a person above the map to fade everyone else's dots (and narrow the list). **List** shows the same thing as cards; phones always get the list.
+- Pick a person above the map to fade everyone else's dots (and narrow the list). **List** shows the same thing as cards. Phones get the same map (with bigger labels); tap a branch or dot and its details open below the map.
 - Ventures replaced the old Projects page. When the `ventures` migration runs, each project is copied into a task on its venture (its checklist goes into the task's details, and a fully ticked project becomes a done task). The old `projects` tables are kept, unused, as an archive. Old `/projects` links redirect to `/ventures`.
 
 ### The Today page (everyone)

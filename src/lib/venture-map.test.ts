@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   BAND_WIDTH,
+  LABEL_SIZES,
   MAP,
+  VIEWBOX,
   bandStart,
   dueBand,
   labelPlacement,
@@ -124,6 +126,17 @@ describe("labelPlacement", () => {
     expect(labelPlacement(spokeAngle(3, 12)).anchor).toBe("start");
     expect(labelPlacement(spokeAngle(9, 12)).anchor).toBe("end");
     expect(labelPlacement(spokeAngle(0, 12)).anchor).toBe("middle");
+  });
+
+  it("spaces the bigger phone labels further apart and keeps them on the map", () => {
+    for (let i = 0; i < 12; i++) {
+      const a = spokeAngle(i, 12);
+      const desk = labelPlacement(a);
+      const phone = labelPlacement(a, true);
+      expect(phone.countY - phone.nameY).toBeGreaterThan(desk.countY - desk.nameY);
+      expect(phone.nameY - LABEL_SIZES.phone.name * 0.75).toBeGreaterThan(VIEWBOX.y); // cap height
+      expect(phone.countY + 6).toBeLessThan(VIEWBOX.y + VIEWBOX.height);
+    }
   });
 });
 
