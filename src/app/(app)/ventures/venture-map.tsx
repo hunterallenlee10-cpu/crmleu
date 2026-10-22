@@ -161,7 +161,6 @@ export function VentureMap({
   }
 
   const visible = items.filter(matches);
-  const finished = visible.filter((t) => t.done).length;
   const ringLabelAngle = spokeAngle(0.5, ventures.length || 1);
   const tipTask = tip ? items.find((t) => t.id === tip.id) : undefined;
   const bubbleVenture = bubble ? ventureById(bubble.id) : undefined;
@@ -295,7 +294,7 @@ export function VentureMap({
           <g
             role="button"
             tabIndex={0}
-            aria-label={`Overview. ${finished} tasks done`}
+            aria-label="LEU overview"
             className="cursor-pointer outline-none"
             onClick={() => select({ mode: "overview" })}
             onKeyDown={(e) => {
@@ -306,13 +305,26 @@ export function VentureMap({
             {pulse > 0 && (
               <circle key={pulse} r={MAP.coreRadius} className="animate-core-pulse fill-none stroke-accent-strong" strokeWidth={2} />
             )}
-            <circle r={MAP.coreRadius} className="fill-bg stroke-accent" strokeWidth={1.5} />
-            <text y={7} textAnchor="middle" className="fill-accent-strong text-[30px] font-semibold tracking-[0.06em]">
-              LEU
-            </text>
-            <text y={27} textAnchor="middle" className="fill-muted text-[10px] font-medium tracking-[0.12em]">
-              {finished} DONE
-            </text>
+            {/* The LEU logo, floating. Silver on dark, gold on light (see .logo-dark / .logo-light). */}
+            <circle r={MAP.coreRadius} fill="transparent" />
+            <g className="motion-safe:animate-leu-float">
+              <image
+                href="/brand/leu-logo-silver.webp"
+                x={-58}
+                y={-46}
+                width={116}
+                height={113}
+                className="logo-dark drop-shadow-[0_10px_14px_rgb(0_0_0_/_0.55)]"
+              />
+              <image
+                href="/brand/leu-logo-gold.webp"
+                x={-58}
+                y={-46}
+                width={116}
+                height={109}
+                className="logo-light drop-shadow-[0_10px_14px_rgb(15_27_45_/_0.25)]"
+              />
+            </g>
           </g>
 
           <g>
@@ -339,16 +351,16 @@ export function VentureMap({
                   onFocus={(e) => showTip(t.id, e.currentTarget)}
                   onBlur={() => setTip(null)}
                 >
-                  <circle r={pos.done ? 6 : 11} fill="transparent" />
+                  <circle r={11} fill="transparent" />
                   <circle
-                    r={pos.done ? 6.5 : 12}
+                    r={12}
                     className={`fill-none transition-opacity group-hover/dot:opacity-90 group-focus-visible/dot:opacity-90 ${
                       overdue ? "stroke-danger opacity-80" : "stroke-fg"
                     } ${isSel ? "opacity-90" : overdue ? "" : "opacity-0"}`}
                     strokeWidth={1.5}
                   />
                   <circle
-                    r={pos.done ? MAP.doneDotRadius : MAP.dotRadius}
+                    r={MAP.dotRadius}
                     style={{ fill: t.color }}
                     className="stroke-surface"
                     strokeWidth={2}

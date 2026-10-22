@@ -2,8 +2,8 @@ import { daysBetween } from "./dates";
 
 // Geometry for the Ventures map: ventures are spokes around the LEU core and
 // each task is a dot on its venture's spoke. Dots sit in rings by how soon
-// they're due, so work drifts toward LEU as its date gets closer, and
-// finished tasks join the core.
+// they're due, so work drifts toward LEU as its date gets closer. Finished
+// tasks leave the map (they join the core).
 //
 // All numbers are SVG user units in a viewBox centred on the core.
 
@@ -14,7 +14,6 @@ export const MAP = {
   plusRadius: 320, // the admin's "add a task here" button
   labelRadius: 350,
   dotRadius: 7,
-  doneDotRadius: 3.5,
   gap: 18, // centre to centre between neighbouring dots
 } as const;
 
@@ -45,13 +44,12 @@ export function spokeAngle(index: number, count: number) {
 }
 
 export type DotInput = { id: string; spoke: number; due: string | null; done: boolean };
-export type DotPosition = { x: number; y: number; done: boolean };
+export type DotPosition = { x: number; y: number };
 // Shown in place of the last dot when a ring on a spoke is too full.
 export type Overflow = { key: string; spoke: number; band: number; x: number; y: number; count: number };
 
 const ROWS_PER_BAND = Math.max(1, Math.floor(BAND_WIDTH / MAP.gap));
 const MAX_PER_ROW = 5;
-const MAX_DONE_SHOWN = 3;
 
 // How many dots fit side by side at radius r without crowding the next spoke.
 function rowCapacity(r: number, spokeCount: number) {
@@ -104,19 +102,13 @@ export function layoutDots(
         for (let i = 0; i < n; i++) {
           const p = at(row.r, across(i, n, MAP.gap));
           const d = shown[next];
-          if (d) positions.set(d.id, { ...p, done: false });
+          if (d) positions.set(d.id, p);
           else overflow.push({ key: `${spoke}-${band}`, spoke, band, ...p, count: extra });
           next++;
         }
         left -= n;
       });
     }
-
-    // A few of the most recently listed finished tasks sit just inside the core.
-    const done = list.filter((d) => d.done).slice(-MAX_DONE_SHOWN);
-    done.forEach((d, k) => {
-      positions.set(d.id, { ...at(MAP.coreRadius - 12, across(k, done.length, 8)), done: true });
-    });
   }
   return { positions, overflow };
 }
