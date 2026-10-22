@@ -23,6 +23,9 @@ const TaskSchema = z.object({
     .union([z.iso.date("Pick a valid due date."), z.literal("")])
     .transform((s) => s || null),
   everyone_must_complete: z.string().transform((s) => s === "on"),
+  venture_id: z
+    .union([z.uuid(), z.literal("")])
+    .transform((s) => s || null),
 }).transform((t) => ({
   ...t,
   // Only whole-team tasks can need everyone to tick them.
@@ -36,6 +39,7 @@ function taskFields(formData: FormData) {
     assignee_id: String(formData.get("assignee_id") ?? ""),
     due_date: String(formData.get("due_date") ?? ""),
     everyone_must_complete: formData.get("everyone_must_complete") === "on" ? "on" : "",
+    venture_id: String(formData.get("venture_id") ?? ""),
   };
 }
 
@@ -46,7 +50,10 @@ type Parsed = { fields: Record<string, string> } & ({ ok: true; data: TaskInput 
 async function parseTask(formData: FormData, currentAssignee?: string | null): Promise<Parsed> {
   const fields = taskFields(formData);
   const parsed = TaskSchema.safeParse(fields);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message, fields };
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    return { ok: false, error: issue.path[0] === "venture_id" ? "Pick a venture." : issue.message, fields };
+  }
 
   if (parsed.data.assignee_id && parsed.data.assignee_id !== currentAssignee) {
     const supabase = await createClient();
@@ -60,6 +67,12 @@ async function parseTask(formData: FormData, currentAssignee?: string | null): P
   return { ok: true, data: parsed.data, fields };
 }
 
+function taskError(error: { code?: string; message: string }) {
+  return error.code === "23503" && error.message.includes("venture")
+    ? "That venture doesn't exist anymore. Pick another one."
+    : error.message;
+}
+
 export async function createTask(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireAdmin();
   const parsed = await parseTask(formData);
@@ -67,7 +80,7 @@ export async function createTask(_prev: FormState, formData: FormData): Promise<
 
   const supabase = await createClient();
   const { error } = await supabase.from("tasks").insert(parsed.data);
-  if (error) return { error: error.message, fields: parsed.fields };
+  if (error) return { error: taskError(error), fields: parsed.fields };
 
   revalidatePath("/", "layout");
   return { message: "Task added." };
@@ -81,7 +94,7 @@ export async function updateTask(taskId: string, _prev: FormState, formData: For
   if (!parsed.ok) return { error: parsed.error, fields: parsed.fields };
 
   const { data, error } = await supabase.from("tasks").update(parsed.data).eq("id", taskId).select("id");
-  if (error) return { error: error.message, fields: parsed.fields };
+  if (error) return { error: taskError(error), fields: parsed.fields };
   if (!data.length) return { error: "Task not found.", fields: parsed.fields };
 
   revalidatePath("/", "layout");

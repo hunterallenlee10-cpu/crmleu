@@ -18,8 +18,7 @@ function useSetParam() {
   };
 }
 
-// Admin only. Picking a person fades everyone else's dots on the map and
-// narrows the list.
+// Picking a person fades everyone else's dots on the map and narrows the list.
 export function PersonChips({ value, people, total }: { value: string; people: PersonChip[]; total: number }) {
   const setParam = useSetParam();
   const chip = (v: string, label: string, count: number, color?: string) => {
@@ -39,7 +38,7 @@ export function PersonChips({ value, people, total }: { value: string; people: P
     );
   };
   return (
-    <div role="group" aria-label="Show projects for" className="flex min-w-0 flex-wrap gap-2">
+    <div role="group" aria-label="Show tasks for" className="flex min-w-0 flex-wrap gap-2">
       {chip("", "Everyone", total)}
       {people.map((p) => chip(p.value, p.label, p.count, p.color))}
     </div>

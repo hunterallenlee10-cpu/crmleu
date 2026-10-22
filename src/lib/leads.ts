@@ -20,7 +20,7 @@ export function friendlyDbError(error: DbError): string {
   const msg = error.message ?? "";
   switch (error.code) {
     case "23505":
-      if (msg.includes("project_divisions_name")) return "There's already a division with that name.";
+      if (msg.includes("ventures_name_unique")) return "There's already a venture with that name.";
       return msg.includes("leads_phone_unique") ? DUPLICATE_MESSAGES.phone : DUPLICATE_MESSAGES.name_city;
     case "22023":
       return "Enter a valid 10-digit US phone number.";
@@ -28,12 +28,11 @@ export function friendlyDbError(error: DbError): string {
       if (msg.includes("lost_needs_reason")) return "Moving to Lost needs a reason.";
       if (msg.includes("won_needs_value")) return "A Won deal needs a deal value.";
       if (msg.includes("business_name_present")) return "Business name is required.";
+      if (msg.includes("venture_timeline_order")) return "The target date can't be before the start date.";
       return "Some of those values aren't allowed.";
     case "23503":
-      if (msg.includes("projects_division_id_fkey")) {
-        return msg.includes("is not present")
-          ? "That division doesn't exist anymore. Pick another one."
-          : "This division still has projects. Move them to another division first.";
+      if (msg.includes("venture_id_fkey") || msg.includes("lead_id_fkey")) {
+        return "That venture or person doesn't exist anymore. Refresh and try again.";
       }
       return "That's linked to something else, so it can't be changed.";
     case "42501":

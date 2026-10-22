@@ -5,7 +5,7 @@ import { useCallback, useOptimistic, useState, useTransition } from "react";
 import { followUpLabel, formatDateTime } from "@/lib/dates";
 import type { EveryoneProgress, Task } from "@/lib/types";
 import { deleteTask, setTaskDone } from "./actions";
-import { TaskForm, type Assignee } from "./task-form";
+import { TaskForm, type Assignee, type VentureOption } from "./task-form";
 
 // One task with its checkbox. Admins also get Edit and Delete.
 // "Everyone" tasks pass `progress` and `meId`: the checkbox is your own tick,
@@ -17,9 +17,11 @@ export function TaskItem({
   meId,
   isAdmin,
   assignees,
+  ventures,
   names,
   today,
   showAssignee = false,
+  showVenture = true,
 }: {
   task: Task;
   canCheck: boolean;
@@ -27,9 +29,11 @@ export function TaskItem({
   meId?: string;
   isAdmin: boolean;
   assignees: Assignee[];
+  ventures?: VentureOption[];
   names: Record<string, string>;
   today: string;
   showAssignee?: boolean;
+  showVenture?: boolean;
 }) {
   const everyone = task.everyone_must_complete;
   const mine = everyone ? progress.find((p) => p.user_id === meId) : undefined;
@@ -63,6 +67,7 @@ export function TaskItem({
       <li className="card">
         <TaskForm
           assignees={assignees}
+          ventures={ventures}
           task={task}
           assigneeName={task.assignee_id ? names[task.assignee_id] : undefined}
           onDone={stopEditing}
@@ -78,6 +83,7 @@ export function TaskItem({
   // My own chip follows the checkbox right away; the rest come from the server.
   const ticked = (p: EveryoneProgress) => (p.user_id === meId ? done : p.checked_at !== null);
   const tickedCount = progress.filter(ticked).length;
+  const venture = showVenture && task.venture_id ? ventures?.find((v) => v.id === task.venture_id) : undefined;
 
   return (
     <li className={`flex gap-3 rounded-card border border-line bg-surface px-4 py-3.5 transition-opacity duration-150 sm:px-5 ${done ? "opacity-60" : ""}`}>
@@ -96,6 +102,7 @@ export function TaskItem({
         <p className={`font-medium break-words ${done ? "text-muted line-through" : ""}`}>{task.title}</p>
         {task.details && <p className="text-label whitespace-pre-line break-words text-muted">{task.details}</p>}
         <p className="flex flex-wrap gap-x-3 gap-y-1 pt-0.5 text-xs text-muted">
+          {venture && <span className="pill pill-accent">{venture.name}</span>}
           {showAssignee && <span className={task.assignee_id ? "" : "font-medium text-fg"}>{assignee}</span>}
           {everyone && (
             <span className="font-medium text-info">

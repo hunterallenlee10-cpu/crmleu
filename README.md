@@ -18,8 +18,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
   - A rep can tick off (or un-tick) tasks assigned to them, and tasks for the whole team.
   - They can see, but not tick off, tasks assigned to someone else.
   - On an "everyone has to check this off" task, each rep can only tick (or un-tick) their own box.
-- **Projects** are only visible to the person they're assigned to (and admins). That person can tick checklist items on and off, but only an admin can create, edit, reassign or delete projects and checklist items.
-- **Divisions** (the spokes on the Projects map) are visible to the whole team. Only admins add, rename, reorder or remove them, and a division can't be removed while it still has projects.
+- **Ventures** (the branches on the Ventures map) are visible to the whole team. Only admins add, edit, reorder or remove them. Removing a venture keeps its tasks; they just lose their venture.
 - **Admins** can see and do everything.
 - **No public sign-up.** The admin invites people with a one-time link (or by email once custom SMTP is set up), and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
@@ -208,14 +207,15 @@ Admins get an **Admin** tab with four pages:
 - Admins can edit, reassign or delete any task, and tick off anyone's.
 - Each person's open tasks (theirs plus whole-team ones) also show at the top of **Today**.
 
-**Projects** (in the main nav, for everyone):
-- The page opens on a **map**: LEU sits in the middle and each division (AI Auto, Websites, SEO / Google Rank, Social Media, Consulting, CRM, Ecom, BM, Ads, Selling TRW, Crypto, Clothes) is a spoke around it. Every project is a dot on its division's spoke, coloured by the person it's assigned to. A new project starts at the tip and moves toward LEU as its checklist gets ticked off; finished projects join the core. A busy spoke is thicker and brighter, and a division nobody is working on is a faint dashed line.
-- Click a dot to see its checklist in the side panel and tick items off right there. Click a spoke to see that division's projects, or LEU for the overview (what's stuck at the edge, what's almost done). **List** shows the same projects grouped by division; phones always get the list.
-- Admins click **+ New project**, or hover a spoke and press **+** to start one in that division. A project needs a name and a division; who it's for, a due date, a description and a checklist (one item per line; bullets and numbers are stripped) are optional.
-- **Edit divisions** (admins) renames, reorders, adds or removes spokes. A division with projects can't be removed until they're moved to another division. Projects made before divisions existed show on a **No division** spoke until an admin picks one on the project's page.
-- On a project's page, admins can add items, edit or remove them, tick them off, change the details (including its division and who it's assigned to), or delete the project.
-- The person it's assigned to sees it under **Projects** and on their **Today** page until every item is done. They can tick items off but can't change the list. Each ticked item shows who did it and when.
-- Admins can pick a person above the map to fade everyone else's dots (and narrow the list).
+**Ventures** (in the main nav, for everyone):
+- The page opens on a **map**: LEU sits in the middle and each venture (Websites, SEO / Google Rank, Ads, Crypto, Clothes...) is a branch around it. A busy branch is thicker and brighter, and a venture with no tasks is a faint dashed line.
+- **Dots are tasks** on that venture, coloured by who they're assigned to (grey for the whole team). The rings show when they're due: **Due now** (overdue or today) right by LEU, then **This week**, **This month**, **Later**, and **No date** out at the tip. Overdue dots get a red ring, and finished tasks join the core.
+- **Hover a venture's name** for its bubble: what the venture is, who's running it, its timeline (start → target date, how far along, days left), its status (Idea, Building, Live, Paused), and its tasks (progress, overdue count, what's next). **Open** shows it in the side panel; admins press **Edit** (or **Fill in details**) to change any of it.
+- The side panel shows the overview (open, overdue and done counts, what's due this week, every venture's progress), one venture (details, its tasks with checkboxes, and for admins **Add a task**), or one task. Hover a dot for its title and due date, click it to tick it off.
+- Admins press **+** on a branch to add a task there, or pick a **Venture** when adding a task on the **Tasks** page. Venture tasks are ordinary tasks: they show on the Tasks page and on each person's **Today** page too.
+- **Edit ventures** (admins) renames, reorders, adds or removes branches.
+- Pick a person above the map to fade everyone else's dots (and narrow the list). **List** shows the same thing as cards; phones always get the list.
+- Ventures replaced the old Projects page. When the `ventures` migration runs, each project is copied into a task on its venture (its checklist goes into the task's details, and a fully ticked project becomes a done task). The old `projects` tables are kept, unused, as an archive. Old `/projects` links redirect to `/ventures`.
 
 ### The Today page (everyone)
 
@@ -231,7 +231,7 @@ On **Leads**, admins see every lead, can filter by owner, and can tick leads to 
 ## 9. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, checklists, projects map)
+npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, ventures, ventures map)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -247,8 +247,8 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged;
 - every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks;
 - an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box;
-- a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects;
-- everyone on the team can read the divisions, only an admin can change them, names are unique and can't be blank, and a division with projects can't be removed.
+- a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects (the archived Projects tables);
+- everyone on the team can read the ventures and their tasks, only an admin can change a venture or move a task between ventures, names are unique and can't be blank, timelines can't end before they start, and removing a venture keeps its tasks.
 
 ## Project layout
 
@@ -266,9 +266,9 @@ src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
 src/app/(app)/tasks     team task list (admins assign; everyone ticks off their own)
-src/app/(app)/projects  projects map and list, new project and edit divisions (admins), project page with checklist
-src/lib/projects.ts     project and division validation, checklist parsing
-src/lib/project-map.ts  where each spoke, label and project dot goes on the map
+src/app/(app)/ventures  ventures map (hover bubble, side panel) and list, edit ventures (admins)
+src/lib/ventures.ts     venture validation, statuses, timeline maths
+src/lib/venture-map.ts  where each branch, label, ring and task dot goes on the map
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
 src/app/api/export      CSV export (admins only)
 src/app/api/leads       POST endpoint for n8n (API key)

@@ -6,15 +6,18 @@ import type { Task } from "@/lib/types";
 import { createTask, updateTask } from "./actions";
 
 export type Assignee = { id: string; name: string };
+export type VentureOption = { id: string; name: string };
 
 // Admin only: add a task, or edit one when `task` is passed.
 export function TaskForm({
   assignees,
+  ventures,
   task,
   assigneeName,
   onDone,
 }: {
   assignees: Assignee[];
+  ventures?: VentureOption[];
   task?: Task;
   assigneeName?: string;
   onDone?: () => void;
@@ -26,7 +29,7 @@ export function TaskForm({
   }, [state, onDone]);
 
   // After an error, show what was typed; otherwise the task's saved values (or blanks).
-  const value = (name: "title" | "details" | "assignee_id" | "due_date") =>
+  const value = (name: "title" | "details" | "assignee_id" | "due_date" | "venture_id") =>
     state?.error ? (state.fields?.[name] ?? "") : (task?.[name] ?? "");
   const everyone = state?.error ? state.fields?.everyone_must_complete === "on" : (task?.everyone_must_complete ?? false);
   const id = (name: string) => `${name}-${task?.id ?? "new"}`;
@@ -48,6 +51,18 @@ export function TaskForm({
         <label htmlFor={id("details")} className="label">Details (optional)</label>
         <textarea id={id("details")} name="details" rows={2} maxLength={2000} className="input resize-y py-3 leading-relaxed" defaultValue={value("details")} />
       </div>
+      {ventures ? (
+        <div>
+          <label htmlFor={id("venture_id")} className="label">Venture (optional)</label>
+          <select id={id("venture_id")} name="venture_id" className="input" defaultValue={value("venture_id")}>
+            <option value="">No venture</option>
+            {ventures.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+          </select>
+        </div>
+      ) : (
+        // Without the list, keep whatever venture the task already has.
+        <input type="hidden" name="venture_id" value={value("venture_id")} />
+      )}
       <WhoFields
         id={id}
         options={options}
