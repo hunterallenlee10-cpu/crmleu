@@ -119,19 +119,28 @@ export function polar(r: number, angle: number) {
   return { x: round(Math.cos(angle) * r), y: round(Math.sin(angle) * r) };
 }
 
+// Label text sizes in map units. On a phone the whole map is shrunk to about
+// a third, so its labels are drawn bigger to stay readable.
+export const LABEL_SIZES = {
+  desktop: { name: 22, count: 15, ring: 13, maxChars: 22 },
+  phone: { name: 34, count: 24, ring: 22, maxChars: 12 },
+} as const;
+
 // Where a spoke's name and count go: beside the tip on the left and right,
-// above or below it at the top and bottom.
-export function labelPlacement(angle: number) {
+// above or below it at the top and bottom. Phone labels are bigger, so their
+// lines sit further apart.
+export function labelPlacement(angle: number, phone = false) {
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
   const { x, y } = polar(MAP.labelRadius, angle);
   const anchor: "start" | "end" | "middle" = cos > 0.3 ? "start" : cos < -0.3 ? "end" : "middle";
-  if (anchor === "middle") {
-    return sin < 0
-      ? { x, y, anchor, nameY: round(y - 20), countY: round(y - 2) }
-      : { x, y, anchor, nameY: round(y + 14), countY: round(y + 32) };
-  }
-  return { x, y, anchor, nameY: round(y - 4), countY: round(y + 15) };
+  const [name, count] =
+    anchor === "middle"
+      ? sin < 0
+        ? phone ? [-26, -2] : [-20, -2]
+        : phone ? [14, 40] : [14, 32]
+      : phone ? [-6, 22] : [-4, 15];
+  return { x, y, anchor, nameY: round(y + name), countY: round(y + count) };
 }
 
 // Long names would run off the edge of the map; the full name stays in the

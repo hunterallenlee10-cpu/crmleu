@@ -6,6 +6,7 @@ import { followUpLabel } from "@/lib/dates";
 import {
   BANDS,
   BAND_WIDTH,
+  LABEL_SIZES,
   MAP,
   VIEWBOX,
   bandStart,
@@ -43,6 +44,8 @@ type Selection =
 type Bubble = { id: string; left: number; top: number; width: number; above: boolean };
 
 const BUBBLE_WIDTH = 304;
+// Below Tailwind's md breakpoint the map draws its bigger phone labels.
+const PHONE_QUERY = "(max-width: 767px)";
 const tally = (tasks: MapTask[]) => ({ done: tasks.filter((t) => t.done).length, total: tasks.length });
 
 // The Ventures map: each venture is a branch around LEU and every task on it
@@ -141,7 +144,7 @@ export function VentureMap({
     if (!stage || !svg) return;
     const scale = svg.width / VIEWBOX.width;
     const angle = spokeAngle(index, ventures.length);
-    const label = labelPlacement(angle);
+    const label = labelPlacement(angle, window.matchMedia(PHONE_QUERY).matches);
     const x = svg.left - stage.left + (label.x - VIEWBOX.x) * scale;
     const y = svg.top - stage.top + (label.y - VIEWBOX.y) * scale;
     const width = Math.min(BUBBLE_WIDTH, stage.width - 16);
@@ -192,7 +195,7 @@ export function VentureMap({
                     {...polar(bandStart(b) + BAND_WIDTH / 2, ringLabelAngle)}
                     dy={4}
                     textAnchor="middle"
-                    className="fill-faint text-[13px] font-medium"
+                    className="fill-faint text-[13px] font-medium max-md:text-[22px]"
                   >
                     {name}
                   </text>
@@ -206,15 +209,20 @@ export function VentureMap({
             const here = tasksOf(v.id);
             const open = here.filter((t) => !t.done).length;
             const strength = Math.min(open, 6);
-            const label = labelPlacement(a);
             const isSel = selectedVenture === v.id;
             const lit = isSel || bubble?.id === v.id;
             const leadFirst = v.lead?.split(" ")[0];
             const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${leadFirst ? ` · ${leadFirst}` : ""}`;
-            const shown = shortLabel(v.name);
-            // A rough box around the name so hovering anywhere on it opens the bubble.
-            const boxW = Math.max(shown.length * 12.5, countText.length * 8) + 16;
-            const boxX = Math.round(label.anchor === "start" ? label.x - 8 : label.anchor === "end" ? label.x - boxW + 8 : label.x - boxW / 2);
+            // Computers and phones get the same label, sized for each screen.
+            const labels = (["desktop", "phone"] as const).map((size) => {
+              const sz = LABEL_SIZES[size];
+              const place = labelPlacement(a, size === "phone");
+              const shown = shortLabel(v.name, sz.maxChars);
+              // A rough box around the name so hovering anywhere on it opens the bubble.
+              const boxW = Math.max(shown.length * sz.name * 0.57, countText.length * sz.count * 0.53) + 16;
+              const boxX = Math.round(place.anchor === "start" ? place.x - 8 : place.anchor === "end" ? place.x - boxW + 8 : place.x - boxW / 2);
+              return { size, sz, place, shown, boxW, boxX };
+            });
             const { x: x1, y: y1 } = polar(MAP.coreRadius + 4, a);
             const { x: x2, y: y2 } = polar(MAP.outerRadius, a);
             const plus = polar(MAP.plusRadius, a);
@@ -232,7 +240,7 @@ export function VentureMap({
                   onFocus={() => openBubble(i, v.id)}
                   onBlur={closeBubbleSoon}
                 >
-                  <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="transparent" strokeWidth={24} />
+                  <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="transparent" strokeWidth={24} className="max-md:[stroke-width:56px]" />
                   <line
                     x1={x1}
                     y1={y1}
@@ -246,29 +254,37 @@ export function VentureMap({
                       lit ? "stroke-accent-strong" : open ? "stroke-accent" : "stroke-faint"
                     }`}
                   />
-                  <g onPointerEnter={() => openBubble(i, v.id)} onPointerLeave={closeBubbleSoon}>
-                    <rect
-                      x={boxX}
-                      y={label.nameY - 22}
-                      width={boxW}
-                      height={label.countY - label.nameY + 30}
-                      rx={8}
-                      className={`fill-fg transition-opacity ${lit ? "opacity-[0.06]" : "opacity-0 group-hover:opacity-[0.04]"}`}
-                    />
-                    <text
-                      x={label.x}
-                      y={label.nameY}
-                      textAnchor={label.anchor}
-                      className={`text-[22px] font-semibold transition-colors group-hover:fill-accent-strong group-focus-within:fill-accent-strong ${
-                        lit ? "fill-accent-strong" : here.length ? "fill-fg" : "fill-muted"
-                      }`}
+                  {labels.map(({ size, sz, place, shown, boxW, boxX }) => (
+                    <g
+                      key={size}
+                      className={size === "phone" ? "md:hidden" : "max-md:hidden"}
+                      onPointerEnter={() => openBubble(i, v.id)}
+                      onPointerLeave={closeBubbleSoon}
                     >
-                      {shown}
-                    </text>
-                    <text x={label.x} y={label.countY} textAnchor={label.anchor} className="fill-muted text-[15px]">
-                      {countText}
-                    </text>
-                  </g>
+                      <rect
+                        x={boxX}
+                        y={place.nameY - sz.name}
+                        width={boxW}
+                        height={place.countY - place.nameY + sz.name + 8}
+                        rx={8}
+                        className={`fill-fg transition-opacity ${lit ? "opacity-[0.06]" : "opacity-0 group-hover:opacity-[0.04]"}`}
+                      />
+                      <text
+                        x={place.x}
+                        y={place.nameY}
+                        textAnchor={place.anchor}
+                        style={{ fontSize: sz.name }}
+                        className={`font-semibold transition-colors group-hover:fill-accent-strong group-focus-within:fill-accent-strong ${
+                          lit ? "fill-accent-strong" : here.length ? "fill-fg" : "fill-muted"
+                        }`}
+                      >
+                        {shown}
+                      </text>
+                      <text x={place.x} y={place.countY} textAnchor={place.anchor} style={{ fontSize: sz.count }} className="fill-muted">
+                        {countText}
+                      </text>
+                    </g>
+                  ))}
                 </g>
                 {isAdmin && (
                   <g
@@ -351,20 +367,23 @@ export function VentureMap({
                   onFocus={(e) => showTip(t.id, e.currentTarget)}
                   onBlur={() => setTip(null)}
                 >
-                  <circle r={11} fill="transparent" />
-                  <circle
-                    r={12}
-                    className={`fill-none transition-opacity group-hover/dot:opacity-90 group-focus-visible/dot:opacity-90 ${
-                      overdue ? "stroke-danger opacity-80" : "stroke-fg"
-                    } ${isSel ? "opacity-90" : overdue ? "" : "opacity-0"}`}
-                    strokeWidth={1.5}
-                  />
-                  <circle
-                    r={MAP.dotRadius}
-                    style={{ fill: t.color }}
-                    className="stroke-surface"
-                    strokeWidth={2}
-                  />
+                  {/* A little bigger on phones, where the whole map is shrunk. */}
+                  <g className="origin-center [transform-box:fill-box] max-md:scale-125">
+                    <circle r={11} fill="transparent" />
+                    <circle
+                      r={12}
+                      className={`fill-none transition-opacity group-hover/dot:opacity-90 group-focus-visible/dot:opacity-90 ${
+                        overdue ? "stroke-danger opacity-80" : "stroke-fg"
+                      } ${isSel ? "opacity-90" : overdue ? "" : "opacity-0"}`}
+                      strokeWidth={1.5}
+                    />
+                    <circle
+                      r={MAP.dotRadius}
+                      style={{ fill: t.color }}
+                      className="stroke-surface"
+                      strokeWidth={2}
+                    />
+                  </g>
                 </g>
               );
             })}
@@ -429,9 +448,11 @@ export function VentureMap({
         )}
 
         <p className="flex flex-wrap gap-x-5 gap-y-1 border-t border-line px-5 py-3 text-xs text-muted">
-          <span>Each branch is a venture. Hover its name for the details.</span>
+          <span className="max-md:hidden">Each branch is a venture. Hover its name for the details.</span>
+          <span className="md:hidden">Each branch is a venture. Tap it for the details.</span>
           <span>Dots are tasks: the sooner they&apos;re due, the closer to LEU. Done tasks join the core.</span>
-          {isAdmin && <span>Press + on a branch to add a task.</span>}
+          {isAdmin && <span className="max-md:hidden">Press + on a branch to add a task.</span>}
+          {isAdmin && <span className="md:hidden">Tap a branch to add a task to it.</span>}
         </p>
       </div>
 

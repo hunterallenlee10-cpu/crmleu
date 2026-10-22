@@ -45,11 +45,11 @@ export function PersonChips({ value, people, total }: { value: string; people: P
   );
 }
 
-// The map needs room, so phones always get the list and don't see this switch.
+// Map or list, on every screen size.
 export function ViewSwitch({ value }: { value: "map" | "list" }) {
   const setParam = useSetParam();
   return (
-    <div role="group" aria-label="View" className="hidden gap-1 rounded-control border border-line bg-surface p-1 md:inline-flex">
+    <div role="group" aria-label="View" className="inline-flex gap-1 rounded-control border border-line bg-surface p-1">
       {(["map", "list"] as const).map((v) => (
         <button
           key={v}
