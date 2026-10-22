@@ -2,26 +2,26 @@
 
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useState, useTransition } from "react";
-import { MAX_DIVISION_NAME } from "@/lib/projects";
-import type { ProjectDivision } from "@/lib/types";
-import { addDivision, moveDivision, removeDivision, renameDivision } from "./actions";
+import { MAX_VENTURE_NAME } from "@/lib/ventures";
+import type { Venture } from "@/lib/types";
+import { addVenture, moveVenture, removeVenture, renameVenture } from "./actions";
 
-export function DivisionRow({
-  division,
-  projects,
+export function VentureRow({
+  venture,
+  tasks,
   isFirst,
   isLast,
 }: {
-  division: ProjectDivision;
-  projects: number;
+  venture: Pick<Venture, "id" | "name">;
+  tasks: number;
   isFirst: boolean;
   isLast: boolean;
 }) {
-  const [name, setName] = useState(division.name);
+  const [name, setName] = useState(venture.name);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const changed = name.trim() !== division.name;
+  const changed = name.trim() !== venture.name;
 
   function run(action: () => Promise<{ error?: string }>, after?: () => void) {
     setError("");
@@ -36,57 +36,57 @@ export function DivisionRow({
   function save(e: React.FormEvent) {
     e.preventDefault();
     if (!changed) return;
-    run(() => renameDivision(division.id, name), () => setSaved(true));
+    run(() => renameVenture(venture.id, name), () => setSaved(true));
   }
 
   function remove() {
-    if (!confirm(`Remove "${division.name}" from the map?`)) return;
-    run(() => removeDivision(division.id));
+    const note = tasks ? ` Its ${tasks} task${tasks === 1 ? "" : "s"} will stay on the Tasks page without a venture.` : "";
+    if (!confirm(`Remove "${venture.name}" from the map?${note}`)) return;
+    run(() => removeVenture(venture.id));
   }
 
-  const inputId = `division-${division.id}`;
+  const inputId = `venture-${venture.id}`;
   return (
     <li className="space-y-2 py-3 first:pt-0 last:pb-0">
       <form onSubmit={save} className="flex flex-wrap items-center gap-2">
-        <label htmlFor={inputId} className="sr-only">Name of {division.name}</label>
+        <label htmlFor={inputId} className="sr-only">Name of {venture.name}</label>
         <input
           id={inputId}
           value={name}
-          maxLength={MAX_DIVISION_NAME}
+          maxLength={MAX_VENTURE_NAME}
           onChange={(e) => { setName(e.target.value); setSaved(false); }}
-          onKeyDown={(e) => { if (e.key === "Escape") setName(division.name); }}
+          onKeyDown={(e) => { if (e.key === "Escape") setName(venture.name); }}
           className="input min-w-0 flex-1 basis-48"
         />
         {changed && (
           <button type="submit" disabled={isPending} className="btn btn-primary">Save</button>
         )}
         <span className="w-20 text-right text-xs text-muted">
-          {projects} project{projects === 1 ? "" : "s"}
+          {tasks} task{tasks === 1 ? "" : "s"}
         </span>
         <div className="flex gap-1">
           <button
             type="button"
             className="btn btn-ghost px-2.5"
-            aria-label={`Move ${division.name} up`}
+            aria-label={`Move ${venture.name} up`}
             disabled={isPending || isFirst}
-            onClick={() => run(() => moveDivision(division.id, "up"))}
+            onClick={() => run(() => moveVenture(venture.id, "up"))}
           >
             <ArrowUp aria-hidden="true" className="size-4" />
           </button>
           <button
             type="button"
             className="btn btn-ghost px-2.5"
-            aria-label={`Move ${division.name} down`}
+            aria-label={`Move ${venture.name} down`}
             disabled={isPending || isLast}
-            onClick={() => run(() => moveDivision(division.id, "down"))}
+            onClick={() => run(() => moveVenture(venture.id, "down"))}
           >
             <ArrowDown aria-hidden="true" className="size-4" />
           </button>
           <button
             type="button"
             className="btn btn-ghost hover:text-danger"
-            disabled={isPending || projects > 0}
-            title={projects > 0 ? "Move its projects to another division first" : undefined}
+            disabled={isPending}
             onClick={remove}
           >
             Remove
@@ -99,7 +99,7 @@ export function DivisionRow({
   );
 }
 
-export function AddDivision() {
+export function AddVenture() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -108,7 +108,7 @@ export function AddDivision() {
     e.preventDefault();
     setError("");
     startTransition(async () => {
-      const res = await addDivision(name);
+      const res = await addVenture(name);
       if (res.error) setError(res.error);
       else setName("");
     });
@@ -116,12 +116,12 @@ export function AddDivision() {
 
   return (
     <form onSubmit={add} className="space-y-2">
-      <label htmlFor="new-division" className="label">Add a division</label>
+      <label htmlFor="new-venture" className="label">Add a venture</label>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
-          id="new-division"
+          id="new-venture"
           value={name}
-          maxLength={MAX_DIVISION_NAME}
+          maxLength={MAX_VENTURE_NAME}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Podcasts"
           className="input"
@@ -131,7 +131,7 @@ export function AddDivision() {
           {isPending ? "Adding…" : "Add"}
         </button>
       </div>
-      <p className="text-xs text-muted">New divisions go at the end, just left of the top of the map.</p>
+      <p className="text-xs text-muted">New ventures go at the end, just left of the top of the map.</p>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </form>
   );

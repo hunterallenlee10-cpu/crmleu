@@ -31,7 +31,12 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
     .order("due_date", { ascending: true, nullsFirst: false })
     .order("created_at");
 
-  const [{ data }, members] = await Promise.all([query.returns<Task[]>(), getTeamMembers(supabase)]);
+  const [{ data }, members, { data: ventureRows }] = await Promise.all([
+    query.returns<Task[]>(),
+    getTeamMembers(supabase),
+    supabase.from("ventures").select("id, name").order("position").order("created_at"),
+  ]);
+  const ventures = (ventureRows ?? []).map((v) => ({ id: v.id as string, name: v.name as string }));
   const tasks = (data ?? []).filter((t) => !mineOnly || t.assignee_id === null || t.assignee_id === me.id);
   const progress = await getEveryoneProgress(supabase, tasks);
   // An everyone task is still on my plate until I've ticked it, even if others haven't.
@@ -91,7 +96,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
             <span className="text-muted group-open:hidden">+ </span>New task
           </summary>
           <div className="mt-5">
-            <TaskForm assignees={assignees} />
+            <TaskForm assignees={assignees} ventures={ventures} />
           </div>
         </details>
       )}
@@ -110,6 +115,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
             meId={me.id}
             isAdmin={isAdmin}
             assignees={assignees}
+            ventures={ventures}
             names={names}
             today={today}
           />

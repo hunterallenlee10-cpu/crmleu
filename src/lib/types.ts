@@ -1,3 +1,5 @@
+import type { VentureStatus } from "./ventures";
+
 // Row shapes for the tables in supabase/migrations.
 
 export type Role = "admin" | "rep";
@@ -96,6 +98,7 @@ export type Task = {
   assignee_id: string | null; // null = whole team
   everyone_must_complete: boolean; // whole-team task every rep ticks off for themselves
   due_date: string | null; // YYYY-MM-DD
+  venture_id: string | null;
   created_by: string | null;
   completed_at: string | null;
   completed_by: string | null;
@@ -119,33 +122,16 @@ export type TeamMember = {
   active: boolean;
 };
 
-export type Project = {
+// A big branch of LEU; a spoke on the Ventures map. Tasks hang off it.
+export type Venture = {
   id: string;
   name: string;
+  position: number;
   description: string | null;
-  assignee_id: string | null;
-  division_id: string | null; // null only for projects made before divisions existed
-  due_date: string | null; // YYYY-MM-DD
-  created_by: string | null;
+  lead_id: string | null; // who runs it
+  status: VentureStatus;
+  start_date: string | null; // YYYY-MM-DD
+  target_date: string | null; // YYYY-MM-DD
   created_at: string;
   updated_at: string;
-};
-
-// A part of the business a project belongs to; a spoke on the Projects map.
-export type ProjectDivision = {
-  id: string;
-  name: string;
-  position: number;
-  created_at: string;
-};
-
-export type ProjectTask = {
-  id: number;
-  project_id: string;
-  title: string;
-  position: number;
-  done: boolean;
-  done_at: string | null;
-  done_by: string | null;
-  created_at: string;
 };
