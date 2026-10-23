@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { FormMessage } from "@/components/form-message";
+import { SwitchRow } from "@/components/switch-row";
 import type { Task } from "@/lib/types";
 import { createTask, updateTask } from "./actions";
 
@@ -83,7 +84,8 @@ export function TaskForm({
   );
 }
 
-// "Assign to", plus the "everyone has to check this off" switch for whole-team tasks.
+// "Assign to", the "everyone has to check this off" switch for whole-team
+// tasks, and the due date switch.
 function WhoFields({
   id,
   options,
@@ -103,43 +105,51 @@ function WhoFields({
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor={id("assignee_id")} className="label">Assign to</label>
-          <select id={id("assignee_id")} name="assignee_id" className="input" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-            <option value="">Whole team</option>
-            {options.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor={id("due_date")} className="label">Due (optional)</label>
-          <input id={id("due_date")} name="due_date" type="date" className="input" defaultValue={dueDate} />
-        </div>
+      <div>
+        <label htmlFor={id("assignee_id")} className="label">Assign to</label>
+        <select id={id("assignee_id")} name="assignee_id" className="input" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
+          <option value="">Whole team</option>
+          {options.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
       </div>
       {wholeTeam && (
         <>
           <input type="hidden" name="everyone_must_complete" value={everyone ? "on" : ""} />
-          <button
-            type="button"
-            role="switch"
-            aria-checked={everyone}
-            onClick={() => setEveryone(!everyone)}
-            className="flex w-full items-center justify-between gap-4 rounded-control border border-line px-3 py-2.5 text-left transition-colors duration-150 hover:border-line-strong"
-          >
-            <span>
-              <span className="block font-medium">Everyone has to check this off</span>
-              <span className="block text-label text-muted">
-                {everyone
-                  ? "Each rep ticks it off for themselves. It's done when every rep has."
-                  : "Off: it's done as soon as anyone ticks it."}
-              </span>
-            </span>
-            <span className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-150 ${everyone ? "bg-accent" : "bg-line-strong"}`}>
-              <span className={`absolute top-1 size-4 rounded-full transition-[left,background-color] duration-150 ${everyone ? "left-5 bg-on-accent" : "left-1 bg-muted"}`} />
-            </span>
-          </button>
+          <SwitchRow
+            checked={everyone}
+            onChange={setEveryone}
+            title="Everyone has to check this off"
+            description={
+              everyone
+                ? "Each rep ticks it off for themselves. It's done when every rep has."
+                : "Off: it's done as soon as anyone ticks it."
+            }
+          />
         </>
       )}
+      <DueDateField id={id("due_date")} initial={dueDate} />
     </>
+  );
+}
+
+// The due date sits behind a switch. Off saves the task with no due date.
+// The date input stays mounted (just hidden and disabled, so it isn't sent)
+// so a typed date comes back if it's switched on again before saving.
+export function DueDateField({ id, initial }: { id: string; initial: string }) {
+  const [on, setOn] = useState(initial !== "");
+
+  return (
+    <div className="space-y-2">
+      <SwitchRow
+        checked={on}
+        onChange={setOn}
+        title="Due date"
+        description={on ? "Pick when it's due." : "Off: no deadline for this task."}
+      />
+      <div hidden={!on}>
+        <label htmlFor={id} className="label">Due</label>
+        <input id={id} name="due_date" type="date" className="input" defaultValue={initial} disabled={!on} />
+      </div>
+    </div>
   );
 }

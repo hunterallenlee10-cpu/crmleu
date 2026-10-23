@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { FormMessage } from "@/components/form-message";
+import { SwitchRow } from "@/components/switch-row";
 import { MAX_VENTURE_DESCRIPTION, MAX_VENTURE_NAME, STATUS_LABEL, VENTURE_STATUSES, type VentureStatus } from "@/lib/ventures";
 import { createTask } from "../tasks/actions";
+import { DueDateField } from "../tasks/task-form";
 import { updateVenture } from "./actions";
 
 export type Person = { id: string; name: string };
@@ -84,15 +86,8 @@ export function VentureForm({
             {VENTURE_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
           </select>
         </div>
-        <div>
-          <label htmlFor={id("start_date")} className="label">Started</label>
-          <input id={id("start_date")} name="start_date" type="date" className="input" defaultValue={value("start_date")} />
-        </div>
-        <div>
-          <label htmlFor={id("target_date")} className="label">Target date</label>
-          <input id={id("target_date")} name="target_date" type="date" className="input" defaultValue={value("target_date")} />
-        </div>
       </div>
+      <TimelineFields id={id} start={value("start_date")} target={value("target_date")} />
       <div>
         <label htmlFor={id("name")} className="label">Name</label>
         <input
@@ -114,6 +109,34 @@ export function VentureForm({
         )}
       </div>
     </form>
+  );
+}
+
+// The venture's start and target dates sit behind a switch. Off clears both
+// when saved; the inputs stay mounted (hidden and disabled, so they aren't
+// sent) so typed dates come back if it's switched on again before saving.
+function TimelineFields({ id, start, target }: { id: (name: string) => string; start: string; target: string }) {
+  const [on, setOn] = useState(start !== "" || target !== "");
+
+  return (
+    <div className="space-y-2">
+      <SwitchRow
+        checked={on}
+        onChange={setOn}
+        title="Timeline"
+        description={on ? "When it started and when it should get there." : "Off: no start or target date."}
+      />
+      <div hidden={!on} className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor={id("start_date")} className="label">Started</label>
+          <input id={id("start_date")} name="start_date" type="date" className="input" defaultValue={start} disabled={!on} />
+        </div>
+        <div>
+          <label htmlFor={id("target_date")} className="label">Target date</label>
+          <input id={id("target_date")} name="target_date" type="date" className="input" defaultValue={target} disabled={!on} />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -142,19 +165,14 @@ export function QuickAddTask({ ventureId, people }: { ventureId: string; people:
           autoComplete="off"
         />
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label htmlFor={id("assignee_id")} className="label">Assign to</label>
-          <select id={id("assignee_id")} name="assignee_id" className="input" defaultValue={value("assignee_id")}>
-            <option value="">Whole team</option>
-            {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor={id("due_date")} className="label">Due</label>
-          <input id={id("due_date")} name="due_date" type="date" className="input" defaultValue={value("due_date")} />
-        </div>
+      <div>
+        <label htmlFor={id("assignee_id")} className="label">Assign to</label>
+        <select id={id("assignee_id")} name="assignee_id" className="input" defaultValue={value("assignee_id")}>
+          <option value="">Whole team</option>
+          {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
       </div>
+      <DueDateField id={id("due_date")} initial={value("due_date")} />
       <FormMessage state={state?.error ? state : undefined} />
       {state?.message && <p role="status" className="text-xs text-success">Task added.</p>}
       <button type="submit" disabled={pending} className="btn btn-secondary w-full">

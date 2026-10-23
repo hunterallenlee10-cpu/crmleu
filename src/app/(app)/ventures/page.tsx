@@ -9,7 +9,7 @@ import { getTeamMembers } from "@/lib/team";
 import type { EveryoneProgress, Task, Venture } from "@/lib/types";
 import { personColor } from "@/lib/venture-map";
 import { TaskItem } from "../tasks/task-item";
-import { ProgressBar, StatusPill, Timeline } from "./bits";
+import { ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
 import { PersonChips, ViewSwitch, type PersonChip } from "./toolbar";
 import { QuickAddTask, VentureForm, type Person } from "./venture-forms";
 import { VentureMap, type MapTask, type MapVenture } from "./venture-map";
@@ -196,7 +196,7 @@ async function VentureList({
                 <span className="text-muted">Run by </span>
                 {v.lead ?? <span className="text-faint">no one yet</span>}
               </p>
-              <Timeline start={v.startDate} target={v.targetDate} today={today} />
+              {hasTimeline(v) && <Timeline start={v.startDate} target={v.targetDate} today={today} />}
               <ProgressBar done={done.length} total={mine.length} />
             </div>
 

@@ -18,7 +18,7 @@ import {
   spokeAngle,
 } from "@/lib/venture-map";
 import { setTaskDone } from "../tasks/actions";
-import { DueLabel, ProgressBar, StatusPill, Timeline } from "./bits";
+import { DueLabel, ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
 import { QuickAddTask, VentureForm, type Person, type VentureDetails } from "./venture-forms";
 
 export type MapVenture = VentureDetails & { leadColor: string };
@@ -567,12 +567,14 @@ function VentureBubble({
             )}
           </dd>
         </div>
-        <div className="space-y-1">
-          <dt className="text-xs text-muted">Timeline</dt>
-          <dd>
-            <Timeline start={venture.startDate} target={venture.targetDate} today={today} />
-          </dd>
-        </div>
+        {hasTimeline(venture) && (
+          <div className="space-y-1">
+            <dt className="text-xs text-muted">Timeline</dt>
+            <dd>
+              <Timeline start={venture.startDate} target={venture.targetDate} today={today} />
+            </dd>
+          </div>
+        )}
         <div className="space-y-1">
           <dt className="flex justify-between text-xs text-muted">
             <span>Tasks</span>
@@ -817,12 +819,14 @@ function VenturePanel({
                 )}
               </dd>
             </div>
-            <div className="space-y-1">
-              <dt className="text-xs text-muted">Timeline</dt>
-              <dd>
-                <Timeline start={venture.startDate} target={venture.targetDate} today={today} />
-              </dd>
-            </div>
+            {hasTimeline(venture) && (
+              <div className="space-y-1">
+                <dt className="text-xs text-muted">Timeline</dt>
+                <dd>
+                  <Timeline start={venture.startDate} target={venture.targetDate} today={today} />
+                </dd>
+              </div>
+            )}
             <div className="space-y-1">
               <dt className="text-xs text-muted">Progress</dt>
               <dd>
