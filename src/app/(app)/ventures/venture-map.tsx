@@ -17,6 +17,7 @@ import {
   shortLabel,
   spokeAngle,
 } from "@/lib/venture-map";
+import { STATUS_COLOR, STATUS_LABEL, VENTURE_STATUSES } from "@/lib/ventures";
 import { setTaskDone } from "../tasks/actions";
 import { DueLabel, ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
 import { QuickAddTask, VentureForm, type Person, type VentureDetails } from "./venture-forms";
@@ -212,16 +213,31 @@ export function VentureMap({
             const isSel = selectedVenture === v.id;
             const lit = isSel || bubble?.id === v.id;
             const leadFirst = v.lead?.split(" ")[0];
-            const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${leadFirst ? ` · ${leadFirst}` : ""}`;
+            const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${leadFirst ? ` · ${shortLabel(leadFirst, 10)}` : ""}`;
+            const status = STATUS_LABEL[v.status];
+            const statusColor = STATUS_COLOR[v.status];
             // Computers and phones get the same label, sized for each screen.
+            // Computers also spell out the status; phones rely on the beacon.
             const labels = (["desktop", "phone"] as const).map((size) => {
               const sz = LABEL_SIZES[size];
               const place = labelPlacement(a, size === "phone");
               const shown = shortLabel(v.name, sz.maxChars);
+              const withStatus = size === "desktop";
+              const countLen = countText.length + (withStatus ? status.length + 3 : 0);
+              const nameW = shown.length * sz.name * 0.57;
+              // The status beacon sits beside the name, on the side facing the core.
+              const gap = Math.round(sz.name * 0.6);
+              const beacon = {
+                x: Math.round(place.anchor === "start" ? place.x - gap : place.anchor === "end" ? place.x + gap : place.x - nameW / 2 - gap),
+                y: Math.round(place.nameY - sz.name * 0.34),
+                r: Math.round(sz.name * 0.24),
+              };
               // A rough box around the name so hovering anywhere on it opens the bubble.
-              const boxW = Math.max(shown.length * sz.name * 0.57, countText.length * sz.count * 0.53) + 16;
-              const boxX = Math.round(place.anchor === "start" ? place.x - 8 : place.anchor === "end" ? place.x - boxW + 8 : place.x - boxW / 2);
-              return { size, sz, place, shown, boxW, boxX };
+              const boxW = Math.max(nameW, countLen * sz.count * 0.53) + 16 + gap;
+              const boxX = Math.round(
+                place.anchor === "start" ? place.x - 8 - gap : place.anchor === "end" ? place.x - boxW + 8 + gap : place.x - boxW / 2 - gap / 2,
+              );
+              return { size, sz, place, shown, boxW, boxX, beacon, withStatus };
             });
             const { x: x1, y: y1 } = polar(MAP.coreRadius + 4, a);
             const { x: x2, y: y2 } = polar(MAP.outerRadius, a);
@@ -231,7 +247,7 @@ export function VentureMap({
                 <g
                   role="button"
                   tabIndex={0}
-                  aria-label={`${v.name}: ${countText}. Open details`}
+                  aria-label={`${v.name}, ${status}: ${countText}. Open details`}
                   className="cursor-pointer outline-none"
                   onClick={() => select({ mode: "venture", id: v.id })}
                   onKeyDown={(e) => {
@@ -254,7 +270,7 @@ export function VentureMap({
                       lit ? "stroke-accent-strong" : open ? "stroke-accent" : "stroke-faint"
                     }`}
                   />
-                  {labels.map(({ size, sz, place, shown, boxW, boxX }) => (
+                  {labels.map(({ size, sz, place, shown, boxW, boxX, beacon, withStatus }) => (
                     <g
                       key={size}
                       className={size === "phone" ? "md:hidden" : "max-md:hidden"}
@@ -280,7 +296,34 @@ export function VentureMap({
                       >
                         {shown}
                       </text>
+                      <g aria-hidden="true">
+                        {v.status === "live" && (
+                          <circle
+                            cx={beacon.x}
+                            cy={beacon.y}
+                            r={beacon.r}
+                            style={{ fill: statusColor }}
+                            className="origin-center [transform-box:fill-box] motion-safe:animate-beacon-ping"
+                          />
+                        )}
+                        <circle
+                          cx={beacon.x}
+                          cy={beacon.y}
+                          r={beacon.r}
+                          style={v.status === "idea" ? { stroke: statusColor } : { fill: statusColor }}
+                          className={v.status === "idea" ? "fill-surface" : undefined}
+                          strokeWidth={v.status === "idea" ? Math.max(2, beacon.r * 0.4) : undefined}
+                        >
+                          <title>{status}</title>
+                        </circle>
+                      </g>
                       <text x={place.x} y={place.countY} textAnchor={place.anchor} style={{ fontSize: sz.count }} className="fill-muted">
+                        {withStatus && (
+                          <>
+                            <tspan style={{ fill: statusColor }} className="font-semibold">{status}</tspan>
+                            {" · "}
+                          </>
+                        )}
                         {countText}
                       </text>
                     </g>
@@ -448,6 +491,18 @@ export function VentureMap({
         )}
 
         <p className="flex flex-wrap gap-x-5 gap-y-1 border-t border-line px-5 py-3 text-xs text-muted">
+          <span className="flex w-full flex-wrap items-center gap-x-4 gap-y-1">
+            {VENTURE_STATUSES.map((st) => (
+              <span key={st} className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className={`size-2.5 rounded-full ${st === "idea" ? "border-2 bg-surface" : ""}`}
+                  style={st === "idea" ? { borderColor: STATUS_COLOR[st] } : { background: STATUS_COLOR[st] }}
+                />
+                {STATUS_LABEL[st]}
+              </span>
+            ))}
+          </span>
           <span className="max-md:hidden">Each branch is a venture. Hover its name for the details.</span>
           <span className="md:hidden">Each branch is a venture. Tap it for the details.</span>
           <span>Dots are tasks: the sooner they&apos;re due, the closer to LEU. Done tasks join the core.</span>
