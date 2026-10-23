@@ -135,6 +135,10 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
   );
 }
 
+// Promotions anyone can go for, listed on the org chart ahead of one
+// "<venture> Lead" seat per venture.
+const TOP_OPEN_ROLES = ["President", "CFO", "Sales Manager"];
+
 // The org chart. Counts every open task assigned to each person, not just
 // ones on a venture.
 async function TeamView({
@@ -172,7 +176,8 @@ async function TeamView({
       ventures: ventures.filter((v) => v.leadId === m.id).map((v) => ({ id: v.id, name: v.name, status: v.status })),
       openTasks: openCount.get(m.id) ?? 0,
     }));
-  return <TeamChart people={people} isAdmin={isAdmin} />;
+  const openRoles = [...TOP_OPEN_ROLES, ...ventures.map((v) => `${v.name} Lead`)];
+  return <TeamChart people={people} isAdmin={isAdmin} openRoles={openRoles} />;
 }
 
 // The same ventures and tasks as a list.

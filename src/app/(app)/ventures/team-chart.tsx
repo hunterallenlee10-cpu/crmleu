@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { buildOrgTree, type OrgNode, type OrgPerson } from "@/lib/hierarchy";
+import { FitChart } from "./fit-chart";
 import { STATUS_COLOR, STATUS_LABEL, type VentureStatus } from "@/lib/ventures";
 
 export type ChartPerson = OrgPerson & {
@@ -13,10 +14,21 @@ type Node = OrgNode<ChartPerson>;
 
 // The team's org chart, for everyone. Admins set titles and who reports to
 // whom on Admin → Team. Computers get a top-down chart; phones an outline.
-export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin: boolean }) {
+export function TeamChart({
+  people,
+  isAdmin,
+  openRoles,
+}: {
+  people: ChartPerson[];
+  isAdmin: boolean;
+  openRoles: string[]; // promotions up for grabs
+}) {
   const tree = buildOrgTree(people);
   const branches = tree.filter((n) => n.reports.length);
   const loose = tree.filter((n) => !n.reports.length);
+  // The space beside the top of the chart is free when the top person has
+  // just one report, so the list can sit in that corner on big screens.
+  const corner = branches[0]?.reports.length === 1;
 
   if (!people.length) return <div className="empty"><p>No one on the team yet.</p></div>;
 
@@ -39,14 +51,19 @@ export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin:
         </p>
       )}
 
-      {/* Computers: top-down chart. Wide teams scroll sideways. */}
+      {/* Computers: top-down chart. Boxes stretch and shrink to fit the card,
+          and big teams wrap (see FitChart). */}
       <div className="space-y-5 max-md:hidden">
-        {branches.map((n) => (
-          <section key={n.person.id} className="card overflow-x-auto">
-            <div className="mx-auto flex w-max flex-col items-center px-2 pb-2">
+        {!branches.length && <OpenRoles roles={openRoles} className="card" />}
+        {branches.map((n, i) => (
+          <FitChart key={n.person.id} className="card relative overflow-x-auto">
+            {i === 0 && (
+              <OpenRoles roles={openRoles} className={`mb-5 ${corner ? "lg:absolute lg:top-5 lg:left-5 lg:mb-0 lg:w-72" : ""}`} />
+            )}
+            <div className="flex w-full min-w-min flex-col items-center pb-2">
               <ChartBranch node={n} />
             </div>
-          </section>
+          </FitChart>
         ))}
         {loose.length > 0 && (
           <section className="card space-y-3">
@@ -56,7 +73,7 @@ export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin:
             <ul className="flex flex-wrap gap-3">
               {loose.map((n) => (
                 <li key={n.person.id}>
-                  <PersonCard node={n} />
+                  <PersonCard node={n} size="fixed" />
                 </li>
               ))}
             </ul>
@@ -65,6 +82,7 @@ export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin:
       </div>
 
       {/* Phones: an indented outline. */}
+      <OpenRoles roles={openRoles} className="card md:hidden" />
       <ul className="space-y-3 md:hidden">
         {tree.map((n) => <OutlineItem key={n.person.id} node={n} />)}
       </ul>
@@ -72,12 +90,33 @@ export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin:
   );
 }
 
+function OpenRoles({ roles, className = "" }: { roles: string[]; className?: string }) {
+  if (!roles.length) return null;
+  return (
+    <section className={`space-y-2 text-left ${className}`} aria-label="Promotions up for grabs">
+      <h2 className="group-title">Promotions up for grabs</h2>
+      <ul className="flex flex-wrap gap-1.5">
+        {roles.map((r) => (
+          <li
+            key={r}
+            className="inline-flex max-w-full items-center rounded-control border border-dashed border-line-strong px-2 py-0.5 text-xs"
+          >
+            <span className="truncate" title={r}>{r}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ChartBranch({ node }: { node: Node }) {
+  // A row of people with no one under them can wrap when space runs out.
+  const leaves = node.reports.length > 1 && node.reports.every((r) => !r.reports.length);
   return (
     <>
       <PersonCard node={node} />
       {node.reports.length > 0 && (
-        <ul className="org-children">
+        <ul className={leaves ? "org-children org-leaves" : "org-children"}>
           {node.reports.map((r) => (
             <li key={r.person.id}>
               <ChartBranch node={r} />
@@ -92,7 +131,7 @@ function ChartBranch({ node }: { node: Node }) {
 function OutlineItem({ node }: { node: Node }) {
   return (
     <li className="space-y-3">
-      <PersonCard node={node} wide />
+      <PersonCard node={node} size="wide" />
       {node.reports.length > 0 && (
         <ul className="ml-3 space-y-3 border-l border-line-strong pl-3">
           {node.reports.map((r) => <OutlineItem key={r.person.id} node={r} />)}
@@ -102,7 +141,11 @@ function OutlineItem({ node }: { node: Node }) {
   );
 }
 
-function PersonCard({ node, wide = false }: { node: Node; wide?: boolean }) {
+// "fit" grows and shrinks with the chart, "fixed" sits in a wrapping row,
+// "wide" fills the phone outline.
+const CARD_WIDTH = { fit: "w-full max-w-56 min-w-28", fixed: "w-56", wide: "w-full" };
+
+function PersonCard({ node, size = "fit" }: { node: Node; size?: keyof typeof CARD_WIDTH }) {
   const p = node.person;
   const reports = node.size - 1;
   const role = p.role === "admin" ? "Admin" : "Team member";
@@ -113,7 +156,7 @@ function PersonCard({ node, wide = false }: { node: Node; wide?: boolean }) {
 
   return (
     <article
-      className={`space-y-2 rounded-card border bg-surface-2 p-3 text-left text-sm ${wide ? "w-full" : "w-56"} ${
+      className={`space-y-2 rounded-card border bg-surface-2 p-3 text-left text-sm ${CARD_WIDTH[size]} ${
         p.isMe ? "border-accent shadow-[inset_0_0_0_1px_var(--color-accent)]" : "border-line"
       }`}
     >

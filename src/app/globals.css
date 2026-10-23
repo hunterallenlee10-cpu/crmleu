@@ -357,9 +357,11 @@ input[type="radio"] {
 
   /* Org chart (Ventures → Team): each list of reports hangs from a line
      under their manager's card. Computers only; phones get an outline. */
+  /* Each row fills the width it's given; boxes share it and shrink to fit. */
   .org-children {
     position: relative;
     display: flex;
+    align-self: stretch;
     justify-content: center;
     padding-top: 1.25rem;
   }
@@ -373,6 +375,7 @@ input[type="radio"] {
   }
   .org-children > li {
     position: relative;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -399,6 +402,29 @@ input[type="radio"] {
     border-top: 0;
   }
   .org-children > li:only-child::before {
+    display: none;
+  }
+
+  /* Too wide for the card: the row wraps into a grid boxed under its manager. */
+  .org-fit[data-wrap] .org-leaves {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    justify-items: center;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding: 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-card);
+  }
+  .org-fit[data-wrap] .org-leaves::before {
+    top: calc(-1.25rem - 1px);
+  }
+  .org-fit[data-wrap] .org-leaves > li {
+    width: 100%;
+    padding: 0;
+  }
+  .org-fit[data-wrap] .org-leaves > li::before,
+  .org-fit[data-wrap] .org-leaves > li::after {
     display: none;
   }
 }
