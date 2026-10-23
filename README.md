@@ -179,6 +179,7 @@ Admins get an **Admin** tab with four pages:
 - **Dashboard:** revenue and deals won this month, commission owed per rep (won deal value × their rate), leads by stage per rep, and activities per rep this week (Monday to today). Every number uses New York time.
 - **Team:**
   - Invite reps and set commission rates.
+  - Give each person a **Title** and who they **Report to**. This draws the org chart on **Ventures → Team**. Leave "Reports to" empty for whoever is at the top. A chain can't loop back around (if A manages B, B can't manage A).
   - Deactivating someone blocks their login, and a banner then asks you to move their open leads to someone else. Their Won and Lost leads stay with them, so their commission history doesn't move.
 - **Import:**
   1. Upload a CSV (in Google Sheets: **File → Download → .csv**).
@@ -215,6 +216,7 @@ Admins get an **Admin** tab with four pages:
 - Admins press **+** on a branch to add a task there, or pick a **Venture** when adding a task on the **Tasks** page. Venture tasks are ordinary tasks: they show on the Tasks page and on each person's **Today** page too.
 - **Edit ventures** (admins) renames, reorders, adds or removes branches.
 - Pick a person above the map to fade everyone else's dots (and narrow the list). **List** shows the same thing as cards. Phones get the same map (with bigger labels); tap a branch or dot and its details open below the map.
+- **Team** is the org chart: who reports to whom, each person's title, the ventures they run (with their status colour) and how many open tasks they have. Everyone can see it; admins set titles and managers on **Admin → Team**. People with no manager and nobody under them are listed under "Not placed under anyone yet". On phones it's an indented list.
 - Ventures replaced the old Projects page. When the `ventures` migration runs, each project is copied into a task on its venture (its checklist goes into the task's details, and a fully ticked project becomes a done task). The old `projects` tables are kept, unused, as an archive. Old `/projects` links redirect to `/ventures`.
 
 ### The Today page (everyone)

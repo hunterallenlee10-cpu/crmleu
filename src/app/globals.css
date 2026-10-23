@@ -354,6 +354,53 @@ input[type="radio"] {
   .data-table td {
     @apply transition-colors duration-150;
   }
+
+  /* Org chart (Ventures → Team): each list of reports hangs from a line
+     under their manager's card. Computers only; phones get an outline. */
+  .org-children {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: 1.25rem;
+  }
+  .org-children::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 1.25rem;
+    border-left: 1px solid var(--color-line-strong);
+  }
+  .org-children > li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 0.375rem 0;
+  }
+  .org-children > li::before,
+  .org-children > li::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 1.25rem;
+    border-top: 1px solid var(--color-line-strong);
+  }
+  .org-children > li::before {
+    right: 50%;
+  }
+  .org-children > li::after {
+    left: 50%;
+    border-left: 1px solid var(--color-line-strong);
+  }
+  .org-children > li:first-child::before,
+  .org-children > li:last-child::after {
+    border-top: 0;
+  }
+  .org-children > li:only-child::before {
+    display: none;
+  }
 }
 
 /* Row hover. Unlayered so it also covers sticky cells that set their own background. */

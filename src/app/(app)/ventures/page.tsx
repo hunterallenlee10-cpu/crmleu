@@ -6,11 +6,12 @@ import { todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
-import type { EveryoneProgress, Task, Venture } from "@/lib/types";
+import type { EveryoneProgress, Task, TeamMember, Venture } from "@/lib/types";
 import { personColor } from "@/lib/venture-map";
 import { TaskItem } from "../tasks/task-item";
 import { ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
-import { PersonChips, ViewSwitch, type PersonChip } from "./toolbar";
+import { TeamChart, type ChartPerson } from "./team-chart";
+import { PersonChips, ViewSwitch, type PersonChip, type VenturesView } from "./toolbar";
 import { QuickAddTask, VentureForm, type Person } from "./venture-forms";
 import { VentureMap, type MapTask, type MapVenture } from "./venture-map";
 
@@ -22,7 +23,7 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
   const { person, view: viewParam } = await searchParams;
   const personFilter =
     typeof person === "string" && (person === "team" || z.guid().safeParse(person).success) ? person : "";
-  const view = viewParam === "list" ? "list" : "map";
+  const view: VenturesView = viewParam === "list" || viewParam === "team" ? viewParam : "map";
   const today = todayNY();
   const supabase = await createClient();
 
@@ -108,11 +109,17 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <PersonChips value={personFilter} people={chips} total={tasks.filter(isOpen).length} />
+        {view === "team" ? (
+          <h2 className="section-title">Team</h2>
+        ) : (
+          <PersonChips value={personFilter} people={chips} total={tasks.filter(isOpen).length} />
+        )}
         <ViewSwitch value={view} />
       </div>
 
-      {view === "list" ? (
+      {view === "team" ? (
+        <TeamView members={members} ventures={ventures} meId={profile.id} isAdmin={isAdmin} colorOf={colorOf} />
+      ) : view === "list" ? (
         <VentureList {...listProps} />
       ) : (
         <VentureMap
@@ -126,6 +133,46 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       )}
     </div>
   );
+}
+
+// The org chart. Counts every open task assigned to each person, not just
+// ones on a venture.
+async function TeamView({
+  members,
+  ventures,
+  meId,
+  isAdmin,
+  colorOf,
+}: {
+  members: TeamMember[];
+  ventures: MapVenture[];
+  meId: string;
+  isAdmin: boolean;
+  colorOf: (id: string | null) => string;
+}) {
+  const { data: open } = await (await createClient())
+    .from("tasks")
+    .select("assignee_id")
+    .is("completed_at", null)
+    .not("assignee_id", "is", null)
+    .returns<{ assignee_id: string }[]>();
+  const openCount = new Map<string, number>();
+  for (const t of open ?? []) openCount.set(t.assignee_id, (openCount.get(t.assignee_id) ?? 0) + 1);
+
+  const people: ChartPerson[] = members
+    .filter((m) => m.active)
+    .map((m) => ({
+      id: m.id,
+      name: m.full_name,
+      role: m.role,
+      title: m.title ?? null,
+      reportsTo: m.reports_to ?? null,
+      color: colorOf(m.id),
+      isMe: m.id === meId,
+      ventures: ventures.filter((v) => v.leadId === m.id).map((v) => ({ id: v.id, name: v.name, status: v.status })),
+      openTasks: openCount.get(m.id) ?? 0,
+    }));
+  return <TeamChart people={people} isAdmin={isAdmin} />;
 }
 
 // The same ventures and tasks as a list.
