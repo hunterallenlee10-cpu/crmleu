@@ -29,6 +29,7 @@ export default async function TeamPage() {
   const active = team.filter((m) => m.active);
   const inactive = team.filter((m) => !m.active);
   const assignees = active.map((m) => ({ id: m.id, name: m.full_name }));
+  const names = Object.fromEntries(team.map((m) => [m.id, m.full_name]));
 
   return (
     <div className="space-y-8">
@@ -39,7 +40,7 @@ export default async function TeamPage() {
       <InviteForm emailEnabled={emailEnabled()} />
       <ul className="space-y-2">
         {active.map((m) => (
-          <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
+          <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} managers={assignees} names={names} />
         ))}
       </ul>
       {inactive.length > 0 && (
@@ -49,7 +50,7 @@ export default async function TeamPage() {
           </summary>
           <ul className="mt-3 space-y-2">
             {inactive.map((m) => (
-              <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} />
+              <MemberRow key={m.id} member={m} isMe={m.id === me.id} openLeads={openLeads(m.id)} managers={assignees} names={names} />
             ))}
           </ul>
         </details>

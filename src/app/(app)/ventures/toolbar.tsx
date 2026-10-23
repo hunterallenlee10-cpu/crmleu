@@ -45,12 +45,14 @@ export function PersonChips({ value, people, total }: { value: string; people: P
   );
 }
 
-// Map or list, on every screen size.
-export function ViewSwitch({ value }: { value: "map" | "list" }) {
+export type VenturesView = "map" | "list" | "team";
+
+// Map, list or the team's org chart, on every screen size.
+export function ViewSwitch({ value }: { value: VenturesView }) {
   const setParam = useSetParam();
   return (
     <div role="group" aria-label="View" className="inline-flex gap-1 rounded-control border border-line bg-surface p-1">
-      {(["map", "list"] as const).map((v) => (
+      {(["map", "list", "team"] as const).map((v) => (
         <button
           key={v}
           type="button"

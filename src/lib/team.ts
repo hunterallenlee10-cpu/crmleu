@@ -8,17 +8,18 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 export async function getTeam(supabase: Supabase): Promise<Profile[]> {
   const { data } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role, active, commission_rate, created_at")
+    .select("*") // includes title and reports_to once the team_hierarchy migration has run
     .order("full_name")
     .returns<Profile[]>();
   return data ?? [];
 }
 
-// Names of everyone on the team. Readable by reps too (no emails or rates).
+// Names, titles and who reports to whom for everyone on the team. Readable by
+// reps too (no emails or rates).
 export async function getTeamMembers(supabase: Supabase): Promise<TeamMember[]> {
   const { data } = await supabase
     .from("team_members")
-    .select("id, full_name, role, active")
+    .select("*") // includes title and reports_to once the team_hierarchy migration has run
     .order("full_name")
     .returns<TeamMember[]>();
   return data ?? [];
