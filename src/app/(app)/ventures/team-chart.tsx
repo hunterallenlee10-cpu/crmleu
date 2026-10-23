@@ -13,10 +13,21 @@ type Node = OrgNode<ChartPerson>;
 
 // The team's org chart, for everyone. Admins set titles and who reports to
 // whom on Admin → Team. Computers get a top-down chart; phones an outline.
-export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin: boolean }) {
+export function TeamChart({
+  people,
+  isAdmin,
+  openRoles,
+}: {
+  people: ChartPerson[];
+  isAdmin: boolean;
+  openRoles: string[]; // promotions up for grabs
+}) {
   const tree = buildOrgTree(people);
   const branches = tree.filter((n) => n.reports.length);
   const loose = tree.filter((n) => !n.reports.length);
+  // The space beside the top of the chart is free when the top person has
+  // just one report, so the list can sit in that corner on big screens.
+  const corner = branches[0]?.reports.length === 1;
 
   if (!people.length) return <div className="empty"><p>No one on the team yet.</p></div>;
 
@@ -41,8 +52,12 @@ export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin:
 
       {/* Computers: top-down chart. Wide teams scroll sideways. */}
       <div className="space-y-5 max-md:hidden">
-        {branches.map((n) => (
-          <section key={n.person.id} className="card overflow-x-auto">
+        {!branches.length && <OpenRoles roles={openRoles} className="card" />}
+        {branches.map((n, i) => (
+          <section key={n.person.id} className="card relative overflow-x-auto">
+            {i === 0 && (
+              <OpenRoles roles={openRoles} className={`mb-5 ${corner ? "lg:absolute lg:top-5 lg:left-5 lg:mb-0 lg:w-72" : ""}`} />
+            )}
             <div className="mx-auto flex w-max flex-col items-center px-2 pb-2">
               <ChartBranch node={n} />
             </div>
@@ -65,10 +80,30 @@ export function TeamChart({ people, isAdmin }: { people: ChartPerson[]; isAdmin:
       </div>
 
       {/* Phones: an indented outline. */}
+      <OpenRoles roles={openRoles} className="card md:hidden" />
       <ul className="space-y-3 md:hidden">
         {tree.map((n) => <OutlineItem key={n.person.id} node={n} />)}
       </ul>
     </div>
+  );
+}
+
+function OpenRoles({ roles, className = "" }: { roles: string[]; className?: string }) {
+  if (!roles.length) return null;
+  return (
+    <section className={`space-y-2 text-left ${className}`} aria-label="Promotions up for grabs">
+      <h2 className="group-title">Promotions up for grabs</h2>
+      <ul className="flex flex-wrap gap-1.5">
+        {roles.map((r) => (
+          <li
+            key={r}
+            className="inline-flex max-w-full items-center rounded-control border border-dashed border-line-strong px-2 py-0.5 text-xs"
+          >
+            <span className="truncate" title={r}>{r}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
