@@ -24,6 +24,14 @@ export const STATUS_PILL: Record<VentureStatus, string> = {
   paused: "pill-warning",
 };
 
+// The beacon by each venture's name on the map. Ideas get a hollow ring.
+export const STATUS_COLOR: Record<VentureStatus, string> = {
+  idea: "var(--color-muted)",
+  building: "var(--color-info)",
+  live: "var(--color-success)",
+  paused: "var(--color-warning)",
+};
+
 export function isVentureStatus(v: unknown): v is VentureStatus {
   return typeof v === "string" && (VENTURE_STATUSES as readonly string[]).includes(v);
 }
