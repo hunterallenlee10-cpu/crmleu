@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { daysBetween } from "./dates";
-import { MAX_CO_LEADS } from "./promotions";
 
 // Ventures are the big branches of LEU and the spokes on the Ventures map.
 // The database enforces the same limits (see the ventures migration).
 export const MAX_VENTURES = 24;
 export const MAX_VENTURE_NAME = 40;
 export const MAX_VENTURE_DESCRIPTION = 2000;
+// Co-leads ticked off in a venture's form. The database allows the same
+// number (see the venture_co_leads migration).
+export const MAX_CO_LEADS = 2;
 
 export const VENTURE_STATUSES = ["idea", "building", "live", "paused"] as const;
 export type VentureStatus = (typeof VENTURE_STATUSES)[number];

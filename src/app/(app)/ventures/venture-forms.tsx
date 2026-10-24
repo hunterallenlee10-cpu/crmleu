@@ -3,8 +3,14 @@
 import { useActionState, useEffect, useState } from "react";
 import { FormMessage } from "@/components/form-message";
 import { SwitchRow } from "@/components/switch-row";
-import { MAX_CO_LEADS } from "@/lib/promotions";
-import { MAX_VENTURE_DESCRIPTION, MAX_VENTURE_NAME, STATUS_LABEL, VENTURE_STATUSES, type VentureStatus } from "@/lib/ventures";
+import {
+  MAX_CO_LEADS,
+  MAX_VENTURE_DESCRIPTION,
+  MAX_VENTURE_NAME,
+  STATUS_LABEL,
+  VENTURE_STATUSES,
+  type VentureStatus,
+} from "@/lib/ventures";
 import { createTask } from "../tasks/actions";
 import { DueDateField } from "../tasks/task-form";
 import { updateVenture } from "./actions";

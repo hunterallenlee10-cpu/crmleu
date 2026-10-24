@@ -258,10 +258,7 @@ export function VentureMap({
             const isSel = selectedVenture === v.id;
             const lit = isSel || bubble?.id === v.id;
             const leadFirst = v.lead?.split(" ")[0];
-            const people = leadFirst
-              ? ` · ${shortLabel(leadFirst, 10)}${v.coLeads.length ? ` +${v.coLeads.length}` : ""}`
-              : "";
-            const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${people}`;
+            const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${leadFirst ? ` · ${shortLabel(leadFirst, 10)}` : ""}`;
             const status = STATUS_LABEL[v.status];
             const statusColor = STATUS_COLOR[v.status];
             // Computers and phones get the same label, sized for each screen.
