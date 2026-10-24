@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { daysBetween } from "./dates";
+import { MAX_CO_LEADS } from "./promotions";
 
 // Ventures are the big branches of LEU and the spokes on the Ventures map.
 // The database enforces the same limits (see the ventures migration).
@@ -88,6 +89,20 @@ export function parseVentureForm(formData: FormData):
     return { ok: false, error: issue.message };
   }
   return { ok: true, data: { ...parsed.data, name: name.name } };
+}
+
+// The co-leads ticked off on a venture's form: real ids, no repeats, never
+// the lead, and no more than MAX_CO_LEADS.
+export function parseCoLeads(values: string[], leadId: string | null):
+  | { ok: true; ids: string[] }
+  | { ok: false; error: string } {
+  const ids = [...new Set(values.filter(Boolean))];
+  if (!ids.every((id) => z.guid().safeParse(id).success)) return { ok: false, error: "Pick co-leads from the list." };
+  const coLeads = ids.filter((id) => id !== leadId);
+  if (coLeads.length > MAX_CO_LEADS) {
+    return { ok: false, error: `A venture can have up to ${MAX_CO_LEADS} co-leads.` };
+  }
+  return { ok: true, ids: coLeads };
 }
 
 // Where today sits on a venture's timeline. `fraction` is how much of the

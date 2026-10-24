@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseVentureForm, parseVentureName, timelineInfo } from "./ventures";
+import { parseCoLeads, parseVentureForm, parseVentureName, timelineInfo } from "./ventures";
 
 const LEAD = "6a0e3b4c-1d2e-4f50-8a1b-2c3d4e5f6a7b";
 
@@ -57,6 +57,24 @@ describe("parseVentureForm", () => {
     expect(parseVentureForm(form({ lead_id: "nope" })).ok).toBe(false);
     expect(parseVentureForm(form({ start_date: "2026-13-40" })).ok).toBe(false);
     expect(parseVentureForm(form({ name: " " })).ok).toBe(false);
+  });
+});
+
+describe("parseCoLeads", () => {
+  const A = "1a0e3b4c-1d2e-4f50-8a1b-2c3d4e5f6a7b";
+  const B = "2a0e3b4c-1d2e-4f50-8a1b-2c3d4e5f6a7b";
+
+  it("keeps each ticked person once and drops the lead", () => {
+    expect(parseCoLeads([A, A, "", LEAD, B], LEAD)).toEqual({ ok: true, ids: [A, B] });
+    expect(parseCoLeads([], null)).toEqual({ ok: true, ids: [] });
+  });
+
+  it("allows two co-leads at most", () => {
+    expect(parseCoLeads([A, B, LEAD], null)).toEqual({ ok: false, error: "A venture can have up to 2 co-leads." });
+  });
+
+  it("rejects anything that isn't a person", () => {
+    expect(parseCoLeads(["nope"], null).ok).toBe(false);
   });
 });
 

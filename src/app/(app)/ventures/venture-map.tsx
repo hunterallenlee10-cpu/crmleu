@@ -49,10 +49,55 @@ const BUBBLE_WIDTH = 304;
 const PHONE_QUERY = "(max-width: 767px)";
 const tally = (tasks: MapTask[]) => ({ done: tasks.filter((t) => t.done).length, total: tasks.length });
 
+const listNames = (names: string[]) =>
+  names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : (names[0] ?? "");
+
+// "Run by Ann with Bob and Cat", for the overview list.
+function runByLine(v: MapVenture) {
+  const co = listNames(v.coLeads.map((c) => c.name));
+  if (v.lead) return `Run by ${v.lead}${co ? ` with ${co}` : ""}`;
+  return co ? `Co-led by ${co}` : "No one running it yet";
+}
+
+// The lead, then any co-leads, each with their colour. Rows of a <dl>.
+function RunBy({ venture, className = "" }: { venture: MapVenture; className?: string }) {
+  const dot = (color: string) => <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ background: color }} />;
+  return (
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <dt className="text-xs text-muted">Lead</dt>
+        <dd className={`flex min-w-0 items-center gap-1.5 font-medium ${className}`}>
+          {venture.lead ? (
+            <>
+              {dot(venture.leadColor)}
+              <span className="truncate">{venture.lead}</span>
+            </>
+          ) : (
+            <span className="font-normal text-faint">No one yet</span>
+          )}
+        </dd>
+      </div>
+      {venture.coLeads.length > 0 && (
+        <div className="flex items-start justify-between gap-3">
+          <dt className="text-xs text-muted">Co-leads</dt>
+          <dd className={`flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-1 font-medium ${className}`}>
+            {venture.coLeads.map((c) => (
+              <span key={c.id} className="flex min-w-0 items-center gap-1.5">
+                {dot(c.color)}
+                <span className="truncate">{c.name}</span>
+              </span>
+            ))}
+          </dd>
+        </div>
+      )}
+    </>
+  );
+}
+
 // The Ventures map: each venture is a branch around LEU and every task on it
 // is a dot. Dots sit closer to the core the sooner they're due, and finished
 // tasks join the core. Hovering a venture's name opens a bubble with what it
-// is, who runs it, its timeline and its tasks. The side panel shows an
+// is, its lead and co-leads, its timeline and its tasks. The side panel shows an
 // overview, one venture (editable by admins) or one task.
 export function VentureMap({
   ventures,
@@ -213,7 +258,10 @@ export function VentureMap({
             const isSel = selectedVenture === v.id;
             const lit = isSel || bubble?.id === v.id;
             const leadFirst = v.lead?.split(" ")[0];
-            const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${leadFirst ? ` · ${shortLabel(leadFirst, 10)}` : ""}`;
+            const people = leadFirst
+              ? ` · ${shortLabel(leadFirst, 10)}${v.coLeads.length ? ` +${v.coLeads.length}` : ""}`
+              : "";
+            const countText = `${open ? `${open} open` : here.length ? "all done" : "no tasks"}${people}`;
             const status = STATUS_LABEL[v.status];
             const statusColor = STATUS_COLOR[v.status];
             // Computers and phones get the same label, sized for each screen.
@@ -583,7 +631,8 @@ function VentureBubble({
   const { done, total } = tally(tasks);
   const open = tasks.filter((t) => !t.done).sort(byDue);
   const overdue = open.filter((t) => t.dueDate && t.dueDate < today).length;
-  const empty = !venture.description && !venture.leadId && !venture.startDate && !venture.targetDate;
+  const empty =
+    !venture.description && !venture.leadId && !venture.coLeads.length && !venture.startDate && !venture.targetDate;
   return (
     <div
       role="dialog"
@@ -609,19 +658,7 @@ function VentureBubble({
       )}
 
       <dl className="space-y-2.5 border-t border-line pt-3">
-        <div className="flex items-center justify-between gap-3">
-          <dt className="text-xs text-muted">Run by</dt>
-          <dd className="flex items-center gap-1.5 font-medium">
-            {venture.lead ? (
-              <>
-                <span aria-hidden="true" className="size-2 rounded-full" style={{ background: venture.leadColor }} />
-                {venture.lead}
-              </>
-            ) : (
-              <span className="font-normal text-faint">No one yet</span>
-            )}
-          </dd>
-        </div>
+        <RunBy venture={venture} />
         {hasTimeline(venture) && (
           <div className="space-y-1">
             <dt className="text-xs text-muted">Timeline</dt>
@@ -800,7 +837,7 @@ function OverviewPanel({
                     <span className="truncate font-medium">{v.name}</span>
                     <StatusPill status={v.status} />
                   </span>
-                  <span className="block text-xs text-muted">{v.lead ? `Run by ${v.lead}` : "No one running it yet"}</span>
+                  <span className="block text-xs text-muted">{runByLine(v)}</span>
                   <ProgressBar done={done} total={total} />
                 </button>
               </li>
@@ -861,19 +898,7 @@ function VenturePanel({
       ) : (
         <>
           <dl className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-xs text-muted">Run by</dt>
-              <dd className="flex items-center gap-1.5 text-sm font-medium">
-                {venture.lead ? (
-                  <>
-                    <span aria-hidden="true" className="size-2 rounded-full" style={{ background: venture.leadColor }} />
-                    {venture.lead}
-                  </>
-                ) : (
-                  <span className="font-normal text-faint">No one yet</span>
-                )}
-              </dd>
-            </div>
+            <RunBy venture={venture} className="text-sm" />
             {hasTimeline(venture) && (
               <div className="space-y-1">
                 <dt className="text-xs text-muted">Timeline</dt>

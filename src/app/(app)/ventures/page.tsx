@@ -10,7 +10,7 @@ import type { EveryoneProgress, Task, TeamMember, Venture } from "@/lib/types";
 import { personColor } from "@/lib/venture-map";
 import { TaskItem } from "../tasks/task-item";
 import { ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
-import { TeamChart, type ChartPerson } from "./team-chart";
+import { TeamChart, type ChartPerson, type ChartVenture } from "./team-chart";
 import { PersonChips, ViewSwitch, type PersonChip, type VenturesView } from "./toolbar";
 import { QuickAddTask, VentureForm, type Person } from "./venture-forms";
 import { VentureMap, type MapTask, type MapVenture } from "./venture-map";
@@ -28,7 +28,7 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
   const supabase = await createClient();
 
   // Every active team member can see every venture and every task.
-  const [{ data: ventureRows }, { data: taskRows }, members] = await Promise.all([
+  const [{ data: ventureRows }, { data: taskRows }, { data: coLeadRows }, members] = await Promise.all([
     supabase.from("ventures").select("*").order("position").order("created_at").returns<Venture[]>(),
     supabase
       .from("tasks")
@@ -38,6 +38,12 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at")
       .returns<Task[]>(),
+    // Missing until the venture_co_leads migration has run; then nobody co-leads.
+    supabase
+      .from("venture_co_leads")
+      .select("venture_id, user_id")
+      .order("created_at")
+      .returns<{ venture_id: string; user_id: string }[]>(),
     getTeamMembers(supabase),
   ]);
 
@@ -55,6 +61,9 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
     leadId: v.lead_id,
     lead: v.lead_id ? (names.get(v.lead_id) ?? "Former member") : null,
     leadColor: colorOf(v.lead_id),
+    coLeads: (coLeadRows ?? [])
+      .filter((c) => c.venture_id === v.id && c.user_id !== v.lead_id)
+      .map((c) => ({ id: c.user_id, name: names.get(c.user_id) ?? "Former member", color: colorOf(c.user_id) })),
     startDate: v.start_date,
     targetDate: v.target_date,
   }));
@@ -135,12 +144,8 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
   );
 }
 
-// Promotions anyone can go for, listed on the org chart ahead of one
-// "<venture> Lead" seat per venture.
-const TOP_OPEN_ROLES = ["President", "CFO", "Sales Manager"];
-
-// The org chart. Counts every open task assigned to each person, not just
-// ones on a venture.
+// The org chart, with the promotions up for grabs. Counts every open task
+// assigned to each person, not just ones on a venture.
 async function TeamView({
   members,
   ventures,
@@ -173,11 +178,16 @@ async function TeamView({
       reportsTo: m.reports_to ?? null,
       color: colorOf(m.id),
       isMe: m.id === meId,
-      ventures: ventures.filter((v) => v.leadId === m.id).map((v) => ({ id: v.id, name: v.name, status: v.status })),
       openTasks: openCount.get(m.id) ?? 0,
     }));
-  const openRoles = [...TOP_OPEN_ROLES, ...ventures.map((v) => `${v.name} Lead`)];
-  return <TeamChart people={people} isAdmin={isAdmin} openRoles={openRoles} />;
+  const seats: ChartVenture[] = ventures.map((v) => ({
+    id: v.id,
+    name: v.name,
+    status: v.status,
+    leadId: v.leadId,
+    coLeadIds: v.coLeads.map((c) => c.id),
+  }));
+  return <TeamChart people={people} ventures={seats} isAdmin={isAdmin} />;
 }
 
 // The same ventures and tasks as a list.
@@ -247,6 +257,12 @@ async function VentureList({
               <p className="text-sm">
                 <span className="text-muted">Run by </span>
                 {v.lead ?? <span className="text-faint">no one yet</span>}
+                {v.coLeads.length > 0 && (
+                  <>
+                    <span className="text-muted"> · Co-leads </span>
+                    {v.coLeads.map((c) => c.name).join(", ")}
+                  </>
+                )}
               </p>
               {hasTimeline(v) && <Timeline start={v.startDate} target={v.targetDate} today={today} />}
               <ProgressBar done={done.length} total={mine.length} />
