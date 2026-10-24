@@ -217,11 +217,12 @@ Admins get an **Admin** tab with four pages:
 - Admins press **+** on a branch to add a task there, or pick a **Venture** when adding a task on the **Tasks** page. Venture tasks are ordinary tasks: they show on the Tasks page and on each person's **Today** page too.
 - **Edit ventures** (admins) renames, reorders, adds or removes branches.
 - Pick a person above the map to fade everyone else's dots (and narrow the list). **List** shows the same thing as cards. Phones get the same map (with bigger labels); tap a branch or dot and its details open below the map.
-- **Team** is the org chart: who reports to whom, each person's title, the ventures they lead or co-lead (with their status colour) and how many open tasks they have. Everyone can see it; admins set titles and managers on **Admin → Team**. People with no manager and nobody under them are listed under "Not placed under anyone yet". On phones it's an indented list.
-- **Leads and co-leads:** in a venture's **Edit details**, pick its **Lead** and tick off up to two **Co-leads**.
-- **Promotions up for grabs** (on the Team chart) lists what's still open: **President**, **CFO** and **Sales Manager** until someone has that title, then a **"<venture> Lead"** for each venture with no lead, and a **"<venture> Co-Lead"** for each venture that has a lead but fewer than two co-leads. It reads the same data as the map, so the two always match.
-  - Admins **drag a promotion onto someone's card** to give it to them (on phones, press and hold, then drag). Or tap it, then press **Give** on their card. A venture lead or co-lead shows up on the map straight away; President, CFO and Sales Manager become their title. **Undo** appears after each change.
-  - The **×** next to someone's title or a venture role takes it back, and it goes back on the list.
+- **Team** is the org chart: who reports to whom, each person's title, the ventures they lead (with their status colour) and how many open tasks they have. Everyone can see it; admins set titles and managers on **Admin → Team**. People with no manager and nobody under them are listed under "Not placed under anyone yet". On phones it's an indented list.
+- **Leads and co-leads:** in a venture's **Edit details**, pick its **Lead** and tick off up to two **Co-leads**. Co-leads show when you open a venture (its bubble, side panel and the list view); they aren't on the Team chart.
+- **Promotions up for grabs** (on the Team chart) lists what's still open: title promotions (**President**, **CFO**, **Sales Manager** and any an admin adds) until someone has that title, then a **"<venture> Lead"** for each venture with no lead. It reads the same data as the map, so the two always match.
+  - Admins press **+ New promotion** at the end of the list, type it (e.g. "Head of Marketing") and press **Add**. It goes straight onto the board for everyone. The **×** next to a title promotion takes it off the board (anyone who already has that title keeps it). Venture lead seats come and go with their venture, so they have no ×.
+  - Admins **drag a promotion onto someone's card** to give it to them (on phones, press and hold, then drag). Or tap it, then press **Give** on their card. A venture lead shows up on the map straight away; a title promotion becomes their title. **Undo** appears after each change.
+  - The **×** next to someone's title or a venture lead badge takes it back, and it goes back on the list.
   - When the `venture_co_leads` migration runs, anyone whose title is already "<venture> Lead" (or "<venture> Co-Lead") is put on that venture as its lead (or a co-lead), if the seat is free.
 - Ventures replaced the old Projects page. When the `ventures` migration runs, each project is copied into a task on its venture (its checklist goes into the task's details, and a fully ticked project becomes a done task). The old `projects` tables are kept, unused, as an archive. Old `/projects` links redirect to `/ventures`.
 
@@ -257,7 +258,8 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box;
 - a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects (the archived Projects tables);
 - everyone on the team can read the ventures and their tasks, only an admin can change a venture or move a task between ventures, names are unique and can't be blank, timelines can't end before they start, and removing a venture keeps its tasks;
-- everyone can see a venture's co-leads, only an admin can add or remove them, a venture has two at most, its lead can't also be a co-lead, and a co-lead who becomes the lead comes off the co-lead list.
+- everyone can see a venture's co-leads, only an admin can add or remove them, a venture has two at most, its lead can't also be a co-lead, and a co-lead who becomes the lead comes off the co-lead list;
+- everyone can read the promotions up for grabs, only an admin can add or remove one, and they're trimmed, unique (ignoring case) and 60 characters at most.
 
 ## Project layout
 
@@ -275,10 +277,10 @@ src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
 src/app/(app)/tasks     team task list (admins assign; everyone ticks off their own)
-src/app/(app)/ventures  ventures map (hover bubble, side panel), list, team chart (drag promotions onto people), edit ventures (admins)
+src/app/(app)/ventures  ventures map (hover bubble, side panel), list, team chart (add promotions, drag them onto people), edit ventures (admins)
 src/lib/ventures.ts     venture validation, statuses, timeline maths
 src/lib/venture-map.ts  where each branch, label, ring and task dot goes on the map
-src/lib/promotions.ts   which promotions are up for grabs (titles, venture lead and co-lead seats)
+src/lib/promotions.ts   which promotions are up for grabs (title promotions and venture lead seats)
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
 src/app/api/export      CSV export (admins only)
 src/app/api/leads       POST endpoint for n8n (API key)

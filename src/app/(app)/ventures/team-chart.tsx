@@ -13,25 +13,27 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import Link from "next/link";
-import { createContext, use, useMemo, useOptimistic, useState, useTransition } from "react";
+import { createContext, use, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
 import { buildOrgTree, type OrgNode, type OrgPerson } from "@/lib/hierarchy";
 import {
   canGive,
   giveSeat as giveLocal,
   openPromotions,
+  parseNewPromotion,
   seatLabel,
-  seatsHeld,
   takeSeat as takeLocal,
+  venturesLed,
   type Promotion,
   type Seat,
   type SeatPerson,
   type Seats,
+  type TitlePromotion,
 } from "@/lib/promotions";
 import { STATUS_COLOR, STATUS_LABEL, type VentureStatus } from "@/lib/ventures";
 import { FitChart } from "./fit-chart";
-import { giveSeat, takeSeat } from "./team-actions";
+import { addPromotion, giveSeat, removePromotion, takeSeat } from "./team-actions";
 
 export type ChartPerson = OrgPerson & {
   color: string;
@@ -39,18 +41,20 @@ export type ChartPerson = OrgPerson & {
   openTasks: number;
 };
 
-// A venture's lead and co-lead seats, the same ones the Ventures map shows.
+// A venture's lead seat, the same one the Ventures map shows.
 export type ChartVenture = {
   id: string;
   name: string;
   status: VentureStatus;
   leadId: string | null;
-  coLeadIds: string[];
 };
 
 type Node = OrgNode<ChartPerson>;
 type ChartSeats = Seats<ChartVenture, SeatPerson>;
-type Change = { give: boolean; personId: string; seat: Seat };
+type Change =
+  | { type: "give" | "take"; personId: string; seat: Seat }
+  | { type: "add"; title: string }
+  | { type: "remove"; id: string };
 type Notice = { tone: "success" | "error"; text: string; undo?: () => void };
 type Place = "desktop" | "phone"; // each card and promotion is drawn once per layout
 
@@ -62,31 +66,64 @@ type Chart = {
   pick: (p: Promotion | null) => void;
   give: (personId: string, seat: Seat) => void;
   take: (personId: string, seat: Seat) => void;
+  add: (raw: string) => string | null; // returns an error to show by the box
+  remove: (promotion: Promotion) => void;
 };
 const ChartContext = createContext<Chart | null>(null);
 const useChart = () => use(ChartContext)!;
 
+// Typed-in promotions show straight away; this marks one that isn't saved yet.
+const UNSAVED = "unsaved:";
+
+function applyChange(state: ChartSeats, c: Change): ChartSeats {
+  switch (c.type) {
+    case "give":
+      return giveLocal(state, c.personId, c.seat);
+    case "take":
+      return takeLocal(state, c.personId, c.seat);
+    case "add":
+      return { ...state, titles: [...state.titles, { id: `${UNSAVED}${c.title}`, title: c.title }] };
+    case "remove":
+      return { ...state, titles: state.titles.filter((t) => t.id !== c.id) };
+  }
+}
+
+function save(c: Change) {
+  switch (c.type) {
+    case "give":
+      return giveSeat(c.personId, c.seat);
+    case "take":
+      return takeSeat(c.personId, c.seat);
+    case "add":
+      return addPromotion(c.title);
+    case "remove":
+      return removePromotion(c.id);
+  }
+}
+
 // The team's org chart, for everyone. Admins set titles and who reports to
-// whom on Admin → Team, and hand out promotions here: drag one onto a person
-// (or tap it, then tap "Give" on their card). A venture's lead and co-lead
-// seats are the ones on the Ventures map, so the two always match.
-// Computers get a top-down chart; phones an outline.
+// whom on Admin → Team, and run "Promotions up for grabs" here: type a new
+// one onto the board, drag one onto a person (or tap it, then tap "Give" on
+// their card), or remove one. A venture's lead seat is the one on the
+// Ventures map, so the two always match. Co-leads are picked in each
+// venture's own form, not here. Computers get a top-down chart; phones an
+// outline.
 export function TeamChart({
   people,
   ventures,
+  titles,
   isAdmin,
 }: {
   people: ChartPerson[];
   ventures: ChartVenture[];
+  titles: TitlePromotion[];
   isAdmin: boolean;
 }) {
   const base = useMemo<ChartSeats>(
-    () => ({ ventures, people: people.map((p) => ({ id: p.id, title: p.title })) }),
-    [ventures, people],
+    () => ({ ventures, titles, people: people.map((p) => ({ id: p.id, title: p.title })) }),
+    [ventures, titles, people],
   );
-  const [seats, apply] = useOptimistic(base, (state, c: Change) =>
-    c.give ? giveLocal(state, c.personId, c.seat) : takeLocal(state, c.personId, c.seat),
-  );
+  const [seats, apply] = useOptimistic(base, applyChange);
   const [, startTransition] = useTransition();
   const [dragging, setDragging] = useState<Promotion | null>(null);
   const [picked, setPicked] = useState<Promotion | null>(null);
@@ -108,7 +145,7 @@ export function TeamChart({
     startTransition(async () => {
       for (const c of changes) apply(c);
       for (const c of changes) {
-        const res = await (c.give ? giveSeat : takeSeat)(c.personId, c.seat);
+        const res = await save(c);
         if (res.error) {
           setNotice({ tone: "error", text: res.error });
           return;
@@ -126,28 +163,43 @@ export function TeamChart({
 
     const label = seatLabel(seat, seats.ventures);
     const before = seat.kind === "title" ? titleOf(personId) : null;
-    const wasCoLead = seat.kind === "lead" && seats.ventures.some((v) => v.id === seat.ventureId && v.coLeadIds.includes(personId));
     // Undo puts back exactly what was there before.
-    const undo: Change[] =
-      seat.kind === "title"
-        ? [before ? { give: true, personId, seat: { kind: "title", title: before } } : { give: false, personId, seat }]
-        : [
-            { give: false, personId, seat },
-            ...(wasCoLead ? [{ give: true, personId, seat: { kind: "co_lead", ventureId: seat.ventureId } } as Change] : []),
-          ];
-    run([{ give: true, personId, seat }], {
+    const undo: Change =
+      before ? { type: "give", personId, seat: { kind: "title", title: before } } : { type: "take", personId, seat };
+    run([{ type: "give", personId, seat }], {
       tone: "success",
       text: `${name} is now ${label}${before ? ` (was ${before})` : ""}.`,
-      undo: () => run(undo, { tone: "success", text: "Undone." }),
+      undo: () => run([undo], { tone: "success", text: "Undone." }),
     });
   }
 
   function take(personId: string, seat: Seat) {
     const label = seat.kind === "title" ? seat.title : seatLabel(seat, seats.ventures);
-    run([{ give: false, personId, seat }], {
+    run([{ type: "take", personId, seat }], {
       tone: "success",
       text: `${nameOf(personId)} is no longer ${label}.`,
-      undo: () => run([{ give: true, personId, seat }], { tone: "success", text: "Undone." }),
+      undo: () => run([{ type: "give", personId, seat }], { tone: "success", text: "Undone." }),
+    });
+  }
+
+  function add(raw: string) {
+    const parsed = parseNewPromotion(raw, seats);
+    if (!parsed.ok) return parsed.error;
+    setPicked(null);
+    run([{ type: "add", title: parsed.title }], {
+      tone: "success",
+      text: `Added ${parsed.title}. Drag it onto someone to give it to them.`,
+    });
+    return null;
+  }
+
+  function remove(promotion: Promotion) {
+    if (!promotion.removableId || promotion.removableId.startsWith(UNSAVED)) return;
+    if (picked?.key === promotion.key) setPicked(null);
+    run([{ type: "remove", id: promotion.removableId }], {
+      tone: "success",
+      text: `Took ${promotion.label} off the board.`,
+      undo: () => run([{ type: "add", title: promotion.label }], { tone: "success", text: "Undone." }),
     });
   }
 
@@ -173,7 +225,7 @@ export function TeamChart({
 
   if (!people.length) return <div className="empty"><p>No one on the team yet.</p></div>;
 
-  const chart: Chart = { isAdmin, seats, dragging, picked, pick: setPicked, give, take };
+  const chart: Chart = { isAdmin, seats, dragging, picked, pick: setPicked, give, take, add, remove };
 
   return (
     <ChartContext value={chart}>
@@ -288,13 +340,14 @@ function OpenRoles({ promotions, place, className = "" }: { promotions: Promotio
   return (
     <section className={`space-y-2 text-left ${className}`} aria-label="Promotions up for grabs">
       <h2 className="group-title">Promotions up for grabs</h2>
-      {promotions.length ? (
-        <ul className="flex flex-wrap gap-1.5">
+      {promotions.length > 0 || isAdmin ? (
+        <ul className="flex flex-wrap items-center gap-1.5">
           {promotions.map((p) => (
             <li key={p.key} className="max-w-full">
               {isAdmin ? <DraggableRole promotion={p} place={place} /> : <RoleChip label={p.label} />}
             </li>
           ))}
+          {isAdmin && <NewPromotion place={place} />}
         </ul>
       ) : (
         <p className="text-sm text-muted">Every promotion is taken.</p>
@@ -315,6 +368,80 @@ function OpenRoles({ promotions, place, className = "" }: { promotions: Promotio
   );
 }
 
+// Admins type a new promotion straight onto the board.
+function NewPromotion({ place }: { place: Place }) {
+  const { add } = useChart();
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const id = `new-promotion-${place}`;
+
+  function close() {
+    setOpen(false);
+    setError("");
+  }
+
+  if (!open) {
+    return (
+      <li>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1 rounded-control border border-dashed border-accent/60 px-2 py-0.5 text-xs text-accent-strong transition-colors duration-150 hover:border-accent hover:bg-accent/[0.08]"
+        >
+          <Plus aria-hidden="true" className="size-3" />
+          New promotion
+        </button>
+      </li>
+    );
+  }
+
+  return (
+    <li className="basis-full">
+      <form
+        className="flex items-center gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const problem = add(input.current?.value ?? "");
+          if (problem) {
+            setError(problem);
+            input.current?.focus();
+          } else {
+            close();
+          }
+        }}
+      >
+        <label htmlFor={id} className="sr-only">New promotion</label>
+        <input
+          ref={input}
+          id={id}
+          autoFocus
+          maxLength={60}
+          autoComplete="off"
+          placeholder="e.g. Head of Marketing"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          onChange={() => setError("")}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") close();
+          }}
+          className="input min-h-8 min-w-0 flex-1 px-2 text-xs sm:min-h-8 sm:text-xs"
+        />
+        <button type="submit" className="btn btn-primary min-h-8 px-3 text-xs">Add</button>
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Cancel"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-control text-muted hover:bg-fg/[0.08] hover:text-fg"
+        >
+          <X aria-hidden="true" className="size-4" />
+        </button>
+      </form>
+      {error && <p id={`${id}-error`} role="alert" className="mt-1 text-xs text-danger">{error}</p>}
+    </li>
+  );
+}
+
 function RoleChip({ label, lifted, active }: { label: string; lifted?: boolean; active?: boolean }) {
   return (
     <span
@@ -332,27 +459,43 @@ function RoleChip({ label, lifted, active }: { label: string; lifted?: boolean; 
 }
 
 function DraggableRole({ promotion, place }: { promotion: Promotion; place: Place }) {
-  const { picked, pick, dragging } = useChart();
+  const { picked, pick, dragging, remove } = useChart();
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: `${place}:${promotion.key}`,
     data: { promotion },
   });
   const isPicked = picked?.key === promotion.key;
+  // Title promotions can come off the board; venture lead seats come and go
+  // with their venture.
+  const removable = promotion.removableId !== null;
+  const saving = promotion.removableId?.startsWith(UNSAVED) ?? false;
   return (
-    <button
-      ref={setNodeRef}
-      type="button"
-      {...attributes}
-      {...listeners}
-      aria-pressed={isPicked}
-      aria-label={`${promotion.label}. Drag onto a person, or press to pick who gets it`}
-      onClick={() => pick(isPicked ? null : promotion)}
-      className={`block max-w-full cursor-grab touch-manipulation select-none [-webkit-touch-callout:none] ${
-        dragging?.key === promotion.key ? "opacity-40" : ""
-      }`}
-    >
-      <RoleChip label={promotion.label} active={isPicked} />
-    </button>
+    <span className={`inline-flex max-w-full items-center ${dragging?.key === promotion.key ? "opacity-40" : ""}`}>
+      <button
+        ref={setNodeRef}
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-pressed={isPicked}
+        aria-label={`${promotion.label}. Drag onto a person, or press to pick who gets it`}
+        onClick={() => pick(isPicked ? null : promotion)}
+        className="block max-w-full min-w-0 cursor-grab touch-manipulation select-none [-webkit-touch-callout:none]"
+      >
+        <RoleChip label={promotion.label} active={isPicked} />
+      </button>
+      {removable && (
+        <button
+          type="button"
+          onClick={() => remove(promotion)}
+          disabled={saving}
+          aria-label={`Take ${promotion.label} off the board`}
+          title={`Take ${promotion.label} off the board`}
+          className="ml-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-control text-faint transition-colors duration-150 hover:bg-fg/[0.08] hover:text-fg disabled:opacity-40"
+        >
+          <X aria-hidden="true" className="size-3" />
+        </button>
+      )}
+    </span>
   );
 }
 
@@ -398,7 +541,7 @@ function PersonCard({ node, size = "fit", place }: { node: Node; size?: keyof ty
   const { setNodeRef, isOver } = useDroppable({ id: `${place}:${p.id}`, data: { personId: p.id }, disabled: !isAdmin });
 
   const title = seats.people.find((x) => x.id === p.id)?.title ?? null;
-  const held = seatsHeld(seats.ventures, p.id);
+  const led = venturesLed(seats.ventures, p.id);
   const reports = node.size - 1;
   const role = p.role === "admin" ? "Admin" : "Team member";
   const facts = [
@@ -438,13 +581,13 @@ function PersonCard({ node, size = "fit", place }: { node: Node; size?: keyof ty
           </p>
         </div>
       </div>
-      {held.length > 0 && (
+      {led.length > 0 && (
         <ul className="flex flex-wrap gap-1.5" aria-label={`What ${p.name} leads`}>
-          {held.map(({ venture: v, role: seatRole }) => {
-            const label = `${v.name} ${seatRole === "lead" ? "Lead" : "Co-Lead"}`;
+          {led.map((v) => {
+            const label = `${v.name} Lead`;
             return (
               <li
-                key={`${seatRole}:${v.id}`}
+                key={v.id}
                 className="inline-flex max-w-full items-center gap-1.5 rounded-control bg-fg/[0.06] py-0.5 pr-1 pl-2 text-xs"
                 title={`${label} · ${STATUS_LABEL[v.status]}`}
               >
@@ -457,7 +600,7 @@ function PersonCard({ node, size = "fit", place }: { node: Node; size?: keyof ty
                 {isAdmin && (
                   <RemoveButton
                     label={`Remove ${p.name} as ${label}`}
-                    onClick={() => take(p.id, { kind: seatRole, ventureId: v.id })}
+                    onClick={() => take(p.id, { kind: "lead", ventureId: v.id })}
                   />
                 )}
               </li>

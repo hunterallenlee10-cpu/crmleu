@@ -5,8 +5,7 @@ import { z } from "zod";
 import type { FormState } from "@/components/form-message";
 import { requireAdmin } from "@/lib/auth";
 import { friendlyDbError } from "@/lib/leads";
-import { MAX_CO_LEADS } from "@/lib/promotions";
-import { VENTURE_FIELDS, parseCoLeads, parseVentureForm } from "@/lib/ventures";
+import { MAX_CO_LEADS, VENTURE_FIELDS, parseCoLeads, parseVentureForm } from "@/lib/ventures";
 import { createClient } from "@/lib/supabase/server";
 
 // Admins fill in what a venture is, its lead and co-leads, and its timeline.

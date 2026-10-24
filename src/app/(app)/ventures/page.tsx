@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
 import type { EveryoneProgress, Task, TeamMember, Venture } from "@/lib/types";
+import { DEFAULT_TITLES, type TitlePromotion } from "@/lib/promotions";
 import { personColor } from "@/lib/venture-map";
 import { TaskItem } from "../tasks/task-item";
 import { ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
@@ -145,7 +146,8 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
 }
 
 // The org chart, with the promotions up for grabs. Counts every open task
-// assigned to each person, not just ones on a venture.
+// assigned to each person, not just ones on a venture. Co-leads aren't on the
+// chart; they're picked in each venture's own form.
 async function TeamView({
   members,
   ventures,
@@ -159,12 +161,16 @@ async function TeamView({
   isAdmin: boolean;
   colorOf: (id: string | null) => string;
 }) {
-  const { data: open } = await (await createClient())
-    .from("tasks")
-    .select("assignee_id")
-    .is("completed_at", null)
-    .not("assignee_id", "is", null)
-    .returns<{ assignee_id: string }[]>();
+  const supabase = await createClient();
+  const [{ data: open }, { data: promotionRows, error: promotionError }] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("assignee_id")
+      .is("completed_at", null)
+      .not("assignee_id", "is", null)
+      .returns<{ assignee_id: string }[]>(),
+    supabase.from("promotions").select("id, title").order("seq").returns<{ id: string; title: string }[]>(),
+  ]);
   const openCount = new Map<string, number>();
   for (const t of open ?? []) openCount.set(t.assignee_id, (openCount.get(t.assignee_id) ?? 0) + 1);
 
@@ -180,14 +186,12 @@ async function TeamView({
       isMe: m.id === meId,
       openTasks: openCount.get(m.id) ?? 0,
     }));
-  const seats: ChartVenture[] = ventures.map((v) => ({
-    id: v.id,
-    name: v.name,
-    status: v.status,
-    leadId: v.leadId,
-    coLeadIds: v.coLeads.map((c) => c.id),
-  }));
-  return <TeamChart people={people} ventures={seats} isAdmin={isAdmin} />;
+  const seats: ChartVenture[] = ventures.map((v) => ({ id: v.id, name: v.name, status: v.status, leadId: v.leadId }));
+  // Before the promotions migration has run, fall back to the original three.
+  const titles: TitlePromotion[] = promotionError
+    ? DEFAULT_TITLES.map((title) => ({ id: null, title }))
+    : (promotionRows ?? []).map((p) => ({ id: p.id, title: p.title }));
+  return <TeamChart people={people} ventures={seats} titles={titles} isAdmin={isAdmin} />;
 }
 
 // The same ventures and tasks as a list.
