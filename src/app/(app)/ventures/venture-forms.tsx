@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { FormMessage } from "@/components/form-message";
 import { SwitchRow } from "@/components/switch-row";
+import { MAX_CO_LEADS } from "@/lib/promotions";
 import { MAX_VENTURE_DESCRIPTION, MAX_VENTURE_NAME, STATUS_LABEL, VENTURE_STATUSES, type VentureStatus } from "@/lib/ventures";
 import { createTask } from "../tasks/actions";
 import { DueDateField } from "../tasks/task-form";
@@ -16,11 +17,12 @@ export type VentureDetails = {
   status: VentureStatus;
   leadId: string | null;
   lead: string | null;
+  coLeads: { id: string; name: string; color: string }[];
   startDate: string | null;
   targetDate: string | null;
 };
 
-// Admin only: what the venture is, who runs it, its status and timeline.
+// Admin only: what the venture is, its lead and co-leads, status and timeline.
 export function VentureForm({
   venture,
   people,
@@ -42,6 +44,7 @@ export function VentureForm({
     name: venture.name,
     description: venture.description ?? "",
     lead_id: venture.leadId ?? "",
+    co_lead_ids: venture.coLeads.map((c) => c.id).join(","),
     status: venture.status,
     start_date: venture.startDate ?? "",
     target_date: venture.targetDate ?? "",
@@ -51,11 +54,13 @@ export function VentureForm({
   const id = (name: string) => `${name}-${venture.id}`;
   const key = state?.error ? JSON.stringify(state.fields) : JSON.stringify(saved);
 
-  // Keep a deactivated lead selectable so saving doesn't quietly drop them.
-  const options =
-    venture.leadId && !people.some((p) => p.id === venture.leadId)
-      ? [...people, { id: venture.leadId, name: `${venture.lead ?? "Former member"} (inactive)` }]
-      : people;
+  // Keep deactivated people on the venture selectable so saving doesn't
+  // quietly drop them.
+  const inactive = [
+    ...(venture.leadId ? [{ id: venture.leadId, name: venture.lead ?? "Former member" }] : []),
+    ...venture.coLeads,
+  ].filter((p, i, all) => !people.some((x) => x.id === p.id) && all.findIndex((x) => x.id === p.id) === i);
+  const options = [...people, ...inactive.map((p) => ({ id: p.id, name: `${p.name} (inactive)` }))];
 
   return (
     <form action={action} className="space-y-4" key={key}>
@@ -72,21 +77,19 @@ export function VentureForm({
           autoFocus={autoFocus}
         />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor={id("lead_id")} className="label">Who&apos;s running it</label>
-          <select id={id("lead_id")} name="lead_id" className="input" defaultValue={value("lead_id")}>
-            <option value="">No one yet</option>
-            {options.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </div>
+      <PeopleFields
+        id={id}
+        options={options}
+        lead={value("lead_id")}
+        coLeads={value("co_lead_ids").split(",").filter(Boolean)}
+      >
         <div>
           <label htmlFor={id("status")} className="label">Status</label>
           <select id={id("status")} name="status" className="input" defaultValue={value("status")}>
             {VENTURE_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
           </select>
         </div>
-      </div>
+      </PeopleFields>
       <TimelineFields id={id} start={value("start_date")} target={value("target_date")} />
       <div>
         <label htmlFor={id("name")} className="label">Name</label>
@@ -109,6 +112,87 @@ export function VentureForm({
         )}
       </div>
     </form>
+  );
+}
+
+// Who runs the venture: one lead, plus up to MAX_CO_LEADS co-leads ticked off
+// below it. The lead can't also be a co-lead, so their box is greyed out.
+function PeopleFields({
+  id,
+  options,
+  lead: initialLead,
+  coLeads: initialCoLeads,
+  children,
+}: {
+  id: (name: string) => string;
+  options: Person[];
+  lead: string;
+  coLeads: string[];
+  children: React.ReactNode; // sits beside the lead picker
+}) {
+  const [lead, setLead] = useState(initialLead);
+  const [coLeads, setCoLeads] = useState(initialCoLeads.filter((c) => c !== initialLead));
+  const full = coLeads.length >= MAX_CO_LEADS;
+
+  function pickLead(next: string) {
+    setLead(next);
+    setCoLeads((cs) => cs.filter((c) => c !== next));
+  }
+  function toggle(person: string, on: boolean) {
+    setCoLeads((cs) => (on ? [...cs, person] : cs.filter((c) => c !== person)));
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor={id("lead_id")} className="label">Lead</label>
+          <select id={id("lead_id")} name="lead_id" className="input" value={lead} onChange={(e) => pickLead(e.target.value)}>
+            <option value="">No one yet</option>
+            {options.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+        {children}
+      </div>
+      <fieldset className="@container">
+        <legend className="label">
+          Co-leads <span className="font-normal text-faint">· tick up to {MAX_CO_LEADS}</span>
+        </legend>
+        {options.length ? (
+          <ul className="grid gap-1 rounded-control border border-line p-1.5 @sm:grid-cols-2">
+            {options.map((p) => {
+              const isLead = p.id === lead;
+              const checked = coLeads.includes(p.id);
+              const disabled = isLead || (full && !checked);
+              return (
+                <li key={p.id}>
+                  <label
+                    className={`flex min-h-10 items-center gap-2.5 rounded-control px-2 text-sm transition-colors duration-150 ${
+                      disabled ? "cursor-not-allowed text-faint" : "cursor-pointer hover:bg-surface-2"
+                    } ${checked ? "bg-accent/[0.08]" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      name="co_lead_ids"
+                      value={p.id}
+                      className="size-4 shrink-0"
+                      checked={checked}
+                      disabled={disabled}
+                      onChange={(e) => toggle(p.id, e.target.checked)}
+                    />
+                    <span className="min-w-0 truncate">{p.name}</span>
+                    {isLead && <span className="ml-auto shrink-0 text-xs">Lead</span>}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted">No one on the team yet.</p>
+        )}
+        {full && <p className="mt-1.5 text-xs text-muted">That&apos;s the most co-leads a venture can have. Untick someone to swap them.</p>}
+      </fieldset>
+    </div>
   );
 }
 
