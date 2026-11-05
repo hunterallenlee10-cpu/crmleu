@@ -6,11 +6,13 @@ import { todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
-import type { EveryoneProgress, Task, Venture } from "@/lib/types";
+import type { EveryoneProgress, Task, TeamMember, Venture } from "@/lib/types";
+import { DEFAULT_TITLES, type TitlePromotion } from "@/lib/promotions";
 import { personColor } from "@/lib/venture-map";
 import { TaskItem } from "../tasks/task-item";
-import { ProgressBar, StatusPill, Timeline } from "./bits";
-import { PersonChips, ViewSwitch, type PersonChip } from "./toolbar";
+import { ProgressBar, StatusPill, Timeline, hasTimeline } from "./bits";
+import { TeamChart, type ChartPerson, type ChartVenture } from "./team-chart";
+import { PersonChips, ViewSwitch, type PersonChip, type VenturesView } from "./toolbar";
 import { QuickAddTask, VentureForm, type Person } from "./venture-forms";
 import { VentureMap, type MapTask, type MapVenture } from "./venture-map";
 
@@ -22,12 +24,12 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
   const { person, view: viewParam } = await searchParams;
   const personFilter =
     typeof person === "string" && (person === "team" || z.guid().safeParse(person).success) ? person : "";
-  const view = viewParam === "list" ? "list" : "map";
+  const view: VenturesView = viewParam === "list" || viewParam === "team" ? viewParam : "map";
   const today = todayNY();
   const supabase = await createClient();
 
   // Every active team member can see every venture and every task.
-  const [{ data: ventureRows }, { data: taskRows }, members] = await Promise.all([
+  const [{ data: ventureRows }, { data: taskRows }, { data: coLeadRows }, members] = await Promise.all([
     supabase.from("ventures").select("*").order("position").order("created_at").returns<Venture[]>(),
     supabase
       .from("tasks")
@@ -37,6 +39,12 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at")
       .returns<Task[]>(),
+    // Missing until the venture_co_leads migration has run; then nobody co-leads.
+    supabase
+      .from("venture_co_leads")
+      .select("venture_id, user_id")
+      .order("created_at")
+      .returns<{ venture_id: string; user_id: string }[]>(),
     getTeamMembers(supabase),
   ]);
 
@@ -54,6 +62,9 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
     leadId: v.lead_id,
     lead: v.lead_id ? (names.get(v.lead_id) ?? "Former member") : null,
     leadColor: colorOf(v.lead_id),
+    coLeads: (coLeadRows ?? [])
+      .filter((c) => c.venture_id === v.id && c.user_id !== v.lead_id)
+      .map((c) => ({ id: c.user_id, name: names.get(c.user_id) ?? "Former member", color: colorOf(c.user_id) })),
     startDate: v.start_date,
     targetDate: v.target_date,
   }));
@@ -108,11 +119,17 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <PersonChips value={personFilter} people={chips} total={tasks.filter(isOpen).length} />
+        {view === "team" ? (
+          <h2 className="section-title">Team</h2>
+        ) : (
+          <PersonChips value={personFilter} people={chips} total={tasks.filter(isOpen).length} />
+        )}
         <ViewSwitch value={view} />
       </div>
 
-      {view === "list" ? (
+      {view === "team" ? (
+        <TeamView members={members} ventures={ventures} meId={profile.id} isAdmin={isAdmin} colorOf={colorOf} />
+      ) : view === "list" ? (
         <VentureList {...listProps} />
       ) : (
         <VentureMap
@@ -126,6 +143,55 @@ export default async function VenturesPage({ searchParams }: PageProps<"/venture
       )}
     </div>
   );
+}
+
+// The org chart, with the promotions up for grabs. Counts every open task
+// assigned to each person, not just ones on a venture. Co-leads aren't on the
+// chart; they're picked in each venture's own form.
+async function TeamView({
+  members,
+  ventures,
+  meId,
+  isAdmin,
+  colorOf,
+}: {
+  members: TeamMember[];
+  ventures: MapVenture[];
+  meId: string;
+  isAdmin: boolean;
+  colorOf: (id: string | null) => string;
+}) {
+  const supabase = await createClient();
+  const [{ data: open }, { data: promotionRows, error: promotionError }] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("assignee_id")
+      .is("completed_at", null)
+      .not("assignee_id", "is", null)
+      .returns<{ assignee_id: string }[]>(),
+    supabase.from("promotions").select("id, title").order("seq").returns<{ id: string; title: string }[]>(),
+  ]);
+  const openCount = new Map<string, number>();
+  for (const t of open ?? []) openCount.set(t.assignee_id, (openCount.get(t.assignee_id) ?? 0) + 1);
+
+  const people: ChartPerson[] = members
+    .filter((m) => m.active)
+    .map((m) => ({
+      id: m.id,
+      name: m.full_name,
+      role: m.role,
+      title: m.title ?? null,
+      reportsTo: m.reports_to ?? null,
+      color: colorOf(m.id),
+      isMe: m.id === meId,
+      openTasks: openCount.get(m.id) ?? 0,
+    }));
+  const seats: ChartVenture[] = ventures.map((v) => ({ id: v.id, name: v.name, status: v.status, leadId: v.leadId }));
+  // Before the promotions migration has run, fall back to the original three.
+  const titles: TitlePromotion[] = promotionError
+    ? DEFAULT_TITLES.map((title) => ({ id: null, title }))
+    : (promotionRows ?? []).map((p) => ({ id: p.id, title: p.title }));
+  return <TeamChart people={people} ventures={seats} titles={titles} isAdmin={isAdmin} />;
 }
 
 // The same ventures and tasks as a list.
@@ -195,8 +261,14 @@ async function VentureList({
               <p className="text-sm">
                 <span className="text-muted">Run by </span>
                 {v.lead ?? <span className="text-faint">no one yet</span>}
+                {v.coLeads.length > 0 && (
+                  <>
+                    <span className="text-muted"> · Co-leads </span>
+                    {v.coLeads.map((c) => c.name).join(", ")}
+                  </>
+                )}
               </p>
-              <Timeline start={v.startDate} target={v.targetDate} today={today} />
+              {hasTimeline(v) && <Timeline start={v.startDate} target={v.targetDate} today={today} />}
               <ProgressBar done={done.length} total={mine.length} />
             </div>
 

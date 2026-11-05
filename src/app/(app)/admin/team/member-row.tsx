@@ -1,10 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { MAX_TITLE } from "@/lib/hierarchy";
 import type { Profile } from "@/lib/types";
-import { setActive, setCommissionRate, setMemberPassword } from "./actions";
+import { setActive, setCommissionRate, setMemberPassword, setPosition } from "./actions";
 
-export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: boolean; openLeads: number }) {
+export type Manager = { id: string; name: string };
+
+export function MemberRow({
+  member,
+  isMe,
+  openLeads,
+  managers,
+  names,
+}: {
+  member: Profile;
+  isMe: boolean;
+  openLeads: number;
+  managers: Manager[]; // active people they could report to
+  names: Record<string, string>; // everyone, for a manager who's since been deactivated
+}) {
   const [rate, setRate] = useState(String(Number(member.commission_rate)));
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -61,6 +76,7 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
           {!member.active && <span className="pill pill-danger capitalize">inactive</span>}
         </div>
       </div>
+      {member.active && <PositionForm member={member} managers={managers} names={names} />}
       {(member.role !== "admin" || !isMe) && (
         <div className="flex flex-wrap items-end gap-3 border-t border-line pt-4">
           {member.role !== "admin" && (
@@ -122,5 +138,65 @@ export function MemberRow({ member, isMe, openLeads }: { member: Profile; isMe: 
       {saved && <p role="status" className="text-sm text-success">Rate saved.</p>}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </li>
+  );
+}
+
+// Title and "Reports to", shown on the org chart in Ventures → Team.
+function PositionForm({ member, managers, names }: { member: Profile; managers: Manager[]; names: Record<string, string> }) {
+  const savedTitle = member.title ?? "";
+  const savedBoss = member.reports_to ?? "";
+  const [title, setTitle] = useState(savedTitle);
+  const [boss, setBoss] = useState(savedBoss);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const changed = title.trim() !== savedTitle || boss !== savedBoss;
+
+  // Keep a deactivated manager selectable so saving a title doesn't quietly drop them.
+  const options = managers.filter((m) => m.id !== member.id);
+  if (savedBoss && !options.some((m) => m.id === savedBoss)) options.push({ id: savedBoss, name: `${names[savedBoss] ?? "Former member"} (inactive)` });
+
+  function save(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSaved(false);
+    startTransition(async () => {
+      const res = await setPosition(member.id, title, boss);
+      if (res.error) setError(res.error);
+      else setSaved(true);
+    });
+  }
+
+  return (
+    <form onSubmit={save} className="space-y-2 border-t border-line pt-4">
+      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+        <div>
+          <label htmlFor={`title-${member.id}`} className="label">Title</label>
+          <input
+            id={`title-${member.id}`}
+            className="input"
+            maxLength={MAX_TITLE}
+            placeholder="e.g. Sales Manager"
+            value={title}
+            onChange={(e) => { setTitle(e.target.value); setSaved(false); }}
+          />
+        </div>
+        <div>
+          <label htmlFor={`boss-${member.id}`} className="label">Reports to</label>
+          <select
+            id={`boss-${member.id}`}
+            className="input"
+            value={boss}
+            onChange={(e) => { setBoss(e.target.value); setSaved(false); }}
+          >
+            <option value="">No one (top of the chart)</option>
+            {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+        </div>
+        <button type="submit" disabled={isPending || !changed} className="btn btn-secondary">Save</button>
+      </div>
+      {saved && <p role="status" className="text-sm text-success">Saved. It shows on Ventures → Team.</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+    </form>
   );
 }

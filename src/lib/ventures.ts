@@ -6,6 +6,9 @@ import { daysBetween } from "./dates";
 export const MAX_VENTURES = 24;
 export const MAX_VENTURE_NAME = 40;
 export const MAX_VENTURE_DESCRIPTION = 2000;
+// Co-leads ticked off in a venture's form. The database allows the same
+// number (see the venture_co_leads migration).
+export const MAX_CO_LEADS = 2;
 
 export const VENTURE_STATUSES = ["idea", "building", "live", "paused"] as const;
 export type VentureStatus = (typeof VENTURE_STATUSES)[number];
@@ -22,6 +25,14 @@ export const STATUS_PILL: Record<VentureStatus, string> = {
   building: "pill-info",
   live: "pill-success",
   paused: "pill-warning",
+};
+
+// The beacon by each venture's name on the map. Ideas get a hollow ring.
+export const STATUS_COLOR: Record<VentureStatus, string> = {
+  idea: "var(--color-muted)",
+  building: "var(--color-info)",
+  live: "var(--color-success)",
+  paused: "var(--color-warning)",
 };
 
 export function isVentureStatus(v: unknown): v is VentureStatus {
@@ -80,6 +91,20 @@ export function parseVentureForm(formData: FormData):
     return { ok: false, error: issue.message };
   }
   return { ok: true, data: { ...parsed.data, name: name.name } };
+}
+
+// The co-leads ticked off on a venture's form: real ids, no repeats, never
+// the lead, and no more than MAX_CO_LEADS.
+export function parseCoLeads(values: string[], leadId: string | null):
+  | { ok: true; ids: string[] }
+  | { ok: false; error: string } {
+  const ids = [...new Set(values.filter(Boolean))];
+  if (!ids.every((id) => z.guid().safeParse(id).success)) return { ok: false, error: "Pick co-leads from the list." };
+  const coLeads = ids.filter((id) => id !== leadId);
+  if (coLeads.length > MAX_CO_LEADS) {
+    return { ok: false, error: `A venture can have up to ${MAX_CO_LEADS} co-leads.` };
+  }
+  return { ok: true, ids: coLeads };
 }
 
 // Where today sits on a venture's timeline. `fraction` is how much of the

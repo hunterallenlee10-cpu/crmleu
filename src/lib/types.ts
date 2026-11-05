@@ -34,6 +34,9 @@ export type Profile = {
   active: boolean;
   commission_rate: number;
   created_at: string;
+  // Missing until the team_hierarchy migration has run.
+  title?: string | null;
+  reports_to?: string | null;
 };
 
 export type Lead = {
@@ -120,6 +123,9 @@ export type TeamMember = {
   full_name: string;
   role: Role;
   active: boolean;
+  // Missing until the team_hierarchy migration has run.
+  title?: string | null;
+  reports_to?: string | null;
 };
 
 // A big branch of LEU; a spoke on the Ventures map. Tasks hang off it.
