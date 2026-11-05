@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getProfile } from "@/lib/auth";
+import { isReasonableDate } from "@/lib/dates";
 import {
   changeLeadStage,
   findDuplicate,
@@ -103,7 +104,7 @@ export async function logActivity(
 
 export async function setFollowUp(leadId: string, date: string | null): Promise<{ error?: string }> {
   await getProfile();
-  if (date !== null && !z.iso.date().safeParse(date).success) return { error: "Pick a valid date." };
+  if (date !== null && !isReasonableDate(date)) return { error: "Pick a valid date." };
 
   const supabase = await createClient();
   const { data, error } = await supabase
