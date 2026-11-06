@@ -1,4 +1,4 @@
--- Duplicate protection, stage rules, and the append-only activity log.
+-- Duplicate protection, stage rules, and the locked stage-change log.
 begin;
 create extension if not exists pgtap with schema extensions;
 
@@ -125,13 +125,13 @@ select is(
 );
 
 -------------------------------------------------------------------------------
--- Activities are append-only, even for the database owner.
+-- Stage changes are locked, even for the database owner.
 -------------------------------------------------------------------------------
 reset role;
 select throws_ok(
   $$update public.activities set body = 'edited'$$,
-  '42501', 'Activities are append-only',
-  'activities cannot be edited'
+  '42501', 'Stage changes and reassignments can''t be edited',
+  'stage change entries cannot be edited'
 );
 
 -------------------------------------------------------------------------------

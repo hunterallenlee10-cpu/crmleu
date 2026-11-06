@@ -248,7 +248,8 @@ npm run test:db:no-docker   # the same database tests on a plain local Postgres 
 The database tests (`supabase/tests/*.test.sql`) prove that:
 
 - a rep cannot read, edit or delete another rep's lead, or see or add activities on it;
-- a rep cannot reassign leads, delete leads, or edit or delete activity entries;
+- a rep cannot reassign leads, delete leads, or delete activity entries;
+- a rep can fix the text of calls, texts and notes they logged on leads they own, an admin can fix anyone's, and nobody can rewrite stage changes or reassignments or change an entry's author, time or lead;
 - a rep cannot change their own role or commission rate;
 - a deactivated rep sees nothing, and logged-out visitors are refused;
 - an admin can see, reassign and delete anything;
