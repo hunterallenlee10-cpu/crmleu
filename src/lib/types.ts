@@ -71,6 +71,7 @@ export type Activity = {
   type: ActivityType;
   body: string | null;
   created_at: string;
+  edited_at: string | null;
 };
 
 export const STAGES: { value: Stage; label: string }[] = [
