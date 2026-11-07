@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addDays, followUpLabel } from "@/lib/dates";
+import { addDays, followUpLabel, isReasonableDate } from "@/lib/dates";
 import { setFollowUp } from "../actions";
 
 // Next follow-up date with one-tap shortcuts.
@@ -65,7 +65,9 @@ export function FollowUpControl({
           defaultValue={date ?? ""}
           key={date ?? "none"}
           disabled={isPending}
-          onChange={(e) => e.target.value && save(e.target.value)}
+          // Wait until the year is fully typed: half-typed years like 0002 would
+          // save straight away and mark the lead overdue by thousands of days.
+          onChange={(e) => isReasonableDate(e.target.value) && save(e.target.value)}
         />
         {date && (
           <button type="button" disabled={isPending} onClick={() => save(null)} className="btn btn-secondary">

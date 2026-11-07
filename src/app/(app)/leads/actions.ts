@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getProfile } from "@/lib/auth";
+import { isReasonableDate } from "@/lib/dates";
 import {
   changeLeadStage,
   findDuplicate,
@@ -108,9 +109,37 @@ export async function logActivity(
   return {};
 }
 
+// Fix the text of a logged call, text or note. The database decides who may
+// edit what, and keeps stage changes and reassignments locked.
+export async function editActivity(activityId: number, body: string): Promise<{ error?: string }> {
+  await getProfile();
+  const parsed = LogSchema.shape.body.safeParse(body);
+  if (!parsed.success) return { error: "That entry is too long." };
+
+  const supabase = await createClient();
+  const { data: current } = await supabase
+    .from("activities")
+    .select("type")
+    .eq("id", activityId)
+    .maybeSingle<{ type: string }>();
+  if (!current) return { error: "That entry doesn't exist anymore. Refresh and try again." };
+  if (current.type === "note" && !parsed.data) return { error: "A note can't be empty." };
+
+  const { data, error } = await supabase
+    .from("activities")
+    .update({ body: parsed.data || null })
+    .eq("id", activityId)
+    .select("id");
+  if (error) return { error: friendlyDbError(error) };
+  if (!data.length) return { error: "You can only edit entries you logged." };
+
+  revalidatePath("/", "layout");
+  return {};
+}
+
 export async function setFollowUp(leadId: string, date: string | null): Promise<{ error?: string }> {
   await getProfile();
-  if (date !== null && !z.iso.date().safeParse(date).success) return { error: "Pick a valid date." };
+  if (date !== null && !isReasonableDate(date)) return { error: "Pick a valid date." };
 
   const supabase = await createClient();
   const { data, error } = await supabase

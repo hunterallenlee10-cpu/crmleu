@@ -39,6 +39,11 @@ export function ProgressBar({ done, total, label = "Tasks done" }: { done: numbe
   );
 }
 
+// A venture's timeline is switched off when it has neither date.
+export function hasTimeline(v: { startDate: string | null; targetDate: string | null }) {
+  return Boolean(v.startDate || v.targetDate);
+}
+
 // "Jan 1 → Dec 31 · 70 days left", with a bar showing how much time has gone.
 export function Timeline({
   start,

@@ -10,8 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 import { SERVICE_INTERESTS, type Activity, type ActivityType, type Lead } from "@/lib/types";
 import { getNiches } from "@/lib/niches";
 import { updateLead } from "../actions";
-import { AdminLeadControls, DeleteActivityButton } from "./admin-controls";
+import { AdminLeadControls } from "./admin-controls";
 import { FollowUpControl } from "./follow-up-control";
+import { AddNote, HistoryEntry } from "./history";
 import { QuickLog } from "./quick-log";
 import { StageControl } from "./stage-control";
 
@@ -26,6 +27,9 @@ const ACTIVITY_LABELS: Record<ActivityType, string> = {
   stage_change: "Stage",
   reassignment: "Reassigned",
 };
+
+// Stage changes and reassignments are the audit trail, so they stay locked.
+const EDITABLE_TYPES = new Set<ActivityType>(["call", "text", "email", "meeting", "note"]);
 
 export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
   const profile = await getProfile();
@@ -122,6 +126,7 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
       </Section>
 
       <Section title="History">
+        <AddNote leadId={lead.id} />
         {(activities ?? []).length === 0 ? (
           <div className="empty py-6">
             <History aria-hidden="true" className="empty-icon" strokeWidth={1.75} />
@@ -130,22 +135,17 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
         ) : (
           <ol>
             {(activities ?? []).map((a) => (
-              <li
+              <HistoryEntry
                 key={a.id}
-                className="relative border-l border-line pb-5 pl-5 before:absolute before:top-1.5 before:-left-[4.5px] before:size-2 before:rounded-full before:border before:border-line-strong before:bg-surface-2 last:border-transparent last:pb-0"
-              >
-                <p className="text-label">
-                  <span className="font-medium text-fg">{ACTIVITY_LABELS[a.type]}</span>
-                  <span className="text-muted">
-                    {" · "}
-                    {a.user_id ? names.get(a.user_id) ?? "Someone" : "System"}
-                    {" · "}
-                    {formatDateTime(a.created_at)}
-                  </span>
-                  {isAdmin && <DeleteActivityButton activityId={a.id} />}
-                </p>
-                {a.body && <p className="mt-1 whitespace-pre-wrap">{a.body}</p>}
-              </li>
+                id={a.id}
+                label={ACTIVITY_LABELS[a.type]}
+                meta={`${a.user_id ? names.get(a.user_id) ?? "Someone" : "System"} · ${formatDateTime(a.created_at)}`}
+                body={a.body}
+                edited={!!a.edited_at}
+                isNote={a.type === "note"}
+                canEdit={EDITABLE_TYPES.has(a.type) && (isAdmin || (a.user_id === profile.id && lead.owner_id === profile.id))}
+                canDelete={isAdmin}
+              />
             ))}
           </ol>
         )}
