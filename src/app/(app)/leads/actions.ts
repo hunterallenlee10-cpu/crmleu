@@ -20,9 +20,11 @@ import type { FormState } from "@/components/form-message";
 
 export async function createLead(_prev: FormState, formData: FormData): Promise<FormState> {
   const profile = await getProfile();
-  const fields = formFields(formData);
+  const notes = String(formData.get("notes") ?? "").trim();
+  const fields = { ...formFields(formData), notes };
   const parsed = parseLeadForm(formData);
   if (!parsed.ok) return { error: parsed.error, fields };
+  if (notes.length > 5000) return { error: "Notes are too long (5,000 characters max).", fields };
 
   const supabase = await createClient();
   const duplicate = await findDuplicate(supabase, parsed.data);
@@ -34,6 +36,11 @@ export async function createLead(_prev: FormState, formData: FormData): Promise<
     .select("id")
     .single();
   if (error) return { error: friendlyDbError(error), fields };
+
+  // Notes typed on the form go into the lead's history, like any other note.
+  if (notes) {
+    await supabase.from("activities").insert({ lead_id: data.id, user_id: profile.id, type: "note", body: notes });
+  }
 
   revalidatePath("/", "layout");
   redirect(`/leads/${data.id}`);
