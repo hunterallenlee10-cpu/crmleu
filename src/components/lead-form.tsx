@@ -7,7 +7,7 @@ import { formatPhone } from "@/lib/normalize";
 
 type Action = (prev: FormState, formData: FormData) => Promise<FormState>;
 
-// Create and edit form for a lead. Stage and follow-up have their own
+// Create and edit form for a lead. Stage, follow-up and notes have their own
 // controls on the lead page, so the edit form leaves them out.
 export function LeadForm({
   action,
@@ -62,6 +62,20 @@ export function LeadForm({
         <Field name="spec_site_url" label="Spec site URL" inputMode="url" defaultValue={value("spec_site_url")} />
         {isNew && <Field name="next_follow_up" label="Next follow-up" type="date" defaultValue={value("next_follow_up")} />}
       </div>
+      {isNew && (
+        <div>
+          <label htmlFor="notes" className="label">Notes</label>
+          <textarea
+            id="notes"
+            name="notes"
+            rows={3}
+            maxLength={5000}
+            className="input resize-y py-3 leading-relaxed"
+            placeholder="Anything worth remembering, e.g. spoke to the owner, call back after 3pm"
+            defaultValue={state?.fields?.notes ?? ""}
+          />
+        </div>
+      )}
       <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-line px-3 transition-colors duration-150 hover:border-line-strong has-[:checked]:border-danger/50 has-[:checked]:bg-danger/[0.06] sm:min-h-10">
         <input type="checkbox" name="do_not_contact" defaultChecked={dnc} className="size-4 accent-[var(--color-danger-solid)]" />
         <span>Do not contact</span>
