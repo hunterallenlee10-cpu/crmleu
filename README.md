@@ -235,7 +235,7 @@ Besides each person's own overdue, due and new leads, **Today** shows the whole 
 
 Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown. Admins are ranked on the leaderboard like everyone else, but their work stays out of the feed.
 
-On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
+On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign or delete them in bulk (Delete asks to confirm first). On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
 
 ## 9. Tests
 

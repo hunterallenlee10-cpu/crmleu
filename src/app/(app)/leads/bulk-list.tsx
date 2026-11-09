@@ -4,10 +4,10 @@ import { useState, useTransition } from "react";
 import { LeadRowBody } from "@/components/lead-row";
 import type { FilterOption } from "./filters";
 import type { Lead } from "@/lib/types";
-import { reassignLeads } from "../admin/actions";
+import { deleteLeads, reassignLeads } from "../admin/actions";
 import Link from "next/link";
 
-// Admin version of the lead list: tick leads, then reassign them in one go.
+// Admin version of the lead list: tick leads, then reassign or delete them in one go.
 export function BulkLeadList({
   leads,
   today,
@@ -45,6 +45,19 @@ export function BulkLeadList({
     });
   }
 
+  function remove() {
+    const n = selected.size;
+    const what = n === 1 ? "this lead" : `these ${n} leads`;
+    if (!confirm(`Delete ${what} and their whole history? This can't be undone.`)) return;
+    setResult({});
+    startTransition(async () => {
+      const res = await deleteLeads([...selected]);
+      if (res.error) return setResult({ error: res.error });
+      setResult({ message: `Deleted ${res.count} lead${res.count === 1 ? "" : "s"}.` });
+      setSelected(new Set());
+    });
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -67,8 +80,12 @@ export function BulkLeadList({
             {assignees.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
           </select>
           <button type="button" className="btn btn-primary" disabled={!ownerId || isPending} onClick={reassign}>
-            {isPending ? "Reassigning…" : "Reassign"}
+            Reassign
           </button>
+          <button type="button" className="btn btn-danger sm:ml-auto" disabled={isPending} onClick={remove}>
+            Delete {selected.size === 1 ? "lead" : `${selected.size} leads`}
+          </button>
+          {isPending && <span role="status" className="text-sm text-muted">Working…</span>}
         </div>
       )}
       {result.error && <p role="alert" className="text-sm text-danger">{result.error}</p>}
