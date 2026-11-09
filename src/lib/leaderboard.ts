@@ -17,30 +17,27 @@ export type BoardRow = {
   user_id: string;
   full_name: string;
   outreach: number;
-  warm_ups: number;
   calls_booked: number;
   deals_won: number;
   revenue: number;
 };
 
-export type Metric = "points" | "outreach" | "warm_ups" | "calls_booked" | "deals_won" | "revenue";
+export type Metric = "points" | "outreach" | "calls_booked" | "deals_won" | "revenue";
 
 export const METRICS: { value: Metric; label: string; short: string }[] = [
   { value: "points", label: "Points", short: "Points" },
   { value: "outreach", label: "Outreach", short: "Outreach" },
-  { value: "warm_ups", label: "Warm ups", short: "Warm ups" },
   { value: "calls_booked", label: "Calls booked", short: "Booked" },
   { value: "deals_won", label: "Deals won", short: "Won" },
   { value: "revenue", label: "Revenue", short: "Revenue" },
 ];
 
 // What each thing is worth on the Points board.
-export const POINTS = { outreach: 1, warm_ups: 5, calls_booked: 10, deals_won: 25 } as const;
+export const POINTS = { outreach: 1, calls_booked: 10, deals_won: 25 } as const;
 
 export function pointsFor(row: BoardRow): number {
   return (
     row.outreach * POINTS.outreach +
-    row.warm_ups * POINTS.warm_ups +
     row.calls_booked * POINTS.calls_booked +
     row.deals_won * POINTS.deals_won
   );
@@ -84,7 +81,6 @@ export function toBoardRows(data: unknown): BoardRow[] {
     user_id: String(r.user_id),
     full_name: String(r.full_name),
     outreach: Number(r.outreach ?? 0),
-    warm_ups: Number(r.warm_ups ?? 0),
     calls_booked: Number(r.calls_booked ?? 0),
     deals_won: Number(r.deals_won ?? 0),
     revenue: Number(r.revenue ?? 0),
@@ -120,7 +116,7 @@ export type FeedLine = {
   tone: "win" | "lost" | "stage" | "plain";
 };
 
-// "called Harbor Plumbing" / "logged a call" / "moved a lead to Warm Up Program"
+// "called Harbor Plumbing" / "logged a call" / "moved a lead to Call Booked"
 export function describeItem(item: FeedItem): FeedLine {
   const lead = item.business_name;
   const plain = (withLead: string, without: string): FeedLine =>
@@ -158,7 +154,6 @@ export type PersonDay = {
   emails: number;
   meetings: number;
   notes: number;
-  warmUps: number;
   booked: number;
   quotes: number;
   wins: number;
@@ -174,7 +169,7 @@ export function summarizeByPerson(items: FeedItem[]): PersonDay[] {
     if (!p) {
       p = {
         user_id: item.user_id, name: item.actor_name, calls: 0, texts: 0, emails: 0, meetings: 0,
-        notes: 0, warmUps: 0, booked: 0, quotes: 0, wins: 0, revenue: 0, total: 0,
+        notes: 0, booked: 0, quotes: 0, wins: 0, revenue: 0, total: 0,
       };
       byUser.set(item.user_id, p);
     }
@@ -185,8 +180,7 @@ export function summarizeByPerson(items: FeedItem[]): PersonDay[] {
     else if (item.type === "meeting") p.meetings++;
     else if (item.type === "note") p.notes++;
     else if (item.type === "stage_change") {
-      if (item.to_stage === "warm_up_program") p.warmUps++;
-      else if (item.to_stage === "call_booked") p.booked++;
+      if (item.to_stage === "call_booked") p.booked++;
       else if (item.to_stage === "quote_given") p.quotes++;
       else if (item.to_stage === "won") {
         p.wins++;
@@ -199,13 +193,12 @@ export function summarizeByPerson(items: FeedItem[]): PersonDay[] {
   );
 }
 
-// ["12 calls", "1 text", "2 warm ups"] — only the non-zero ones.
+// ["12 calls", "1 text", "2 calls booked"] — only the non-zero ones.
 export function personHighlights(p: PersonDay): string[] {
   const parts: [number, string, string][] = [
     [p.wins, "win", "wins"],
     [p.booked, "call booked", "calls booked"],
     [p.quotes, "quote given", "quotes given"],
-    [p.warmUps, "warm up", "warm ups"],
     [p.calls, "call", "calls"],
     [p.texts, "text", "texts"],
     [p.emails, "email", "emails"],

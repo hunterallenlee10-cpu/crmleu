@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(20);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local', '{"full_name":"Admin"}'),
@@ -42,10 +42,10 @@ insert into public.activities (lead_id, type, body) values
   ('44444444-0000-0000-0000-000000000001', 'call', 'Private note text'),
   ('44444444-0000-0000-0000-000000000001', 'text', null),
   ('44444444-0000-0000-0000-000000000001', 'note', 'Notes are not outreach');
-update public.leads set stage = 'warm_up_program' where id = '44444444-0000-0000-0000-000000000001';
+update public.leads set stage = 'call_booked' where id = '44444444-0000-0000-0000-000000000001';
 -- Going back and forth still counts the lead once.
 update public.leads set stage = 'contacted' where id = '44444444-0000-0000-0000-000000000001';
-update public.leads set stage = 'warm_up_program' where id = '44444444-0000-0000-0000-000000000001';
+update public.leads set stage = 'call_booked' where id = '44444444-0000-0000-0000-000000000001';
 update public.leads set stage = 'won' where id = '44444444-0000-0000-0000-000000000002';
 
 select results_eq(
@@ -53,6 +53,11 @@ select results_eq(
     where lead_id = '44444444-0000-0000-0000-000000000002' and type = 'stage_change'$$,
   $$values ('won')$$,
   'stage changes record the stage they moved to'
+);
+select throws_ok(
+  $$update public.leads set stage = 'warm_up_program' where id = '44444444-0000-0000-0000-000000000001'$$,
+  '23514', null,
+  'the retired Warm Up Program stage can''t be set any more'
 );
 select throws_ok(
   $$insert into public.activities (lead_id, type, to_stage)
@@ -94,13 +99,13 @@ select is_empty(
 );
 
 select results_eq(
-  $$select outreach::int, warm_ups::int, calls_booked::int, deals_won::int, revenue
+  $$select outreach::int, calls_booked::int, deals_won::int, revenue
     from public.team_leaderboard('month') where full_name = 'Rep A'$$,
-  $$values (2, 1, 0, 1, 2500.00::numeric)$$,
-  'leaderboard counts outreach, distinct warm ups, and this month''s wins'
+  $$values (2, 1, 1, 2500.00::numeric)$$,
+  'leaderboard counts outreach, distinct calls booked, and this month''s wins'
 );
 select results_eq(
-  $$select outreach::int, warm_ups::int, deals_won::int, revenue
+  $$select outreach::int, calls_booked::int, deals_won::int, revenue
     from public.team_leaderboard('all') where full_name = 'Rep A'$$,
   $$values (3, 1, 2, 3400.00::numeric)$$,
   'the all-time board also counts older outreach and last month''s win'

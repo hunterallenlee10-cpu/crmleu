@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { MAX_TITLE } from "@/lib/hierarchy";
 import type { Profile } from "@/lib/types";
-import { setActive, setCommissionRate, setMemberPassword, setPosition } from "./actions";
+import { setActive, setMemberPassword, setPosition } from "./actions";
 
 export type Manager = { id: string; name: string };
 
@@ -20,24 +20,11 @@ export function MemberRow({
   managers: Manager[]; // active people they could report to
   names: Record<string, string>; // everyone, for a manager who's since been deactivated
 }) {
-  const [rate, setRate] = useState(String(Number(member.commission_rate)));
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordSet, setPasswordSet] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  function saveRate(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSaved(false);
-    startTransition(async () => {
-      const res = await setCommissionRate(member.id, Number(rate));
-      if (res.error) setError(res.error);
-      else setSaved(true);
-    });
-  }
 
   function savePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -77,24 +64,9 @@ export function MemberRow({
         </div>
       </div>
       {member.active && <PositionForm member={member} managers={managers} names={names} />}
-      {(member.role !== "admin" || !isMe) && (
+      {!isMe && (
         <div className="flex flex-wrap items-end gap-3 border-t border-line pt-4">
-          {member.role !== "admin" && (
-            <form onSubmit={saveRate} className="flex items-end gap-2">
-              <div>
-                <label htmlFor={`rate-${member.id}`} className="label">Commission %</label>
-                <input
-                  id={`rate-${member.id}`}
-                  inputMode="decimal"
-                  className="input w-24"
-                  value={rate}
-                  onChange={(e) => { setRate(e.target.value); setSaved(false); }}
-                />
-              </div>
-              <button type="submit" disabled={isPending} className="btn btn-secondary">Save</button>
-            </form>
-          )}
-          {!isMe && member.active && (
+          {member.active && (
             <button
               type="button"
               disabled={isPending}
@@ -104,11 +76,9 @@ export function MemberRow({
               Set password
             </button>
           )}
-          {!isMe && (
-            <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-secondary"}`}>
-              {member.active ? "Deactivate" : "Reactivate"}
-            </button>
-          )}
+          <button type="button" disabled={isPending} onClick={toggleActive} className={`btn ${member.active ? "btn-danger" : "btn-secondary"}`}>
+            {member.active ? "Deactivate" : "Reactivate"}
+          </button>
         </div>
       )}
       {showPassword && (
@@ -135,7 +105,6 @@ export function MemberRow({
           Password set. They can log in with {member.email} and the new password now. Send it to them privately.
         </p>
       )}
-      {saved && <p role="status" className="text-sm text-success">Rate saved.</p>}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </li>
   );
