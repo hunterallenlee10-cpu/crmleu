@@ -19,11 +19,12 @@ describe("guessMapping", () => {
 
 describe("parseStage", () => {
   it.each([
-    ["Warm Up Program", "warm_up_program"],
+    ["Warm Up Program", "contacted"],
+    ["warm_up_program", "contacted"],
     ["quote_given", "quote_given"],
-    ["Warm up", "warm_up_program"],
+    ["Warm up", "contacted"],
     ["Quoted", "quote_given"],
-    ["Spec Sent", "warm_up_program"],
+    ["Spec Sent", "contacted"],
     ["Proposal Sent", "quote_given"],
     ["Closed Won", "won"],
     ["dead", "lost"],

@@ -52,14 +52,15 @@ const STAGE_SYNONYMS: Record<string, Stage> = {
   closedwon: "won", closed: "won", sold: "won",
   closedlost: "lost", dead: "lost", notinterested: "lost",
   booked: "call_booked", meeting: "call_booked", contacted: "contacted", reachedout: "contacted",
-  warmup: "warm_up_program", warmups: "warm_up_program", nurture: "warm_up_program",
+  // Warm Up Program was retired; those leads count as Contacted.
+  warmupprogram: "contacted", warmup: "contacted", warmups: "contacted", nurture: "contacted",
   quote: "quote_given", quoted: "quote_given", quotesent: "quote_given",
   // Old stage names, so older spreadsheets still import.
-  spec: "warm_up_program", specsent: "warm_up_program",
+  spec: "contacted", specsent: "contacted",
   proposal: "quote_given", proposalsent: "quote_given",
 };
 
-// "Warm Up Program", "warm_up_program", "Closed Won" -> a stage. Blank or unknown -> null.
+// "Call Booked", "call_booked", "Closed Won" -> a stage. Blank or unknown -> null.
 export function parseStage(raw: string | undefined): Stage | null {
   const s = squash(raw ?? "");
   if (!s) return null;
