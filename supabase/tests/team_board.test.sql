@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(19);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local', '{"full_name":"Admin"}'),
@@ -98,6 +98,12 @@ select results_eq(
     from public.team_leaderboard('month') where full_name = 'Rep A'$$,
   $$values (2, 1, 0, 1, 2500.00::numeric)$$,
   'leaderboard counts outreach, distinct warm ups, and this month''s wins'
+);
+select results_eq(
+  $$select outreach::int, warm_ups::int, deals_won::int, revenue
+    from public.team_leaderboard('all') where full_name = 'Rep A'$$,
+  $$values (3, 1, 2, 3400.00::numeric)$$,
+  'the all-time board also counts older outreach and last month''s win'
 );
 select results_eq(
   $$select outreach::int from public.team_leaderboard('day') where full_name = 'Rep B'$$,

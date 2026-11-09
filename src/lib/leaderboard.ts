@@ -4,12 +4,13 @@
 
 import { stageLabel, type ActivityType, type Stage } from "@/lib/types";
 
-export type Period = "day" | "week" | "month";
+export type Period = "day" | "week" | "month" | "all";
 
 export const PERIODS: { value: Period; label: string }[] = [
   { value: "day", label: "Today" },
   { value: "week", label: "This week" },
   { value: "month", label: "This month" },
+  { value: "all", label: "All time" },
 ];
 
 export type BoardRow = {
