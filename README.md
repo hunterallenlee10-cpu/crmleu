@@ -177,11 +177,11 @@ The CRM sends the POST after the rep's change has saved, waits at most 5 seconds
 
 Admins get an **Admin** tab with four pages:
 
-- **Dashboard:** revenue and deals won this month, commission owed per rep (won deal value × their rate), leads by stage per rep, and activities per rep this week (Monday to today). Every number uses New York time.
+- **Dashboard:** revenue and deals won this month (per rep too), leads by stage per rep, and activities per rep this week (Monday to today). Every number uses New York time.
 - **Team:**
-  - Invite reps and set commission rates.
+  - Invite reps.
   - Give each person a **Title** and who they **Report to**. This draws the org chart on **Ventures → Team**. Leave "Reports to" empty for whoever is at the top. A chain can't loop back around (if A manages B, B can't manage A).
-  - Deactivating someone blocks their login, and a banner then asks you to move their open leads to someone else. Their Won and Lost leads stay with them, so their commission history doesn't move.
+  - Deactivating someone blocks their login, and a banner then asks you to move their open leads to someone else. Their Won and Lost leads stay with them, so their wins stay credited to them.
 - **Import:**
   1. Upload a CSV (in Google Sheets: **File → Download → .csv**).
   2. Match the columns to fields (most are guessed from the headers) and preview.
@@ -230,7 +230,7 @@ Admins get an **Admin** tab with four pages:
 
 Besides each person's own overdue, due and new leads, **Today** shows the whole team:
 
-- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Warm Up Program, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, warm ups, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Warm Up Program, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, warm ups, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the dashboard.
 - **Last 24 hours:** a line per person with what they did, then every entry, newest first.
 
 Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown. Admins are ranked on the leaderboard like everyone else, but their work stays out of the feed.

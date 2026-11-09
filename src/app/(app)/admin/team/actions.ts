@@ -128,24 +128,6 @@ function adminErrorMessage(message: string): string {
 // Managing existing members
 // ---------------------------------------------------------------------------
 
-export async function setCommissionRate(memberId: string, rate: number): Promise<{ error?: string }> {
-  await requireAdmin();
-  if (!Number.isFinite(rate) || rate < 0 || rate > 100) return { error: "Use a rate from 0 to 100." };
-
-  const supabase = await createClient();
-  const { data: member } = await supabase.from("profiles").select("role").eq("id", memberId).maybeSingle();
-  if (member?.role === "admin") return { error: "Admins don't earn commission." };
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ commission_rate: Math.round(rate * 100) / 100 })
-    .eq("id", memberId);
-  if (error) return { error: error.message };
-
-  revalidatePath("/admin", "layout");
-  return {};
-}
-
 // Someone's job title and who they report to, for the org chart on the
 // Ventures page. The database also blocks loops (A over B over A).
 export async function setPosition(memberId: string, rawTitle: string, reportsTo: string): Promise<{ error?: string }> {
@@ -224,7 +206,7 @@ export async function setMemberPassword(memberId: string, password: string): Pro
 }
 
 // Move every open (not Won/Lost) lead from one person to another.
-// Won and Lost leads stay with the original rep so past commission isn't moved.
+// Won and Lost leads stay with the original rep so past wins stay credited to them.
 export async function reassignOpenLeads(fromId: string, toId: string): Promise<{ error?: string; count?: number }> {
   await requireAdmin();
   if (!toId) return { error: "Pick who should get the leads." };
