@@ -230,7 +230,7 @@ Admins get an **Admin** tab with four pages:
 
 Besides each person's own overdue, due and new leads, **Today** shows the whole team:
 
-- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the dashboard.
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, moving a lead back to Call Booked from Quote Given or Won isn't a new booking, and wins use the won date, same as the dashboard. If a lead leaves Won and comes back within 7 days (say, a mis-click), it keeps its original won date, so an old sale doesn't show up as a new one.
 - **Last 24 hours:** a line per person with what they did, then every entry, newest first.
 
 Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown. Admins are ranked on the leaderboard like everyone else, but their work stays out of the feed.
@@ -254,7 +254,7 @@ The database tests (`supabase/tests/*.test.sql`) prove that:
 - a deactivated rep sees nothing, and logged-out visitors are refused;
 - an admin can see, reassign and delete anything;
 - duplicates are blocked: the same phone in any format, or the same business name and city;
-- Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged;
+- Lost requires a reason, Won requires a deal value and sets the won date (going back to Won within 7 days of leaving it keeps the old date), and stage changes are logged;
 - every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks;
 - an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box;
 - a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects (the archived Projects tables);
