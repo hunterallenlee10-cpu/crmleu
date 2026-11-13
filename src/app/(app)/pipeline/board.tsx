@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { FollowUpBadge, STAGE_DOT } from "@/components/badges";
 import { needsDetails, StageDialog, type StageExtras } from "@/components/stage-dialog";
 import { STAGES, type Lead, type Stage } from "@/lib/types";
@@ -34,6 +34,7 @@ export function PipelineBoard({ initialLeads, today }: { initialLeads: Lead[]; t
   const [pending, setPending] = useState<Pending | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const boardRef = useRef<HTMLDivElement>(null);
 
   // Mouse: drag after moving 8px. Touch: press and hold, so swiping still scrolls.
   const sensors = useSensors(
@@ -86,8 +87,13 @@ export function PipelineBoard({ initialLeads, today }: { initialLeads: Lead[]; t
         </p>
       )}
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveId(null)}>
-        {/* Columns snap into place when swiping, but not mid-drag: snapping fights auto-scroll. */}
-        <div className={`-mx-5 flex scroll-px-5 gap-4 overflow-x-auto px-5 pb-4 ${activeId ? "" : "snap-x snap-mandatory"}`}>
+        <TopScrollbar target={boardRef} />
+        {/* Columns snap into place when swiping, but not mid-drag: snapping fights auto-scroll.
+            Its own scrollbar is hidden; the one above the columns drives it instead. */}
+        <div
+          ref={boardRef}
+          className={`-mx-5 flex scroll-px-5 gap-4 overflow-x-auto px-5 pb-4 [scrollbar-width:none]! [&::-webkit-scrollbar]:hidden ${activeId ? "" : "snap-x snap-mandatory"}`}
+        >
           {STAGES.map((s) => (
             <Column key={s.value} stage={s.value} label={s.label}>
               {leads
@@ -111,6 +117,63 @@ export function PipelineBoard({ initialLeads, today }: { initialLeads: Lead[]; t
         />
       )}
     </>
+  );
+}
+
+/** A horizontal scrollbar shown above the board, kept in sync with the board's scroll position. */
+function TopScrollbar({ target }: { target: React.RefObject<HTMLDivElement | null> }) {
+  const barRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  const [overflows, setOverflows] = useState(false);
+
+  useEffect(() => {
+    const board = target.current;
+    const bar = barRef.current;
+    if (!board || !bar) return;
+
+    const measure = () => {
+      setWidth(board.scrollWidth);
+      setOverflows(board.scrollWidth > board.clientWidth + 1);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(board);
+    for (const child of Array.from(board.children)) ro.observe(child);
+
+    // Whichever element the user is scrolling leads; the other follows. The lead
+    // is released shortly after scrolling stops so the board's snap can settle.
+    let leader: HTMLElement | null = null;
+    let release: ReturnType<typeof setTimeout> | undefined;
+    const follow = (from: HTMLElement, to: HTMLElement) => () => {
+      if (leader && leader !== from) return;
+      leader = from;
+      to.scrollLeft = from.scrollLeft;
+      clearTimeout(release);
+      release = setTimeout(() => {
+        leader = null;
+        bar.scrollLeft = board.scrollLeft;
+      }, 150);
+    };
+    const onBoard = follow(board, bar);
+    const onBar = follow(bar, board);
+    board.addEventListener("scroll", onBoard, { passive: true });
+    bar.addEventListener("scroll", onBar, { passive: true });
+    return () => {
+      ro.disconnect();
+      clearTimeout(release);
+      board.removeEventListener("scroll", onBoard);
+      bar.removeEventListener("scroll", onBar);
+    };
+  }, [target]);
+
+  return (
+    <div
+      ref={barRef}
+      aria-hidden="true"
+      className={`-mx-5 mb-3 overflow-x-auto overflow-y-hidden ${overflows ? "" : "invisible h-0"}`}
+    >
+      <div style={{ width, height: 1 }} />
+    </div>
   );
 }
 
