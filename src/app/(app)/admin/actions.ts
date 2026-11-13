@@ -48,6 +48,20 @@ export async function deleteLead(leadId: string): Promise<{ error?: string }> {
   redirect("/leads");
 }
 
+// Delete several leads at once, with their whole history.
+export async function deleteLeads(leadIds: string[]): Promise<{ error?: string; count?: number }> {
+  await requireAdmin();
+  const ids = Ids.safeParse(leadIds);
+  if (!ids.success) return { error: "Pick at least one lead." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("leads").delete().in("id", ids.data).select("id");
+  if (error) return { error: friendlyDbError(error) };
+
+  revalidatePath("/", "layout");
+  return { count: data.length };
+}
+
 export async function deleteActivity(activityId: number): Promise<{ error?: string }> {
   await requireAdmin();
   const supabase = await createClient();

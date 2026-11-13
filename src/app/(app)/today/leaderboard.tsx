@@ -15,14 +15,13 @@ import {
 
 const LEADER_TILES: { metric: Metric; label: string }[] = [
   { metric: "outreach", label: "Most outreach" },
-  { metric: "warm_ups", label: "Most warm ups" },
   { metric: "calls_booked", label: "Most calls booked" },
+  { metric: "deals_won", label: "Most deals won" },
   { metric: "revenue", label: "Top closer" },
 ];
 
 const POINT_RULES = [
   { points: POINTS.outreach, label: "Call, text, email or meeting logged" },
-  { points: POINTS.warm_ups, label: "Lead moved to Warm Up Program" },
   { points: POINTS.calls_booked, label: "Lead moved to Call Booked" },
   { points: POINTS.deals_won, label: "Deal won" },
 ];
@@ -184,7 +183,7 @@ function PointsKey() {
   return (
     <div className="rounded-card border border-line bg-surface p-4">
       <h3 className="text-sm font-semibold">How points work</h3>
-      <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <ul className="mt-3 grid gap-3 sm:grid-cols-3">
         {POINT_RULES.map((rule) => (
           <li key={rule.label} className="flex items-center gap-2.5">
             <span className="inline-flex h-7 min-w-10 shrink-0 items-center justify-center rounded-control bg-accent/[0.14] px-1.5 text-label font-semibold text-fg">

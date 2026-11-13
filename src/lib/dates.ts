@@ -14,6 +14,18 @@ export function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+// True for a real YYYY-MM-DD date with a sensible year. Typing a date by hand
+// passes through years like 0002 and 0020 before the year is finished, and the
+// browser reports those as valid dates, so we ignore them.
+export function isReasonableDate(date: string): boolean {
+  const match = /^(\d{4})-\d{2}-\d{2}$/.exec(date);
+  if (!match) return false;
+  const d = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== date) return false; // e.g. Feb 30
+  const year = Number(match[1]);
+  return year >= 2000 && year <= 2100;
+}
+
 export function daysBetween(from: string, to: string): number {
   return Math.round(
     (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000,

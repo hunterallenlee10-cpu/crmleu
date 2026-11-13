@@ -124,8 +124,8 @@ select lives_ok(
 );
 
 select lives_ok(
-  $$update public.activities set body = 'rewritten' where lead_id = '11111111-1111-1111-1111-1111111111a1'$$,
-  'update of own activities runs (but should match nothing)...'
+  $$update public.activities set body = 'rewritten' where lead_id = '11111111-1111-1111-1111-1111111111b1'$$,
+  'update of rep B''s activities runs (but should match nothing)...'
 );
 
 select lives_ok(
@@ -193,7 +193,7 @@ select results_eq(
   $$select body from public.activities
     where lead_id = '11111111-1111-1111-1111-1111111111a1' and type = 'note'$$,
   $$values ('A''s note')$$,
-  '...and rep A''s activities were neither deleted nor rewritten'
+  '...and rep A''s activities were not deleted'
 );
 select results_eq(
   $$select role::text, commission_rate from public.profiles where id = '00000000-0000-0000-0000-0000000000a1'$$,

@@ -16,7 +16,6 @@ const row = (full_name: string, r: Partial<BoardRow> = {}): BoardRow => ({
   user_id: full_name,
   full_name,
   outreach: 0,
-  warm_ups: 0,
   calls_booked: 0,
   deals_won: 0,
   revenue: 0,
@@ -25,7 +24,7 @@ const row = (full_name: string, r: Partial<BoardRow> = {}): BoardRow => ({
 
 describe("pointsFor", () => {
   it("weights outcomes above outreach", () => {
-    expect(pointsFor(row("A", { outreach: 10, warm_ups: 2, calls_booked: 1, deals_won: 1 }))).toBe(10 + 10 + 10 + 25);
+    expect(pointsFor(row("A", { outreach: 10, calls_booked: 1, deals_won: 1 }))).toBe(10 + 10 + 25);
   });
 });
 
@@ -59,8 +58,8 @@ describe("leaderOf", () => {
 
 describe("toBoardRows", () => {
   it("turns bigint/numeric strings into numbers", () => {
-    expect(toBoardRows([{ user_id: "u", full_name: "A", outreach: "4", warm_ups: 1, calls_booked: "0", deals_won: "2", revenue: "1500.00" }]))
-      .toEqual([row("A", { user_id: "u", outreach: 4, warm_ups: 1, deals_won: 2, revenue: 1500 })]);
+    expect(toBoardRows([{ user_id: "u", full_name: "A", outreach: "4", calls_booked: "0", deals_won: "2", revenue: "1500.00" }]))
+      .toEqual([row("A", { user_id: "u", outreach: 4, deals_won: 2, revenue: 1500 })]);
     expect(toBoardRows(null)).toEqual([]);
   });
 });
@@ -84,7 +83,8 @@ describe("describeItem", () => {
     expect(describeItem(item({ type: "call", business_name: "Harbor Plumbing" }))).toMatchObject({ verb: "called", lead: "Harbor Plumbing" });
   });
 
-  it("describes stage changes", () => {
+  it("describes stage changes, including old moves into retired stages", () => {
+    expect(describeItem(item({ type: "stage_change", to_stage: "call_booked" }))).toMatchObject({ verb: "moved a lead", suffix: "to Call Booked", tone: "stage" });
     expect(describeItem(item({ type: "stage_change", to_stage: "warm_up_program" }))).toMatchObject({ verb: "moved a lead", suffix: "to Warm Up Program", tone: "stage" });
     expect(describeItem(item({ type: "stage_change", to_stage: "won" }))).toMatchObject({ verb: "closed a deal", tone: "win" });
     expect(describeItem(item({ type: "stage_change", to_stage: "lost", business_name: "X" }))).toMatchObject({ verb: "marked", lead: "X", suffix: "Lost" });
@@ -98,12 +98,12 @@ describe("summarizeByPerson", () => {
       item({ user_id: "a", actor_name: "Ann", type: "call" }),
       item({ user_id: "a", actor_name: "Ann", type: "text" }),
       item({ user_id: "b", actor_name: "Ben", type: "stage_change", to_stage: "won", deal_value: 2500 }),
-      item({ user_id: "b", actor_name: "Ben", type: "stage_change", to_stage: "warm_up_program" }),
+      item({ user_id: "b", actor_name: "Ben", type: "stage_change", to_stage: "call_booked" }),
     ]);
     expect(people.map((p) => p.name)).toEqual(["Ben", "Ann"]);
     expect(people[1]).toMatchObject({ calls: 2, texts: 1, total: 3 });
-    expect(people[0]).toMatchObject({ wins: 1, revenue: 2500, warmUps: 1 });
-    expect(personHighlights(people[0])).toEqual(["1 win", "1 warm up"]);
+    expect(people[0]).toMatchObject({ wins: 1, revenue: 2500, booked: 1 });
+    expect(personHighlights(people[0])).toEqual(["1 win", "1 call booked"]);
     expect(personHighlights(people[1])).toEqual(["2 calls", "1 text"]);
   });
 });

@@ -19,6 +19,7 @@ Permissions are enforced by Postgres row-level security (RLS) and triggers, not 
   - They can see, but not tick off, tasks assigned to someone else.
   - On an "everyone has to check this off" task, each rep can only tick (or un-tick) their own box.
 - **Ventures** (the branches on the Ventures map) are visible to the whole team. Only admins add, edit, reorder or remove them. Removing a venture keeps its tasks; they just lose their venture.
+  - Each venture has one **lead** and up to two **co-leads**. Everyone can see them; only admins change them. The lead can't also be a co-lead.
 - **Admins** can see and do everything.
 - **No public sign-up.** The admin invites people with a one-time link (or by email once custom SMTP is set up), and every new user starts as a rep.
 - **The service role key** is only used in server code (`src/lib/supabase/admin.ts`, marked `server-only`).
@@ -163,7 +164,7 @@ If `WEBHOOK_URL` is set, every stage change (from a lead's page or by dragging o
 }
 ```
 
-Stages are `new`, `contacted`, `warm_up_program`, `call_booked`, `quote_given`, `won` and `lost`.
+Stages are `new`, `contacted`, `call_booked`, `quote_given`, `won` and `lost`. (`warm_up_program` was retired: no lead can be set to it, and CSV imports that say Warm Up Program come in as Contacted.)
 
 To kick off onboarding when a deal is won:
 1. In n8n, add a **Webhook** node (POST) and put its **production** URL in `WEBHOOK_URL`.
@@ -176,10 +177,11 @@ The CRM sends the POST after the rep's change has saved, waits at most 5 seconds
 
 Admins get an **Admin** tab with four pages:
 
-- **Dashboard:** revenue and deals won this month, commission owed per rep (won deal value × their rate), leads by stage per rep, and activities per rep this week (Monday to today). Every number uses New York time.
+- **Dashboard:** revenue and deals won this month (per rep too), leads by stage per rep, and activities per rep this week (Monday to today). Every number uses New York time.
 - **Team:**
-  - Invite reps and set commission rates.
-  - Deactivating someone blocks their login, and a banner then asks you to move their open leads to someone else. Their Won and Lost leads stay with them, so their commission history doesn't move.
+  - Invite reps.
+  - Give each person a **Title** and who they **Report to**. This draws the org chart on **Ventures → Team**. Leave "Reports to" empty for whoever is at the top. A chain can't loop back around (if A manages B, B can't manage A).
+  - Deactivating someone blocks their login, and a banner then asks you to move their open leads to someone else. Their Won and Lost leads stay with them, so their wins stay credited to them.
 - **Import:**
   1. Upload a CSV (in Google Sheets: **File → Download → .csv**).
   2. Match the columns to fields (most are guessed from the headers) and preview.
@@ -210,28 +212,35 @@ Admins get an **Admin** tab with four pages:
 **Ventures** (in the main nav, for everyone):
 - The page opens on a **map**: LEU sits in the middle and each venture (Websites, SEO / Google Rank, Ads, Crypto, Clothes...) is a branch around it. A busy branch is thicker and brighter, and a venture with no tasks is a faint dashed line.
 - **Dots are tasks** on that venture, coloured by who they're assigned to (grey for the whole team). The rings show when they're due: **Due now** (overdue or today) right by LEU, then **This week**, **This month**, **Later**, and **No date** out at the tip. Overdue dots get a red ring, and finished tasks join the core.
-- **Hover a venture's name** for its bubble: what the venture is, who's running it, its timeline (start → target date, how far along, days left), its status (Idea, Building, Live, Paused), and its tasks (progress, overdue count, what's next). **Open** shows it in the side panel; admins press **Edit** (or **Fill in details**) to change any of it.
+- **Hover a venture's name** for its bubble: what the venture is, its lead and co-leads, its timeline (start → target date, how far along, days left), its status (Idea, Building, Live, Paused), and its tasks (progress, overdue count, what's next). **Open** shows it in the side panel; admins press **Edit** (or **Fill in details**) to change any of it.
 - The side panel shows the overview (open, overdue and done counts, what's due this week, every venture's progress), one venture (details, its tasks with checkboxes, and for admins **Add a task**), or one task. Hover a dot for its title and due date, click it to tick it off.
 - Admins press **+** on a branch to add a task there, or pick a **Venture** when adding a task on the **Tasks** page. Venture tasks are ordinary tasks: they show on the Tasks page and on each person's **Today** page too.
 - **Edit ventures** (admins) renames, reorders, adds or removes branches.
 - Pick a person above the map to fade everyone else's dots (and narrow the list). **List** shows the same thing as cards. Phones get the same map (with bigger labels); tap a branch or dot and its details open below the map.
+- **Team** is the org chart: who reports to whom, each person's title, the ventures they lead (with their status colour) and how many open tasks they have. Everyone can see it; admins set titles and managers on **Admin → Team**. People with no manager and nobody under them are listed under "Not placed under anyone yet". On phones it's an indented list.
+- **Leads and co-leads:** in a venture's **Edit details**, pick its **Lead** and tick off up to two **Co-leads**. Co-leads show when you open a venture (its bubble, side panel and the list view); they aren't on the Team chart.
+- **Promotions up for grabs** (on the Team chart) lists what's still open: title promotions (**President**, **CFO**, **Sales Manager** and any an admin adds) until someone has that title, then a **"<venture> Lead"** for each venture with no lead. It reads the same data as the map, so the two always match.
+  - Admins press **+ New promotion** at the end of the list, type it (e.g. "Head of Marketing") and press **Add**. It goes straight onto the board for everyone. The **×** next to a title promotion takes it off the board (anyone who already has that title keeps it). Venture lead seats come and go with their venture, so they have no ×.
+  - Admins **drag a promotion onto someone's card** to give it to them (on phones, press and hold, then drag). Or tap it, then press **Give** on their card. A venture lead shows up on the map straight away; a title promotion becomes their title. **Undo** appears after each change.
+  - The **×** next to someone's title or a venture lead badge takes it back, and it goes back on the list.
+  - When the `venture_co_leads` migration runs, anyone whose title is already "<venture> Lead" (or "<venture> Co-Lead") is put on that venture as its lead (or a co-lead), if the seat is free.
 - Ventures replaced the old Projects page. When the `ventures` migration runs, each project is copied into a task on its venture (its checklist goes into the task's details, and a fully ticked project becomes a done task). The old `projects` tables are kept, unused, as an archive. Old `/projects` links redirect to `/ventures`.
 
 ### The Today page (everyone)
 
 Besides each person's own overdue, due and new leads, **Today** shows the whole team:
 
-- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 5 per lead moved to Warm Up Program, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, warm ups, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, and wins use the won date, same as the commission numbers.
+- **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points: 1 per call, text, email or meeting logged, 10 per lead moved to Call Booked, and 25 per deal won. Click a column or a leader card to rank by outreach, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, moving a lead back to Call Booked from Quote Given or Won isn't a new booking, and wins use the won date, same as the dashboard. If a lead leaves Won and comes back within 7 days (say, a mis-click), it keeps its original won date, so an old sale doesn't show up as a new one.
 - **Last 24 hours:** a line per person with what they did, then every entry, newest first.
 
-Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown, and admins' own work isn't counted or shown: only reps appear on the leaderboard and in the feed.
+Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown. Admins are ranked on the leaderboard like everyone else, but their work stays out of the feed.
 
-On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign them in bulk. On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
+On **Leads**, admins see every lead, can filter by owner, and can tick leads to reassign or delete them in bulk (Delete asks to confirm first). On a lead's page, admins can also change the owner, delete the lead, or delete history entries.
 
 ## 9. Tests
 
 ```bash
-npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, ventures, ventures map)
+npm test                    # unit tests (normalization, New York dates, CSV parsing, leaderboard, ventures, ventures map, promotions)
 npm run test:db             # database tests, against a local Supabase (needs Docker + `npx supabase start`)
 npm run test:db:no-docker   # the same database tests on a plain local Postgres + pgTAP (see scripts/db-test/run.sh)
 ```
@@ -239,16 +248,19 @@ npm run test:db:no-docker   # the same database tests on a plain local Postgres 
 The database tests (`supabase/tests/*.test.sql`) prove that:
 
 - a rep cannot read, edit or delete another rep's lead, or see or add activities on it;
-- a rep cannot reassign leads, delete leads, or edit or delete activity entries;
+- a rep cannot reassign leads, delete leads, or delete activity entries;
+- a rep can fix the text of calls, texts and notes they logged on leads they own, an admin can fix anyone's, and nobody can rewrite stage changes or reassignments or change an entry's author, time or lead;
 - a rep cannot change their own role or commission rate;
 - a deactivated rep sees nothing, and logged-out visitors are refused;
 - an admin can see, reassign and delete anything;
 - duplicates are blocked: the same phone in any format, or the same business name and city;
-- Lost requires a reason, Won requires a deal value and sets the won date, and stage changes are logged;
+- Lost requires a reason, Won requires a deal value and sets the won date (going back to Won within 7 days of leaving it keeps the old date), and stage changes are logged;
 - every active member sees every task, only an admin can create, edit or delete one, and a rep can tick off only their own or whole-team tasks;
 - an "everyone" task is only done once every rep has ticked it, and each rep can only tick their own box;
 - a rep only sees projects assigned to them, can tick their checklist items but not add, rename or delete them, and can't create, edit or delete projects (the archived Projects tables);
-- everyone on the team can read the ventures and their tasks, only an admin can change a venture or move a task between ventures, names are unique and can't be blank, timelines can't end before they start, and removing a venture keeps its tasks.
+- everyone on the team can read the ventures and their tasks, only an admin can change a venture or move a task between ventures, names are unique and can't be blank, timelines can't end before they start, and removing a venture keeps its tasks;
+- everyone can see a venture's co-leads, only an admin can add or remove them, a venture has two at most, its lead can't also be a co-lead, and a co-lead who becomes the lead comes off the co-lead list;
+- everyone can read the promotions up for grabs, only an admin can add or remove one, and they're trimmed, unique (ignoring case) and 60 characters at most.
 
 ## Project layout
 
@@ -266,9 +278,10 @@ src/app/(app)/today     overdue + due-today follow-ups, newly assigned leads
 src/app/(app)/leads     my leads list, new lead, lead detail (edit, call/text, log, follow-up, stage, history)
 src/app/(app)/pipeline  kanban board (press-and-hold to drag on phones)
 src/app/(app)/tasks     team task list (admins assign; everyone ticks off their own)
-src/app/(app)/ventures  ventures map (hover bubble, side panel) and list, edit ventures (admins)
+src/app/(app)/ventures  ventures map (hover bubble, side panel), list, team chart (add promotions, drag them onto people), edit ventures (admins)
 src/lib/ventures.ts     venture validation, statuses, timeline maths
 src/lib/venture-map.ts  where each branch, label, ring and task dot goes on the map
+src/lib/promotions.ts   which promotions are up for grabs (title promotions and venture lead seats)
 src/app/(app)/admin     dashboard, team, CSV import (admins only)
 src/app/api/export      CSV export (admins only)
 src/app/api/leads       POST endpoint for n8n (API key)

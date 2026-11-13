@@ -7,7 +7,7 @@ export type Role = "admin" | "rep";
 export type Stage =
   | "new"
   | "contacted"
-  | "warm_up_program"
+  | "warm_up_program" // retired: no lead can be in it, but old history entries still name it
   | "call_booked"
   | "quote_given"
   | "won"
@@ -34,6 +34,9 @@ export type Profile = {
   active: boolean;
   commission_rate: number;
   created_at: string;
+  // Missing until the team_hierarchy migration has run.
+  title?: string | null;
+  reports_to?: string | null;
 };
 
 export type Lead = {
@@ -68,12 +71,12 @@ export type Activity = {
   type: ActivityType;
   body: string | null;
   created_at: string;
+  edited_at: string | null;
 };
 
 export const STAGES: { value: Stage; label: string }[] = [
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
-  { value: "warm_up_program", label: "Warm Up Program" },
   { value: "call_booked", label: "Call Booked" },
   { value: "quote_given", label: "Quote Given" },
   { value: "won", label: "Won" },
@@ -87,8 +90,11 @@ export const SERVICE_INTERESTS: { value: ServiceInterest; label: string }[] = [
   { value: "multiple", label: "Multiple" },
 ];
 
+// Stages that no longer exist, for old history entries.
+const RETIRED_STAGE_LABELS: Partial<Record<Stage, string>> = { warm_up_program: "Warm Up Program" };
+
 export function stageLabel(stage: Stage) {
-  return STAGES.find((s) => s.value === stage)?.label ?? stage;
+  return STAGES.find((s) => s.value === stage)?.label ?? RETIRED_STAGE_LABELS[stage] ?? stage;
 }
 
 export type Task = {
@@ -120,6 +126,9 @@ export type TeamMember = {
   full_name: string;
   role: Role;
   active: boolean;
+  // Missing until the team_hierarchy migration has run.
+  title?: string | null;
+  reports_to?: string | null;
 };
 
 // A big branch of LEU; a spoke on the Ventures map. Tasks hang off it.

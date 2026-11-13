@@ -5,6 +5,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { emailEnabled } from "@/lib/email";
+import { parseTitle } from "@/lib/hierarchy";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { siteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
@@ -127,21 +128,45 @@ function adminErrorMessage(message: string): string {
 // Managing existing members
 // ---------------------------------------------------------------------------
 
-export async function setCommissionRate(memberId: string, rate: number): Promise<{ error?: string }> {
+// Someone's job title and who they report to, for the org chart on the
+// Ventures page. The database also blocks loops (A over B over A).
+export async function setPosition(memberId: string, rawTitle: string, reportsTo: string): Promise<{ error?: string }> {
   await requireAdmin();
-  if (!Number.isFinite(rate) || rate < 0 || rate > 100) return { error: "Use a rate from 0 to 100." };
+  if (!z.guid().safeParse(memberId).success) return { error: "That person isn't on the team." };
+  const title = parseTitle(rawTitle);
+  if (!title.ok) return { error: title.error };
+  if (reportsTo && !z.guid().safeParse(reportsTo).success) return { error: "Pick who they report to." };
+  if (reportsTo === memberId) return { error: "Someone can't report to themselves." };
 
   const supabase = await createClient();
-  const { data: member } = await supabase.from("profiles").select("role").eq("id", memberId).maybeSingle();
-  if (member?.role === "admin") return { error: "Admins don't earn commission." };
+  const { data: current } = await supabase.from("profiles").select("*").eq("id", memberId).maybeSingle();
+  if (!current) return { error: "That person isn't on the team." };
+  // Only check when it changes, so a title can still be saved while their
+  // manager is deactivated.
+  if (reportsTo && reportsTo !== current.reports_to) {
+    const { data: boss } = await supabase.from("profiles").select("active").eq("id", reportsTo).maybeSingle();
+    if (!boss?.active) return { error: "That person isn't an active team member." };
+  }
 
   const { error } = await supabase
     .from("profiles")
-    .update({ commission_rate: Math.round(rate * 100) / 100 })
+    .update({ title: title.title, reports_to: reportsTo || null })
     .eq("id", memberId);
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.code === "42703" || error.code === "PGRST204") {
+      return { error: "The database needs updating first. Run `npx supabase db push`, then try again." };
+    }
+    if (error.code === "23514") {
+      return {
+        error: error.message.startsWith("That would make a loop")
+          ? "That would make a loop: they already manage that person, directly or through someone else."
+          : "Keep titles to 60 characters or fewer.",
+      };
+    }
+    return { error: error.message };
+  }
 
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   return {};
 }
 
@@ -181,7 +206,7 @@ export async function setMemberPassword(memberId: string, password: string): Pro
 }
 
 // Move every open (not Won/Lost) lead from one person to another.
-// Won and Lost leads stay with the original rep so past commission isn't moved.
+// Won and Lost leads stay with the original rep so past wins stay credited to them.
 export async function reassignOpenLeads(fromId: string, toId: string): Promise<{ error?: string; count?: number }> {
   await requireAdmin();
   if (!toId) return { error: "Pick who should get the leads." };

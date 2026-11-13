@@ -102,14 +102,14 @@ const FIRST = ["Mike", "Sarah", "Dave", "Lisa", "Chris", "Tina", "Rob", "Angela"
 const LAST = ["Johnson", "Miller", "Davis", "Garcia", "Wilson", "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris"];
 const LOST_REASONS = ["Too expensive", "Went with another company", "Not interested right now", "Already has a website", "Never responded", "Business closed"];
 const STAGE_MIX = [
-  ["new", 30], ["contacted", 25], ["warm_up_program", 12], ["call_booked", 10],
+  ["new", 30], ["contacted", 37], ["call_booked", 10],
   ["quote_given", 8], ["won", 8], ["lost", 7],
 ];
 const AREA_CODES = ["301", "240", "410", "443"];
 
 const STAGE_ORDER = STAGE_MIX.map(([stage]) => stage);
 const STAGE_LABELS = {
-  new: "New", contacted: "Contacted", warm_up_program: "Warm Up Program", call_booked: "Call Booked",
+  new: "New", contacted: "Contacted", call_booked: "Call Booked",
   quote_given: "Quote Given", won: "Won", lost: "Lost",
 };
 
@@ -155,7 +155,7 @@ function buildLeads(reps, count) {
       created_at: daysAgo(assignedDaysAgo),
       service_interest: pick(["website", "automation", "ai_call_answering", "multiple", null]),
       deal_value: null,
-      spec_site_url: ["warm_up_program", "call_booked", "quote_given", "won"].includes(stage) ? `https://spec-${slug}.example.com` : null,
+      spec_site_url: ["call_booked", "quote_given", "won"].includes(stage) ? `https://spec-${slug}.example.com` : null,
       next_follow_up: null,
       do_not_contact: rand() < 0.03,
       lost_reason: null,
@@ -194,7 +194,7 @@ function buildActivities(leads) {
         created_at: daysAgo(between(0, 20), between(60, 600)),
       });
     }
-    // The move into its current stage, so the Today leaderboard has warm ups, bookings and wins to count.
+    // The move into its current stage, so the Today leaderboard has bookings and wins to count.
     const at = STAGE_ORDER.indexOf(lead.stage);
     if (at >= 2) {
       const from = lead.stage === "lost" ? "contacted" : STAGE_ORDER[at - 1];

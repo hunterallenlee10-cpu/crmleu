@@ -42,7 +42,7 @@ export function ReassignPrompt({
         </button>
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}
-      <p className="text-xs text-muted">Won and Lost leads stay with {from.name} so their commission history doesn&apos;t move.</p>
+      <p className="text-xs text-muted">Won and Lost leads stay with {from.name} so their wins stay credited to them.</p>
     </form>
   );
 }

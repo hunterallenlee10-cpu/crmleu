@@ -3,7 +3,7 @@ import Link from "next/link";
 import { todayNY } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 import { getTeam } from "@/lib/team";
-import { STAGES, type ActivityType, type Profile, type Stage } from "@/lib/types";
+import { STAGES, type ActivityType, type Stage } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -49,10 +49,6 @@ export default async function DashboardPage() {
 
   const totalDeals = won.reduce((s, w) => s + Number(w.deals), 0);
   const totalRevenue = won.reduce((s, w) => s + Number(w.revenue), 0);
-  // Admins own the business, so they never earn commission on their own wins.
-  const rateFor = (m: Profile) => (m.role === "admin" ? 0 : Number(m.commission_rate));
-  const commissionFor = (m: Profile) => (Number(wonFor(m.id)?.revenue ?? 0) * rateFor(m)) / 100;
-  const totalCommission = team.reduce((s, m) => s + commissionFor(m), 0);
   const totalActivities = activityCounts.reduce((s, a) => s + Number(a.activity_count), 0);
 
   const month = new Date(`${todayNY()}T12:00:00Z`).toLocaleDateString("en-US", {
@@ -63,16 +59,15 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-10">
       {/* Headline + tiles */}
-      <section className="grid gap-px overflow-hidden rounded-card border border-line bg-line lg:grid-cols-5">
+      <section className="grid gap-px overflow-hidden rounded-card border border-line bg-line lg:grid-cols-4">
         <div className="flex flex-col justify-between bg-surface p-5 lg:col-span-2">
           <p className="text-label text-muted">Revenue won in {month}</p>
           <p className="mt-2 text-xl font-semibold tracking-tight">
             {money(totalRevenue)}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-px lg:col-span-3">
+        <div className="grid grid-cols-2 gap-px lg:col-span-2">
           <Tile label={`Deals won in ${month}`} value={totalDeals.toLocaleString("en-US")} />
-          <Tile label="Commission owed" value={money(totalCommission)} />
           <Tile label="Activities this week" value={totalActivities.toLocaleString("en-US")} />
         </div>
       </section>
@@ -133,15 +128,13 @@ export default async function DashboardPage() {
         </tbody>
       </Table>
 
-      {/* Won + commission this month */}
-      <Table title={`Won in ${month} and commission owed`} caption="Commission = won deal value × the rep's commission rate.">
+      {/* Won this month */}
+      <Table title={`Won in ${month}`} caption="Deals marked Won this month, by won date.">
         <thead>
           <tr>
             <Th left>Rep</Th>
             <Th>Deals</Th>
             <Th>Revenue</Th>
-            <Th>Rate</Th>
-            <Th>Commission</Th>
           </tr>
         </thead>
         <tbody>
@@ -152,8 +145,6 @@ export default async function DashboardPage() {
                 <Td left>{m.full_name}</Td>
                 <Td>{Number(w?.deals ?? 0)}</Td>
                 <Td>{money(Number(w?.revenue ?? 0))}</Td>
-                <Td>{m.role === "admin" ? "–" : `${rateFor(m)}%`}</Td>
-                <Td strong>{m.role === "admin" ? "–" : money(commissionFor(m))}</Td>
               </tr>
             );
           })}
@@ -163,8 +154,6 @@ export default async function DashboardPage() {
             <Td left strong>Total</Td>
             <Td strong>{totalDeals}</Td>
             <Td strong>{money(totalRevenue)}</Td>
-            <Td />
-            <Td strong>{money(totalCommission)}</Td>
           </tr>
         </tfoot>
       </Table>
