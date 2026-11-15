@@ -20,6 +20,7 @@ export type BoardRow = {
   calls_booked: number;
   deals_won: number;
   revenue: number;
+  sale_bonus: number; // per won deal: dollars over $499, rounded up, summed
 };
 
 export type Metric = "points" | "outreach" | "warm_ups" | "calls_booked" | "deals_won" | "revenue";
@@ -33,16 +34,14 @@ export const METRICS: { value: Metric; label: string; short: string }[] = [
   { value: "revenue", label: "Revenue", short: "Revenue" },
 ];
 
-// What each thing is worth on the Points board.
-export const POINTS = { outreach: 1, warm_ups: 5, calls_booked: 10, deals_won: 25 } as const;
+// Points come only from closed sales: 100 per deal won, plus a point for every
+// dollar of the sale over $499, rounded up ($750.40 -> 100 + 252). The bonus is
+// per deal, so team_leaderboard() works it out (sale_bonus) in
+// supabase/migrations/20261115000000_points_closed_sales.sql.
+export const POINTS = { deal_won: 100, bonus_over: 499 } as const;
 
 export function pointsFor(row: BoardRow): number {
-  return (
-    row.outreach * POINTS.outreach +
-    row.warm_ups * POINTS.warm_ups +
-    row.calls_booked * POINTS.calls_booked +
-    row.deals_won * POINTS.deals_won
-  );
+  return row.deals_won * POINTS.deal_won + row.sale_bonus;
 }
 
 export function metricValue(row: BoardRow, metric: Metric): number {
@@ -87,6 +86,7 @@ export function toBoardRows(data: unknown): BoardRow[] {
     calls_booked: Number(r.calls_booked ?? 0),
     deals_won: Number(r.deals_won ?? 0),
     revenue: Number(r.revenue ?? 0),
+    sale_bonus: Number(r.sale_bonus ?? 0),
   }));
 }
 

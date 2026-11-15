@@ -94,10 +94,10 @@ select is_empty(
 );
 
 select results_eq(
-  $$select outreach::int, warm_ups::int, calls_booked::int, deals_won::int, revenue
+  $$select outreach::int, warm_ups::int, calls_booked::int, deals_won::int, revenue, sale_bonus
     from public.team_leaderboard('month') where full_name = 'Rep A'$$,
-  $$values (2, 1, 0, 1, 2500.00::numeric)$$,
-  'leaderboard counts outreach, distinct warm ups, and this month''s wins'
+  $$values (2, 1, 0, 1, 2500.00::numeric, 2001::numeric)$$,
+  'leaderboard counts outreach, distinct warm ups, this month''s wins and the sale bonus (dollars over $499)'
 );
 select results_eq(
   $$select outreach::int from public.team_leaderboard('day') where full_name = 'Rep B'$$,
