@@ -19,12 +19,15 @@ const row = (full_name: string, r: Partial<BoardRow> = {}): BoardRow => ({
   calls_booked: 0,
   deals_won: 0,
   revenue: 0,
+  sale_bonus: 0,
   ...r,
 });
 
 describe("pointsFor", () => {
   it("weights outcomes above outreach", () => {
-    expect(pointsFor(row("A", { outreach: 10, calls_booked: 1, deals_won: 1 }))).toBe(10 + 10 + 25);
+    expect(pointsFor(row("A", { outreach: 10, calls_booked: 1 }))).toBe(0);
+    // A $750.40 win and a $300 win: 100 + 252, then 100 + 0.
+    expect(pointsFor(row("A", { outreach: 10, deals_won: 2, revenue: 1050.4, sale_bonus: 252 }))).toBe(452);
   });
 });
 
@@ -42,9 +45,9 @@ describe("rankBy", () => {
   });
 
   it("ranks by points", () => {
-    const ranked = rankBy([row("A", { outreach: 20 }), row("B", { deals_won: 1 })], "points");
+    const ranked = rankBy([row("A", { outreach: 20 }), row("B", { deals_won: 1, revenue: 1000, sale_bonus: 501 })], "points");
     expect(ranked[0].full_name).toBe("B");
-    expect(ranked[0].points).toBe(25);
+    expect(ranked[0].points).toBe(601);
   });
 });
 
@@ -58,8 +61,8 @@ describe("leaderOf", () => {
 
 describe("toBoardRows", () => {
   it("turns bigint/numeric strings into numbers", () => {
-    expect(toBoardRows([{ user_id: "u", full_name: "A", outreach: "4", calls_booked: "0", deals_won: "2", revenue: "1500.00" }]))
-      .toEqual([row("A", { user_id: "u", outreach: 4, deals_won: 2, revenue: 1500 })]);
+    expect(toBoardRows([{ user_id: "u", full_name: "A", outreach: "4", calls_booked: "0", deals_won: "2", revenue: "1500.00", sale_bonus: "502" }]))
+      .toEqual([row("A", { user_id: "u", outreach: 4, deals_won: 2, revenue: 1500, sale_bonus: 502 })]);
     expect(toBoardRows(null)).toEqual([]);
   });
 });
