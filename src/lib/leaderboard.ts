@@ -94,6 +94,13 @@ export function toBoardRows(data: unknown): BoardRow[] {
 // ---------------------------------------------------------------------------
 // Feed
 
+// Rows from team_lead_counts(): the active reps holding the most leads.
+export type LeadCount = { user_id: string; full_name: string; lead_count: number };
+
+export function toLeadCounts(data: unknown): LeadCount[] {
+  return ((data ?? []) as LeadCount[]).map((r) => ({ ...r, lead_count: Number(r.lead_count) }));
+}
+
 export type FeedItem = {
   id: number;
   created_at: string;

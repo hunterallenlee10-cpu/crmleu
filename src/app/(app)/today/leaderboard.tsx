@@ -10,16 +10,12 @@ import {
   money,
   rankBy,
   type BoardRow,
+  type LeadCount,
   type Metric,
   type Period,
 } from "@/lib/leaderboard";
 
-const LEADER_TILES: { metric: Metric; label: string }[] = [
-  { metric: "outreach", label: "Most outreach" },
-  { metric: "calls_booked", label: "Most calls booked" },
-  { metric: "deals_won", label: "Most deals won" },
-  { metric: "revenue", label: "Top closer" },
-];
+const LEAD_TILE_LABELS = ["Most leads", "2nd most leads", "3rd most leads"];
 
 const POINT_RULES = [
   { points: String(POINTS.deal_won), label: "Closed sale" },
@@ -39,16 +35,19 @@ const show = (metric: Metric, n: number) => (metric === "revenue" ? money(n) : n
 
 export function Leaderboard({
   rows,
+  leadCounts,
   period,
   sort,
   meId,
 }: {
   rows: BoardRow[];
+  leadCounts: LeadCount[];
   period: Period;
   sort: Metric;
   meId: string;
 }) {
   const ranked = rankBy(rows, sort);
+  const closer = leaderOf(rows, "revenue");
   const href = (p: Period, s: Metric) => {
     const params = new URLSearchParams();
     if (p !== DEFAULT_PERIOD) params.set("board", p);
@@ -62,7 +61,7 @@ export function Leaderboard({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="leaderboard-title" className="section-title">Leaderboard</h2>
-          <p className="mt-0.5 text-sm text-muted">Ranked by points. Click a card or column to rank by something else.</p>
+          <p className="mt-0.5 text-sm text-muted">Ranked by points. Click a column to rank by something else.</p>
         </div>
         <nav className="flex rounded-control border border-line bg-surface p-0.5" aria-label="Leaderboard period">
           {PERIODS.map((p) => (
@@ -84,25 +83,30 @@ export function Leaderboard({
       <PointsKey />
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-4">
-        {LEADER_TILES.map(({ metric, label }) => {
-          const leader = leaderOf(rows, metric);
+        <Link
+          href={href(period, "revenue")}
+          scroll={false}
+          className={`flex flex-col gap-0.5 p-4 transition-colors duration-150 hover:bg-surface-2 focus-visible:-outline-offset-2 ${
+            sort === "revenue" ? "bg-surface-2" : "bg-surface"
+          }`}
+        >
+          <LeaderTile
+            label="Top closer"
+            name={closer ? (closer.user_id === meId ? "You" : closer.full_name) : null}
+            value={closer ? money(closer.revenue) : null}
+          />
+        </Link>
+        {/* Leads held right now, whatever the period above. */}
+        {LEAD_TILE_LABELS.map((label, i) => {
+          const holder = leadCounts[i];
           return (
-            <Link
-              key={metric}
-              href={href(period, metric)}
-              scroll={false}
-              className={`flex flex-col gap-0.5 p-4 transition-colors duration-150 hover:bg-surface-2 focus-visible:-outline-offset-2 ${
-                sort === metric ? "bg-surface-2" : "bg-surface"
-              }`}
-            >
-              <span className="text-xs text-muted">{label}</span>
-              <span className="truncate font-medium">
-                {leader ? (leader.user_id === meId ? "You" : leader.full_name) : "Up for grabs"}
-              </span>
-              <span className={`mt-1 text-base font-semibold ${leader ? "text-fg" : "text-faint"}`}>
-                {leader ? show(metric, metricValue(leader, metric)) : "–"}
-              </span>
-            </Link>
+            <div key={label} className="flex flex-col gap-0.5 bg-surface p-4">
+              <LeaderTile
+                label={label}
+                name={holder ? (holder.user_id === meId ? "You" : holder.full_name) : null}
+                value={holder ? `${holder.lead_count.toLocaleString("en-US")} ${holder.lead_count === 1 ? "lead" : "leads"}` : null}
+              />
+            </div>
           );
         })}
       </div>
@@ -175,6 +179,16 @@ export function Leaderboard({
         </div>
       )}
     </section>
+  );
+}
+
+function LeaderTile({ label, name, value }: { label: string; name: string | null; value: string | null }) {
+  return (
+    <>
+      <span className="text-xs text-muted">{label}</span>
+      <span className="truncate font-medium">{name ?? "Up for grabs"}</span>
+      <span className={`mt-1 text-base font-semibold ${value ? "text-fg" : "text-faint"}`}>{value ?? "–"}</span>
+    </>
   );
 }
 
