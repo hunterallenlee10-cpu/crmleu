@@ -97,7 +97,7 @@ export function toBoardRows(data: unknown): BoardRow[] {
 // Every rep aims for this many touches a week. A touch is any work on a lead
 // (a logged call, text, email, meeting or note, a stage move, a follow-up date,
 // an edit), counted once per lead per day. See
-// supabase/migrations/20261118200000_weekly_touches.sql. The leaderboard's
+// supabase/migrations/20261118210437_weekly_touches.sql. The leaderboard's
 // Outreach column counts the same touches.
 export const WEEKLY_TOUCH_GOAL = 100;
 
