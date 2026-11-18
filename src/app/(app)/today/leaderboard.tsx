@@ -1,6 +1,7 @@
 import { ArrowDown, Users } from "lucide-react";
 import Link from "next/link";
 import {
+  DEFAULT_PERIOD,
   METRICS,
   PERIODS,
   POINTS,
@@ -50,7 +51,7 @@ export function Leaderboard({
   const ranked = rankBy(rows, sort);
   const href = (p: Period, s: Metric) => {
     const params = new URLSearchParams();
-    if (p !== "week") params.set("board", p);
+    if (p !== DEFAULT_PERIOD) params.set("board", p);
     if (s !== "points") params.set("sort", s);
     const qs = params.toString();
     return qs ? `/today?${qs}` : "/today";

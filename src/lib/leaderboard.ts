@@ -6,6 +6,9 @@ import { stageLabel, type ActivityType, type Stage } from "@/lib/types";
 
 export type Period = "day" | "week" | "month" | "all";
 
+// The leaderboard opens on this one.
+export const DEFAULT_PERIOD: Period = "all";
+
 export const PERIODS: { value: Period; label: string }[] = [
   { value: "day", label: "Today" },
   { value: "week", label: "This week" },

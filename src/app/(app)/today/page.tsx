@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
-import { METRICS, PERIODS, toBoardRows, toFeedItems, type Metric, type Period } from "@/lib/leaderboard";
+import { DEFAULT_PERIOD, METRICS, PERIODS, toBoardRows, toFeedItems, type Metric, type Period } from "@/lib/leaderboard";
 import { createClient } from "@/lib/supabase/server";
 import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
@@ -29,7 +29,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const newSince = addDays(today, -NEW_LEAD_WINDOW_DAYS);
 
   const sp = await searchParams;
-  const period: Period = PERIODS.find((p) => p.value === sp.board)?.value ?? "week";
+  const period: Period = PERIODS.find((p) => p.value === sp.board)?.value ?? DEFAULT_PERIOD;
   const sort: Metric = METRICS.find((m) => m.value === sp.sort)?.value ?? "points";
 
   // My open leads that are due (or overdue), plus fresh New leads assigned to me.
