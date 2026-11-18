@@ -1,5 +1,5 @@
 -- Leaderboard: the Outreach column counts touches, the same as the weekly
--- outreach goal (20261118200000_weekly_touches.sql). A touch is any work a
+-- outreach goal (20261118210437_weekly_touches.sql). A touch is any work a
 -- person does on a lead (a logged call, text, email, meeting or note, a stage
 -- move, a follow-up date, an edit, adding it), counted once per lead per day.
 -- Before, it counted every logged call, text, email and meeting, and nothing
