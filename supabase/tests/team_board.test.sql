@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(20);
+select plan(21);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local', '{"full_name":"Admin"}'),
@@ -73,8 +73,8 @@ insert into public.activities (lead_id, type) values ('44444444-0000-0000-0000-0
 
 select results_eq(
   $$select count(*)::int from public.team_feed() where actor_name = 'Rep A'$$,
-  $$values (7)$$,
-  'a rep sees everything other reps did in the last 24 hours'
+  $$values (8)$$,
+  'a rep sees everything other reps did, newest first'
 );
 select is_empty(
   $$select 1 from public.team_feed()
@@ -93,9 +93,14 @@ select results_eq(
   $$values (2500.00::numeric)$$,
   'wins show the deal value to everyone'
 );
-select is_empty(
-  $$select 1 from public.team_feed() where created_at < now() - interval '24 hours'$$,
-  'the feed only covers the last 24 hours'
+select isnt_empty(
+  $$select 1 from public.team_feed() where created_at < now() - interval '30 days'$$,
+  'the feed isn''t cut off at 24 hours, so older work still shows'
+);
+select results_eq(
+  $$select count(*)::int from public.team_feed(3)$$,
+  $$values (3)$$,
+  'the feed returns only the latest entries asked for'
 );
 
 select results_eq(

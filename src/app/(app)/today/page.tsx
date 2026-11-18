@@ -10,13 +10,18 @@ import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
 import type { Lead, Task } from "@/lib/types";
 import { TaskItem } from "../tasks/task-item";
+import { Announcements, type Announcement } from "./announcements";
 import { Leaderboard } from "./leaderboard";
+import { SidebarTabs } from "./sidebar-tabs";
 import { TeamFeed } from "./team-feed";
 
 export const metadata: Metadata = { title: "Today" };
 
 const NEW_LEAD_WINDOW_DAYS = 7;
-const FEED_LIMIT = 500;
+const FEED_LIMIT = 100;
+const ANNOUNCEMENT_LIMIT = 20;
+// An announcement this recent gets a "new" dot on its tab.
+const FRESH_NEWS_HOURS = 72;
 
 export default async function TodayPage({ searchParams }: PageProps<"/today">) {
   const profile = await getProfile();
@@ -48,7 +53,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     .order("created_at")
     .returns<Task[]>();
 
-  const [{ data }, { data: taskData }, { data: ventureRows }, members, boardRes, feedRes] = await Promise.all([
+  const [{ data }, { data: taskData }, { data: ventureRows }, members, boardRes, feedRes, newsRes] = await Promise.all([
     leadsQuery,
     tasksQuery,
     supabase.from("ventures").select("id, name"),
@@ -56,6 +61,12 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     // The whole team. These only return names and counts for other people's work.
     supabase.rpc("team_leaderboard", { p_period: period }),
     supabase.rpc("team_feed", { p_limit: FEED_LIMIT }),
+    supabase
+      .from("announcements")
+      .select("id, body, author_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(ANNOUNCEMENT_LIMIT)
+      .returns<Announcement[]>(),
   ]);
   // Everyone tasks only show for reps who still have to tick them.
   const progress = await getEveryoneProgress(supabase, taskData ?? []);
@@ -67,6 +78,10 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
 
   const board = toBoardRows(boardRes.data);
   const feed = toFeedItems(feedRes.data);
+  const news = newsRes.data ?? [];
+  const freshNews =
+    news.length > 0 && new Date().getTime() - Date.parse(news[0].created_at) < FRESH_NEWS_HOURS * 3_600_000;
+  const isAdmin = profile.role === "admin";
   const leads = data ?? [];
   const overdue = leads.filter((l) => l.next_follow_up && l.next_follow_up < today);
   const dueToday = leads.filter((l) => l.next_follow_up === today);
@@ -146,11 +161,24 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
         </div>
 
         <aside>
-          {feedRes.error ? (
-            <p className="text-sm text-danger">Couldn&apos;t load the team feed.</p>
-          ) : (
-            <TeamFeed items={feed} meId={profile.id} capped={feed.length >= FEED_LIMIT} />
-          )}
+          <SidebarTabs
+            newsCount={news.length}
+            freshNews={freshNews}
+            feed={
+              feedRes.error ? (
+                <p className="text-sm text-danger">Couldn&apos;t load the team feed.</p>
+              ) : (
+                <TeamFeed items={feed} meId={profile.id} capped={feed.length >= FEED_LIMIT} />
+              )
+            }
+            news={
+              newsRes.error ? (
+                <p className="text-sm text-danger">Couldn&apos;t load announcements.</p>
+              ) : (
+                <Announcements items={news} names={names} isAdmin={isAdmin} />
+              )
+            }
+          />
         </aside>
       </div>
     </div>
