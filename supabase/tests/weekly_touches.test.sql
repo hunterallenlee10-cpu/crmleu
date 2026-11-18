@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local', '{"full_name":"Admin"}'),
@@ -74,6 +74,11 @@ select is(
 );
 select is(pg_temp.week_touches('Rep A'), 2, 'but sees everyone''s weekly count');
 select is(pg_temp.week_touches('Rep B'), 0, 'reps with nothing yet show 0');
+select is(
+  (select outreach::int from public.team_leaderboard('week') where full_name = 'Rep A'),
+  2,
+  'the leaderboard''s Outreach column counts the same touches'
+);
 select is(
   (select count(*)::int from public.team_weekly_touches()
     where full_name in ('Admin', 'Gone Rep')),
