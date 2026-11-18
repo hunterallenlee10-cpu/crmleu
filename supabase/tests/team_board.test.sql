@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(25);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@test.local', '{"full_name":"Admin"}'),
@@ -175,6 +175,46 @@ select throws_ok(
   '42501', null,
   'logged-out visitors cannot read the leaderboard'
 );
+
+-------------------------------------------------------------------------------
+-- Most leads: active reps only, names and counts only.
+reset role;
+insert into public.leads (business_name, phone, city, owner_id) values
+  ('Admin Pool 1', '9995552101', 'Testville', '00000000-0000-0000-0000-00000000000a'),
+  ('Admin Pool 2', '9995552102', 'Testville', '00000000-0000-0000-0000-00000000000a'),
+  ('Admin Pool 3', '9995552103', 'Testville', '00000000-0000-0000-0000-00000000000a'),
+  ('Admin Pool 4', '9995552104', 'Testville', '00000000-0000-0000-0000-00000000000a'),
+  ('Gone Lead 1',  '9995552105', 'Testville', '00000000-0000-0000-0000-0000000000d1'),
+  ('Gone Lead 2',  '9995552106', 'Testville', '00000000-0000-0000-0000-0000000000d1'),
+  ('Gone Lead 3',  '9995552107', 'Testville', '00000000-0000-0000-0000-0000000000d1'),
+  ('Gone Lead 4',  '9995552108', 'Testville', '00000000-0000-0000-0000-0000000000d1'),
+  ('Gone Lead 5',  '9995552109', 'Testville', '00000000-0000-0000-0000-0000000000d1');
+select pg_temp.login_as('00000000-0000-0000-0000-0000000000b1');
+select results_eq(
+  $$select full_name, lead_count::int from public.team_lead_counts()
+    where user_id::text like '00000000-0000-0000-0000-%'$$,
+  $$values ('Rep A', 3), ('Rep C', 1)$$,
+  'reps see who holds the most leads (won ones included, reps with none left off); admins and deactivated reps are left out'
+);
+select results_eq(
+  $$select count(*)::int from public.team_lead_counts(1) where user_id::text like '00000000-0000-0000-0000-%'$$,
+  $$values (1)$$,
+  'the lead count list returns only as many people as asked for'
+);
+select pg_temp.login_as('00000000-0000-0000-0000-0000000000d1');
+select throws_ok(
+  'select * from public.team_lead_counts()',
+  '42501', null,
+  'deactivated users cannot read lead counts'
+);
+reset role;
+set local role anon;
+select throws_ok(
+  'select * from public.team_lead_counts()',
+  '42501', null,
+  'logged-out visitors cannot read lead counts'
+);
+reset role;
 
 select * from finish();
 rollback;

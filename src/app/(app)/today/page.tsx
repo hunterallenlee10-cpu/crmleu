@@ -4,7 +4,7 @@ import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
 import { getProfile } from "@/lib/auth";
 import { addDays, todayNY } from "@/lib/dates";
-import { DEFAULT_PERIOD, METRICS, PERIODS, toBoardRows, toFeedItems, type Metric, type Period } from "@/lib/leaderboard";
+import { DEFAULT_PERIOD, METRICS, PERIODS, toBoardRows, toFeedItems, toLeadCounts, type Metric, type Period } from "@/lib/leaderboard";
 import { createClient } from "@/lib/supabase/server";
 import { getEveryoneProgress } from "@/lib/tasks";
 import { getTeamMembers } from "@/lib/team";
@@ -53,7 +53,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
     .order("created_at")
     .returns<Task[]>();
 
-  const [{ data }, { data: taskData }, { data: ventureRows }, members, boardRes, feedRes, newsRes] = await Promise.all([
+  const [{ data }, { data: taskData }, { data: ventureRows }, members, boardRes, feedRes, newsRes, leadCountRes] = await Promise.all([
     leadsQuery,
     tasksQuery,
     supabase.from("ventures").select("id, name"),
@@ -67,6 +67,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
       .order("created_at", { ascending: false })
       .limit(ANNOUNCEMENT_LIMIT)
       .returns<Announcement[]>(),
+    supabase.rpc("team_lead_counts", { p_limit: 3 }),
   ]);
   // Everyone tasks only show for reps who still have to tick them.
   const progress = await getEveryoneProgress(supabase, taskData ?? []);
@@ -78,6 +79,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
 
   const board = toBoardRows(boardRes.data);
   const feed = toFeedItems(feedRes.data);
+  const leadCounts = toLeadCounts(leadCountRes.data);
   const news = newsRes.data ?? [];
   const freshNews =
     news.length > 0 && new Date().getTime() - Date.parse(news[0].created_at) < FRESH_NEWS_HOURS * 3_600_000;
@@ -141,7 +143,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/today">) {
           {boardRes.error ? (
             <p className="text-sm text-danger">Couldn&apos;t load the leaderboard.</p>
           ) : (
-            <Leaderboard rows={board} period={period} sort={sort} meId={profile.id} />
+            <Leaderboard rows={board} leadCounts={leadCounts} period={period} sort={sort} meId={profile.id} />
           )}
 
           <Section

@@ -5,6 +5,7 @@ import {
   pointsFor,
   rankBy,
   timeAgo,
+  toLeadCounts,
   toBoardRows,
   type BoardRow,
   type FeedItem,
@@ -101,5 +102,14 @@ describe("timeAgo", () => {
     ["2026-10-11T12:00:00Z", "2d ago"],
   ])("%s -> %s", (iso, expected) => {
     expect(timeAgo(iso, now)).toBe(expected);
+  });
+});
+
+describe("toLeadCounts", () => {
+  it("turns the counts Postgres sends as strings into numbers", () => {
+    expect(toLeadCounts([{ user_id: "a", full_name: "Ann", lead_count: "121" }])).toEqual([
+      { user_id: "a", full_name: "Ann", lead_count: 121 },
+    ]);
+    expect(toLeadCounts(null)).toEqual([]);
   });
 });
