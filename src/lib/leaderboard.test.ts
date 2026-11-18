@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   describeItem,
   leaderOf,
-  personHighlights,
   pointsFor,
   rankBy,
-  summarizeByPerson,
   timeAgo,
   toBoardRows,
   type BoardRow,
@@ -91,23 +89,6 @@ describe("describeItem", () => {
     expect(describeItem(item({ type: "stage_change", to_stage: "warm_up_program" }))).toMatchObject({ verb: "moved a lead", suffix: "to Warm Up Program", tone: "stage" });
     expect(describeItem(item({ type: "stage_change", to_stage: "won" }))).toMatchObject({ verb: "closed a deal", tone: "win" });
     expect(describeItem(item({ type: "stage_change", to_stage: "lost", business_name: "X" }))).toMatchObject({ verb: "marked", lead: "X", suffix: "Lost" });
-  });
-});
-
-describe("summarizeByPerson", () => {
-  it("rolls the feed up per person, winners first", () => {
-    const people = summarizeByPerson([
-      item({ user_id: "a", actor_name: "Ann", type: "call" }),
-      item({ user_id: "a", actor_name: "Ann", type: "call" }),
-      item({ user_id: "a", actor_name: "Ann", type: "text" }),
-      item({ user_id: "b", actor_name: "Ben", type: "stage_change", to_stage: "won", deal_value: 2500 }),
-      item({ user_id: "b", actor_name: "Ben", type: "stage_change", to_stage: "call_booked" }),
-    ]);
-    expect(people.map((p) => p.name)).toEqual(["Ben", "Ann"]);
-    expect(people[1]).toMatchObject({ calls: 2, texts: 1, total: 3 });
-    expect(people[0]).toMatchObject({ wins: 1, revenue: 2500, booked: 1 });
-    expect(personHighlights(people[0])).toEqual(["1 win", "1 call booked"]);
-    expect(personHighlights(people[1])).toEqual(["2 calls", "1 text"]);
   });
 });
 

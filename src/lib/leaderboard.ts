@@ -147,68 +147,6 @@ export function describeItem(item: FeedItem): FeedLine {
   }
 }
 
-export type PersonDay = {
-  user_id: string;
-  name: string;
-  calls: number;
-  texts: number;
-  emails: number;
-  meetings: number;
-  notes: number;
-  booked: number;
-  quotes: number;
-  wins: number;
-  revenue: number;
-  total: number;
-};
-
-// One line per person: what they did in the feed's window, busiest first.
-export function summarizeByPerson(items: FeedItem[]): PersonDay[] {
-  const byUser = new Map<string, PersonDay>();
-  for (const item of items) {
-    let p = byUser.get(item.user_id);
-    if (!p) {
-      p = {
-        user_id: item.user_id, name: item.actor_name, calls: 0, texts: 0, emails: 0, meetings: 0,
-        notes: 0, booked: 0, quotes: 0, wins: 0, revenue: 0, total: 0,
-      };
-      byUser.set(item.user_id, p);
-    }
-    p.total++;
-    if (item.type === "call") p.calls++;
-    else if (item.type === "text") p.texts++;
-    else if (item.type === "email") p.emails++;
-    else if (item.type === "meeting") p.meetings++;
-    else if (item.type === "note") p.notes++;
-    else if (item.type === "stage_change") {
-      if (item.to_stage === "call_booked") p.booked++;
-      else if (item.to_stage === "quote_given") p.quotes++;
-      else if (item.to_stage === "won") {
-        p.wins++;
-        p.revenue += item.deal_value ?? 0;
-      }
-    }
-  }
-  return [...byUser.values()].sort(
-    (a, b) => b.wins - a.wins || b.total - a.total || a.name.localeCompare(b.name),
-  );
-}
-
-// ["12 calls", "1 text", "2 calls booked"] — only the non-zero ones.
-export function personHighlights(p: PersonDay): string[] {
-  const parts: [number, string, string][] = [
-    [p.wins, "win", "wins"],
-    [p.booked, "call booked", "calls booked"],
-    [p.quotes, "quote given", "quotes given"],
-    [p.calls, "call", "calls"],
-    [p.texts, "text", "texts"],
-    [p.emails, "email", "emails"],
-    [p.meetings, "meeting", "meetings"],
-    [p.notes, "note", "notes"],
-  ];
-  return parts.filter(([n]) => n > 0).map(([n, one, many]) => `${n} ${n === 1 ? one : many}`);
-}
-
 // "just now" / "5m ago" / "3h ago" / "2d ago"
 export function timeAgo(iso: string, now: Date = new Date()): string {
   const minutes = Math.floor((now.getTime() - Date.parse(iso)) / 60_000);

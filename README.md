@@ -231,7 +231,8 @@ Admins get an **Admin** tab with four pages:
 Besides each person's own overdue, due and new leads, **Today** shows the whole team:
 
 - **Leaderboard** for Today, This week (from Monday) or This month, New York time. It ranks by points, which come only from closed sales: 100 per deal won, plus 1 point for every dollar of the sale over $499, rounded up (a $750.40 sale is 100 + 252 = 352 points; $499 or less is just the 100). Click a column or a leader card to rank by outreach, bookings, wins or revenue instead. Moving the same lead back and forth only counts once, moving a lead back to Call Booked from Quote Given or Won isn't a new booking, and wins use the won date, same as the dashboard. If a lead leaves Won and comes back within 7 days (say, a mis-click), it keeps its original won date, so an old sale doesn't show up as a new one.
-- **Last 24 hours:** a line per person with what they did, then every entry, newest first.
+- **Team feed** (sidebar tab): the team's latest 100 actions, newest first, however old they are, so it's never blank on a slow day.
+- **Announcements** (sidebar tab): posts everyone on the team can read. Admins write and delete them right there; reps can only read. The tab gets a dot for 3 days after a new post.
 
 Reps see each other's names and counts but not the other reps' leads: business names and notes appear only on their own entries. Admins looking at the page see business names on every entry. Reassignments aren't shown. Admins are ranked on the leaderboard like everyone else, but their work stays out of the feed.
 
