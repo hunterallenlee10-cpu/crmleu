@@ -41,7 +41,7 @@ select pg_temp.login_as('00000000-0000-0000-0000-0000000000a1');
 insert into public.activities (lead_id, type, body) values
   ('44444444-0000-0000-0000-000000000001', 'call', 'Private note text'),
   ('44444444-0000-0000-0000-000000000001', 'text', null),
-  ('44444444-0000-0000-0000-000000000001', 'note', 'Notes are not outreach');
+  ('44444444-0000-0000-0000-000000000001', 'note', 'Same lead, same day: still one touch');
 update public.leads set stage = 'call_booked' where id = '44444444-0000-0000-0000-000000000001';
 -- Going back and forth still counts the lead once.
 update public.leads set stage = 'contacted' where id = '44444444-0000-0000-0000-000000000001';
@@ -107,7 +107,7 @@ select results_eq(
   $$select outreach::int, calls_booked::int, deals_won::int, revenue, sale_bonus
     from public.team_leaderboard('month') where full_name = 'Rep A'$$,
   $$values (2, 1, 1, 2500.00::numeric, 2001::numeric)$$,
-  'leaderboard counts outreach, distinct calls booked, this month''s wins and the sale bonus (dollars over $499)'
+  'leaderboard counts outreach (touches: each lead once a day), distinct calls booked, this month''s wins and the sale bonus (dollars over $499)'
 );
 select results_eq(
   $$select outreach::int, calls_booked::int, deals_won::int, revenue
