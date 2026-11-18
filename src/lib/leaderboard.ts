@@ -92,6 +92,39 @@ export function toBoardRows(data: unknown): BoardRow[] {
 }
 
 // ---------------------------------------------------------------------------
+// Weekly outreach goal
+
+// Every rep aims for this many touches a week. A touch is any work on a lead
+// (a logged call, text, email, meeting or note, a stage move, a follow-up date,
+// an edit), counted once per lead per day. See
+// supabase/migrations/20261118200000_weekly_touches.sql.
+export const WEEKLY_TOUCH_GOAL = 100;
+
+// Rows from team_weekly_touches(): every active rep, this week (Monday to Sunday).
+export type WeeklyTouches = { user_id: string; full_name: string; touches: number };
+
+export function toWeeklyTouches(data: unknown): WeeklyTouches[] {
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    user_id: String(r.user_id),
+    full_name: String(r.full_name),
+    touches: Number(r.touches ?? 0),
+  }));
+}
+
+// Days left in the week, today included: 7 on Monday, 1 on Sunday.
+export function daysLeftInWeek(today: string): number {
+  const weekday = new Date(`${today}T12:00:00Z`).getUTCDay(); // 0 = Sunday
+  return weekday === 0 ? 1 : 8 - weekday;
+}
+
+// What it takes to hit the goal from here: how many are left, and how many a
+// day that is through Sunday (rounded up).
+export function goalPace(touches: number, today: string, goal: number = WEEKLY_TOUCH_GOAL) {
+  const left = Math.max(goal - touches, 0);
+  return { left, perDay: Math.ceil(left / daysLeftInWeek(today)) };
+}
+
+// ---------------------------------------------------------------------------
 // Feed
 
 // Rows from team_lead_counts(): the active reps holding the most leads.

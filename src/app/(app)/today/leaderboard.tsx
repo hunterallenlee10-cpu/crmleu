@@ -5,6 +5,7 @@ import {
   METRICS,
   PERIODS,
   POINTS,
+  WEEKLY_TOUCH_GOAL,
   leaderOf,
   metricValue,
   money,
@@ -13,7 +14,9 @@ import {
   type LeadCount,
   type Metric,
   type Period,
+  type WeeklyTouches,
 } from "@/lib/leaderboard";
+import { WeeklyOutreach } from "./weekly-outreach";
 
 const LEAD_TILE_LABELS = ["Most leads", "2nd most leads", "3rd most leads"];
 
@@ -39,13 +42,18 @@ export function Leaderboard({
   period,
   sort,
   meId,
+  weekly,
+  today,
 }: {
   rows: BoardRow[];
   leadCounts: LeadCount[];
   period: Period;
   sort: Metric;
   meId: string;
+  weekly: WeeklyTouches[] | null; // null if it couldn't load
+  today: string;
 }) {
+  const weekTouches = new Map((weekly ?? []).map((w) => [w.user_id, w.touches]));
   const ranked = rankBy(rows, sort);
   const closer = leaderOf(rows, "revenue");
   const href = (p: Period, s: Metric) => {
@@ -106,10 +114,24 @@ export function Leaderboard({
                 name={holder ? (holder.user_id === meId ? "You" : holder.full_name) : null}
                 value={holder ? `${holder.lead_count.toLocaleString("en-US")} ${holder.lead_count === 1 ? "lead" : "leads"}` : null}
               />
+              {holder && weekTouches.has(holder.user_id) && (
+                <span className="text-xs text-muted">
+                  <span className="tabular-nums text-fg">
+                    {weekTouches.get(holder.user_id)}/{WEEKLY_TOUCH_GOAL}
+                  </span>{" "}
+                  touches this week
+                </span>
+              )}
             </div>
           );
         })}
       </div>
+
+      {weekly ? (
+        <WeeklyOutreach rows={weekly} meId={meId} today={today} />
+      ) : (
+        <p className="text-sm text-danger">Couldn&apos;t load this week&apos;s outreach.</p>
+      )}
 
       {ranked.length === 0 ? (
         <div className="empty">

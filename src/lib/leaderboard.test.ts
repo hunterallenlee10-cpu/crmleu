@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  daysLeftInWeek,
   describeItem,
+  goalPace,
   leaderOf,
   pointsFor,
   rankBy,
   timeAgo,
   toLeadCounts,
   toBoardRows,
+  toWeeklyTouches,
   type BoardRow,
   type FeedItem,
 } from "./leaderboard";
@@ -111,5 +114,26 @@ describe("toLeadCounts", () => {
       { user_id: "a", full_name: "Ann", lead_count: 121 },
     ]);
     expect(toLeadCounts(null)).toEqual([]);
+  });
+});
+
+describe("weekly outreach goal", () => {
+  it("counts the days left in the week, today included", () => {
+    expect(daysLeftInWeek("2026-11-16")).toBe(7); // Monday
+    expect(daysLeftInWeek("2026-11-18")).toBe(5); // Wednesday
+    expect(daysLeftInWeek("2026-11-22")).toBe(1); // Sunday
+  });
+
+  it("works out what's left and the daily pace", () => {
+    expect(goalPace(37, "2026-11-18")).toEqual({ left: 63, perDay: 13 });
+    expect(goalPace(0, "2026-11-16")).toEqual({ left: 100, perDay: 15 });
+    expect(goalPace(120, "2026-11-20")).toEqual({ left: 0, perDay: 0 });
+  });
+
+  it("parses counts that come back as strings", () => {
+    expect(toWeeklyTouches([{ user_id: "u", full_name: "A", touches: "12" }])).toEqual([
+      { user_id: "u", full_name: "A", touches: 12 },
+    ]);
+    expect(toWeeklyTouches(null)).toEqual([]);
   });
 });
